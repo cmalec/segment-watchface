@@ -83,6 +83,9 @@ void settings_process_tuple(Tuple *new_tuple) {
   else if (key == BLUETOOTH_SHOW_KEY) {
     global_settings.BluetoothShow = new_tuple->value->uint8;
   }
+  else if (key == BATTERY_ICON_ONLY_KEY) {
+    global_settings.BatteryIconOnly = new_tuple->value->uint8;
+  }
   else if (key == HOURLYVIBE_KEY) {
     global_settings.HourlyVibe = new_tuple->value->uint8;
   }
@@ -229,6 +232,7 @@ void settings_default_values() {
   // BT icon hidden by default: the phone-app connection state it shows is
   // rarely actionable, and a mostly-blue badge is visual noise.
   global_settings.BluetoothShow = 0;
+  global_settings.BatteryIconOnly = 0;
   colors[c_bg1] = GColorWhite;
   colors[c_bg2] = GColorBlack;
   colors[c_bg3] = GColorWhite;

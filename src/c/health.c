@@ -6,6 +6,7 @@
 #include "helpers.h"
 #include "window.h"
 #include "fonts.h"
+#include "battery.h"
 
 static bool health_enabled = false;
 
@@ -120,10 +121,8 @@ void health_update() {
   text_layer_set_text(health_text_layer, str2);
 
   #ifdef PBL_PLATFORM_EMERY
-  // Heart rate readout. 0 = no reading from the sensor yet; hide rather
-  // than display a meaningless zero. HEALTH_BPM_TEXT is sized for two
-  // digits (≤99 BPM); three digits are clipped by design rather than
-  // overlapping.
+  // Heart rate readout. 0 = no sensor reading yet; hide rather than display
+  // a meaningless zero. HEALTH_BPM_TEXT is sized for two digits (≤99 BPM).
   if(s_bpm > 0 && s_bpm <= 99) {
     static char bpm_str[4];
     snprintf(bpm_str, sizeof(bpm_str), "%d", (int)s_bpm);
@@ -132,12 +131,58 @@ void health_update() {
     layer_set_hidden(health_bpm_icon_layer, false);
   }
   else {
-    // No reading (0) or above display range: hide instead of garbage.
     layer_set_hidden(text_layer_get_layer(health_bpm_layer), true);
     layer_set_hidden(health_bpm_icon_layer, true);
   }
+  health_layout_row();
   #endif
 }
+
+#ifdef PBL_PLATFORM_EMERY
+/*
+ * Dynamic horizontal layout of the health row.
+ *
+ * The top strip holds: [steps ... heart rate] on the left and
+ * [battery % (icon)] on the right. The heart-rate number sits close to the
+ * battery readout, which crowds at 100%. So the BPM text is right-anchored
+ * against the battery margin (dynamic: percent-only mode frees ~33px, BT
+ * icon visibility frees the left edge), and the steps text keeps a fixed
+ * left origin.
+ *
+ * Called on every health update and on settings changes.
+ */
+void health_layout_row(void) {
+  static int16_t last_right = -1;
+  static int16_t last_left = -1;
+  if (health_layer == NULL || health_bpm_layer == NULL) {
+    return;
+  }
+  // BPM text right edge = screen width minus the battery reserve.
+  GRect full = layer_get_bounds(my_window_layer);
+  int16_t right_edge = full.size.w - battery_right_margin();
+  // Health row slides left when the BT badge is hidden (frees left space).
+  int16_t left_origin = health_left_origin();
+
+  if (right_edge != last_right || left_origin != last_left) {
+    // Move the whole health row to the new left origin.
+    GRect hl = layer_get_frame(health_layer);
+    hl.origin.x = left_origin;
+    layer_set_frame(health_layer, hl);
+
+    // Anchor the BPM text so its RIGHT edge lands at right_edge (screen
+    // coords); the heart icon sits to its left.
+    GRect bpm = layer_get_frame(text_layer_get_layer(health_bpm_layer));
+    int16_t desired_local_right = right_edge - left_origin;
+    bpm.origin.x = desired_local_right - bpm.size.w;
+    layer_set_frame(text_layer_get_layer(health_bpm_layer), bpm);
+    GRect icon = layer_get_frame(health_bpm_icon_layer);
+    icon.origin.x = bpm.origin.x - icon.size.w - 2;
+    layer_set_frame(health_bpm_icon_layer, icon);
+    last_right = right_edge;
+    last_left = left_origin;
+  }
+}
+#endif
 
 void health_handler(HealthEventType event, void *context) {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "health_handler");

@@ -174,7 +174,8 @@
     <div class="row"><div><div class="t">Seconds</div><div class="d">Show seconds — smaller clock, more battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Hide branding</div><div class="d">No “pebble” logo at the top</div></div><div class="ctl"><button class="sw" data-k="branding_mask" data-on="1"></button></div></div>
-    <div class="row"><div><div class="t">Hide battery</div><div class="d">No battery icon or percent</div></div><div class="ctl"><button class="sw" data-k="battery_hide" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Battery readout</div><div class="d">Percent only — hides the icon and phone bar</div></div><div class="ctl"><button class="sw" data-k="battery_icon_only" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Hide battery</div><div class="d">No battery readout at all</div></div><div class="ctl"><button class="sw" data-k="battery_hide" data-on="1"></button></div></div>
   </section>
 
   <section>
@@ -276,7 +277,7 @@ var DEFAULT_COLORS = 'FFC0FFC0C0C0C0C0FFC0FFFFFFFFFFC0FFFFFFFFFFC0C0FFC0';
 var DEFAULTS = {
   health: 1, blink: 0, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
-  branding_mask: 0, battery_hide: 0, seconds: 0,
+  branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
   switchset: 0, switch_start: 47, switch_end: 15,
   setcolors: DEFAULT_COLORS, set2colors: DEFAULT_COLORS
@@ -397,7 +398,9 @@ function renderPreview() {
   ['s-d7','s-d7b','s-d7c'].forEach(function(id){ setS(id,'color',c.d7); });
   // hide branding/battery/bluetooth when configured off
   document.getElementById('s-d9').style.display = settings.branding_mask ? 'none' : '';
+  var battVisible = !settings.battery_hide && !settings.battery_icon_only;
   ['s-bi1p','s-bi1b'].forEach(function(id){ document.getElementById(id).style.display = settings.battery_hide ? 'none' : ''; });
+  document.getElementById('s-bi1b').style.display = battVisible ? '' : 'none';
   document.getElementById('s-steps').style.display = settings.health ? '' : 'none';
   document.getElementById('s-thi').textContent = '37°';
   document.getElementById('s-tlo').textContent = '23°';
