@@ -76,9 +76,10 @@ typedef void (*SettingsChangeCallback)();
 #define WTEMP_LO_KEY       MESSAGE_KEY_wtemp_lo
 #define PBATT_LEVEL_KEY    MESSAGE_KEY_pbatt_level
 
-#define SET_KEY  200
-#define SET1_KEY 201
-#define SET2_KEY 202
+// Color-set payloads ride the messageKey values too (legacy hardcoded keys
+// 200/202 predated the SDK-generated 10000+ range and matched nothing).
+#define SET_KEY  MESSAGE_KEY_setcolors
+#define SET2_KEY MESSAGE_KEY_set2colors
 
 
 enum {

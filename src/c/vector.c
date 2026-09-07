@@ -54,6 +54,10 @@ GPathInfo WaterResistOuterPathInfo = {
   .num_points = 9,
   .points = (GPoint []) {{0,2}, {2,0}, {39,0}, {41,2}, {41,9}, {35,15}, {5,15}, {0,10}, {0,2}}
 };
+GPathInfo BatteryBoltPathInfo = {
+  .num_points = 13,
+  .points = (GPoint []) {{4,4},{6,4},{6,3},{8,3},{8,2},{8,4},{12,4},{10,4},{10,5},{8,5},{8,6},{8,4},{11,4}}
+};
 
 static bool s_scaled = false;
 
@@ -79,6 +83,7 @@ static void ensure_scaled(void) {
   scale_info_once(&ArrowLeftPathInfo);
   scale_info_once(&ArrowRightPathInfo);
   scale_info_once(&WaterResistOuterPathInfo);
+  scale_info_once(&BatteryBoltPathInfo);
 #endif
   s_scaled = true;
 }

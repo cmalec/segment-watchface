@@ -13,7 +13,7 @@ A seven-segment digital watchface for the Pebble Time 2 and the wider Pebble fam
 - Optional seconds display
 - Optional hourly vibration
 - **Day high/low temperature readouts** (bottom corners, from Open-Meteo via the phone's location)
-- Power-saving mode (blank the display between configurable hours)
+- Power-saving mode (no seconds, blink, vibes, BT badge or battery readout between configurable hours)
 - Health step count display + heart rate on Time 2
 - Color customization
 - Web-based settings page
@@ -115,7 +115,7 @@ Configurable from the Pebble mobile app (tap the gear on the watchface card in t
 
 **https://cmalec.github.io/segment-watchface/server/index.10.html**
 
-It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, two color sets (switchable by time or tap), preset themes, a live preview, and theme sharing. The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
+It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, two color sets (switchable by time or tap), preset themes, and a live preview. The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
 ## Project layout
 
@@ -128,8 +128,8 @@ It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hou
 ├── resources/
 │   ├── fonts/            # DS-Digital + Lucida Console TTFs
 │   └── images/           # Branding, menu icon PNGs
-├── tools/                # Dev helpers (font measurement, pbw inspection)
-└── server/               # The original settings web page (needs hosting — see above)
+├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot diffing)
+└── server/               # The settings web page (index.10.html + theme presets)
 ```
 
 ## Troubleshooting builds
@@ -152,7 +152,8 @@ The original layout was hardcoded for basalt's 144×168 display. Emery's 200×22
 - **Vector art**: bluetooth, arrows, and the WR box are `GPath`s, scaled at init by `1.389 << 10` per point.
 - **Heart rate**: the Time 2 has an optical HRM, so when Health is enabled an emery-only heart + BPM readout shows next to the step counter (`HealthMetricHeartRateBPM`). Two digits are displayed (≤99 BPM); higher readings are hidden rather than clipped.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the day's high/low from [Open-Meteo](https://open-meteo.com) (free, no API key)
-  using the phone's geolocation, refreshed hourly. Bottom-left shows the high, bottom-right the low, and the center box shows "CM" (Celsius).
+  using the phone's geolocation (with an IP-based fallback), refreshed hourly. Bottom-left shows the high, bottom-right the low; °C/°F is a
+  settings option, converted phone-side so unit flips are instant (no refetch). The center box is decorative.
 - Everything else (color sets, blink, powersave, hourly vibe, etc.) works as in the original.
 
 ## Modernization notes
@@ -161,7 +162,7 @@ Changes made during the modernization from the original codebase:
 
 - `appinfo.json` → `package.json` (current SDK project format)
 - New `wscript` matching the current SDK template
-- C sources moved `src/` → `src/c/`, JS moved `src/js/` → `src/pkjs/index.js` (`enableMultiJS: false` preserves the old single-file JS behavior)
+- C sources moved `src/` → `src/c/`, JS moved `src/js/` → `src/pkjs/index.js` (`enableMultiJS: true` is required for the `src/pkjs/` layout)
 - `targetPlatforms` now includes `emery`
 - Fresh app UUID (so this build doesn't collide with the original on the watch)
 - Message keys resolve through the SDK-generated `MESSAGE_KEY_*` symbols; `settings_process_tuple` is an if/else chain because those symbols are extern variables, not compile-time constants

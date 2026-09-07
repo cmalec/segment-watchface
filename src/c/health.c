@@ -28,7 +28,7 @@ static GPath *zee3_path_ptr = NULL;
 // Heart outline, used on emery (Pebble Time 2 has a HRM).
 static GPath *heart_path_ptr = NULL;
 
-static HealthValue s_sleep, s_deep_sleep, s_steps, s_active, s_distance;
+static HealthValue s_sleep, s_steps;
 #ifdef PBL_PLATFORM_EMERY
 static HealthValue s_bpm;
 #endif
@@ -151,9 +151,12 @@ void health_update() {
  *
  * Called on every health update and on settings changes.
  */
+// Last-applied anchors; reset on every health_init so a settings-driven
+// deinit/re-init cycle can't skip re-anchoring the rebuilt layers.
+static int16_t last_right = -1;
+static int16_t last_left = -1;
+
 void health_layout_row(void) {
-  static int16_t last_right = -1;
-  static int16_t last_left = -1;
   if (health_layer == NULL || health_bpm_layer == NULL) {
     return;
   }
@@ -203,6 +206,12 @@ void health_handler(HealthEventType event, void *context) {
 
 void health_init() {
 
+  #ifdef PBL_PLATFORM_EMERY
+  // Fresh layer set: force health_layout_row to re-anchor.
+  last_right = -1;
+  last_left = -1;
+  #endif
+
   if(!global_settings.Health) {
     return;
   }
@@ -225,7 +234,9 @@ void health_init() {
   heart_path_ptr = vector_create(&HealthHeartPathInfo);
   #endif
 
-  health_zee_layer = layer_create(GRect(0,3,14,7));
+  // Zzz icon frame: sized to the (emery-scaled) glyph bounds so the rightmost
+  // z isn't clipped; path points already carry the platform scale.
+  health_zee_layer = layer_create(GRect(0, 3, SCREEN_ELSE(17, 14, 14), SCREEN_ELSE(9, 7, 7)));
   layer_set_update_proc(health_zee_layer, health_icon_layer_update_callback);
   layer_add_child(health_layer, health_zee_layer);
 
@@ -289,12 +300,3 @@ void health_deinit() {
 }
 
 #endif
-
-int16_t health_bpm_text_offset_x() {
-  // Health text box right edge, BPM text starts this far to its right.
-  #ifdef PBL_PLATFORM_EMERY
-    return 22;
-  #else
-    return 0;
-  #endif
-}

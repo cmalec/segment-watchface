@@ -42,7 +42,6 @@ bool setting_is_set2(int8_t h, int8_t m){
   else {
     return ( (tested >= global_settings.SwitchStart) || (tested < global_settings.SwitchEnd) );
   }
-  return false; // safer to return some value in any case
 }
 
 bool setting_is_power_save(int8_t h, int8_t m){
@@ -59,12 +58,9 @@ bool setting_is_power_save(int8_t h, int8_t m){
   else {
     return ( (tested >= global_settings.PS_Start) || (tested < global_settings.PS_End) );
   }
-  return false; // safer to return some value in any case
 }
 
 void settings_process_tuple(Tuple *new_tuple) {
-  int8_t cnt=0;
-  cnt++;
   uint32_t key = new_tuple->key;
   // NOTE: message keys are extern variables in the modern SDK, not integer
   // constants, so this must be an if/else chain rather than a switch.
@@ -144,8 +140,7 @@ void settings_process_tuple(Tuple *new_tuple) {
   }
   else if (key == SET_KEY) {
     #ifdef PBL_COLOR
-      ////APP_LOG(APP_LOG_LEVEL_INFO, "color set1 data: %s", new_tuple->value->cstring) ;
-      cnt = strlen(new_tuple->value->cstring ) >>1;
+      uint8_t cnt = strlen(new_tuple->value->cstring ) >>1;
       if (cnt>COLORS_NUM) {
         cnt=COLORS_NUM;
       }
@@ -157,8 +152,7 @@ void settings_process_tuple(Tuple *new_tuple) {
   }
   else if (key == SET2_KEY) {
     #ifdef PBL_COLOR
-      ////APP_LOG(APP_LOG_LEVEL_INFO, "color set2 data: %s", new_tuple->value->cstring) ;
-      cnt = strlen(new_tuple->value->cstring ) >>1;
+      uint8_t cnt = strlen(new_tuple->value->cstring ) >>1;
       if (cnt>COLORS_NUM) {
         cnt=COLORS_NUM;
       }
@@ -214,6 +208,9 @@ void settings_inbox(DictionaryIterator *iter, void *context) {
   update_settings();
 
   //Delayed setting save instead of in exit. The delay allow screen update before save
+  if (delayed_save != NULL) {
+    app_timer_cancel(delayed_save);
+  }
   delayed_save= app_timer_register(100, settings_save, NULL);
 }
 
@@ -270,16 +267,16 @@ void settings_default_values() {
   colors[c_t3]  = GColorWhite;
   colors[c_t4]  = GColorBlack;
 
-  memcpy(colorsSet1,colors,COLORS_NUM);
-  memcpy(colorsSet2,colors,COLORS_NUM);
+  memcpy(colorsSet1,colors,sizeof(colorsSet1));
+  memcpy(colorsSet2,colors,sizeof(colorsSet2));
 }
 
 void settings_load_colorSet1() {
-  memcpy(colors, colorsSet1, COLORS_NUM);
+  memcpy(colors, colorsSet1, sizeof(colors));
   selectedSet = 0;
 }
 void settings_load_colorSet2() {
-  memcpy(colors, colorsSet2, COLORS_NUM);
+  memcpy(colors, colorsSet2, sizeof(colors));
   selectedSet = 1;
 }
 
@@ -350,8 +347,8 @@ void settings_save(void *data) {
   delayed_save =NULL;
   persist_write_data(SETTINGS_KEY, &global_settings, sizeof(global_settings));
   #ifdef PBL_COLOR
-  persist_write_data(COLORSET1_KEY, &colorsSet1, sizeof(colors));
-  persist_write_data(COLORSET2_KEY, &colorsSet2, sizeof(colors));
+  persist_write_data(COLORSET1_KEY, &colorsSet1, sizeof(colorsSet1));
+  persist_write_data(COLORSET2_KEY, &colorsSet2, sizeof(colorsSet2));
   #endif
 }
 

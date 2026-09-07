@@ -12,6 +12,7 @@
 // flight (outbox_busy guards that).
 
 static bool s_outbox_busy = false;   // a send is awaiting its callback
+static bool s_unit_share_pending = false;  // unit share queued behind outbox
 static AppTimer *s_retry_timer = NULL;
 static int s_retry_count = 0;
 
@@ -42,6 +43,11 @@ void weather_request(void) {
 // inbox handler). Clear the busy flag on either outcome so retries can go.
 static void weather_out_sent(DictionaryIterator *iter, void *context) {
   s_outbox_busy = false;
+  // A unit share that arrived while a request was in flight goes out now.
+  if (s_unit_share_pending) {
+    s_unit_share_pending = false;
+    weather_share_unit();
+  }
 }
 static void weather_out_failed(DictionaryIterator *iter, AppMessageResult result, void *context) {
   s_outbox_busy = false;
@@ -75,15 +81,22 @@ void weather_request_scheduled(void) {
 // the watch simple and makes unit flips instant — cached values just
 // re-convert, no refetch).
 void weather_share_unit(void) {
+  if (s_outbox_busy) {
+    // Don't clobber an in-flight request; retry when the outbox frees up.
+    s_unit_share_pending = true;
+    return;
+  }
   DictionaryIterator *iter;
   AppMessageResult result = app_message_outbox_begin(&iter);
   if (result != APP_MSG_OK) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "unit share: begin failed %d", (int)result);
     return;
   }
+  s_outbox_busy = true;
   dict_write_uint8(iter, TEMP_UNIT_KEY, global_settings.TempUnit);
   result = app_message_outbox_send();
   if (result != APP_MSG_OK) {
+    s_outbox_busy = false;
     APP_LOG(APP_LOG_LEVEL_WARNING, "unit share: send failed %d", (int)result);
   }
 }

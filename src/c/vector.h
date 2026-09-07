@@ -28,6 +28,9 @@ extern GPathInfo ArrowLeftPathInfo;
 extern GPathInfo ArrowRightPathInfo;
 extern GPathInfo WaterResistOuterPathInfo;
 
+// battery.c (charging bolt)
+extern GPathInfo BatteryBoltPathInfo;
+
 // Emery uniform scale factor (1.389 << 10). Identity on other platforms.
 #if defined(PBL_PLATFORM_EMERY)
 #define GPATH_SCALE_NUM 1422

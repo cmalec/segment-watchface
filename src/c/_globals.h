@@ -132,7 +132,8 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 //WATER RESIST box (CM label removed; box currently decorative)
 //WATER/RESIST labels are now day high/low temp readouts
 #define DECORATIONS_WR_OUTER SCREEN_ELSE(GRect(71,206,58,22), PBL_IF_RECT_ELSE(GRect(51,148,42,16), GRect(69,138,42,16)), GRect(69,138,42,16))
-#define DECORATIONS_TEMP_HI SCREEN_ELSE(GRect(0,211,64,28), PBL_IF_RECT_ELSE(GRect(0,152,46,20), GRect(19,128,46,20)), GRect(19,128,46,20))
-#define DECORATIONS_TEMP_LO SCREEN_ELSE(GRect(138,211,67,28), PBL_IF_RECT_ELSE(GRect(99,152,48,20), GRect(116,128,48,20)), GRect(116,128,48,20))
+// Temp readout boxes bottom-align with the WR box (both end at screen bottom).
+#define DECORATIONS_TEMP_HI SCREEN_ELSE(GRect(0,211,64,17), PBL_IF_RECT_ELSE(GRect(0,152,46,20), GRect(19,128,46,20)), GRect(19,128,46,20))
+#define DECORATIONS_TEMP_LO SCREEN_ELSE(GRect(138,211,67,17), PBL_IF_RECT_ELSE(GRect(99,152,48,20), GRect(116,128,48,20)), GRect(116,128,48,20))
 
 // Vector path scale factor now lives in vector.h (with the pristine arrays).

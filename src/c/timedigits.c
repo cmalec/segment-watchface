@@ -7,6 +7,7 @@
 #include "fonts.h"
 #include "bluetooth.h"
 #include "battery.h"
+#include "weather.h"
 
 enum {t_dig1, t_dig2, t_sep, t_dig3, t_dig4, t_dig5, t_dig6,
       t_shadow_dig1, t_shadow_dig2, t_shadow_sep, t_shadow_dig3, t_shadow_dig4, t_shadow_dig5, t_shadow_dig6,
@@ -196,6 +197,8 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
         bluetooth_init();
         battery_init();
         update_settings();
+        // Temps may have been requested while we were dark; fetch fresh ones.
+        weather_request_scheduled();
       }
     }
 
@@ -277,11 +280,6 @@ void timedigits_background_color(GColor background) {
   for (int i=0; i<active_digits; i++) {
     text_layer_set_text_color(t_layer[t_shadow_dig1+i], background);
   }
-}
-
-void timedigits_color(GColor foreground, GColor background) {
-  timedigits_foreground_color(foreground);
-  timedigits_background_color(background);
 }
 
 TextLayer *timedigits_init_big_digit(int d) {

@@ -15,7 +15,7 @@
 
 AppTimer * started_timer =NULL;
 
-void app_sarted_callback(void *data) {
+void app_started_callback(void *data) {
   started_timer =NULL;
   appStarted = true;
 
@@ -40,18 +40,20 @@ void handle_init(void) {
   decorations_init();
   unobstructed_init();
   timedigits_init();
+  #if defined (PBL_HEALTH)
+    // Registered unconditionally so the Health toggle applies at runtime;
+    // health_init() itself no-ops on layers when Health is off.
+    health_init();
+  #endif
   if (!powerSaveEngaged) {
     battery_init();
-    #if defined (PBL_HEALTH)
-      health_init();
-    #endif
     bluetooth_init();
   }
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "memfree %d", heap_bytes_free());
 
   //delay started flag. Prevent settings vibe during first few seconds (HOUR_UNIT included in settings update)
-  started_timer = app_timer_register(4000, app_sarted_callback, NULL);
+  started_timer = app_timer_register(4000, app_started_callback, NULL);
 }
 
 void handle_deinit(void) {
@@ -63,11 +65,11 @@ void handle_deinit(void) {
   background_deinit();
   fonts_deinit();
   timedigits_deinit();
+  #if defined (PBL_HEALTH)
+    health_deinit();
+  #endif
   if (!powerSaveEngaged) {
     battery_deinit();
-    #if defined (PBL_HEALTH)
-      health_deinit();
-    #endif
     bluetooth_deinit();
   }
   decorations_deinit();
