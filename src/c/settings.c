@@ -86,6 +86,12 @@ void settings_process_tuple(Tuple *new_tuple) {
   else if (key == BATTERY_ICON_ONLY_KEY) {
     global_settings.BatteryIconOnly = new_tuple->value->uint8;
   }
+  else if (key == TEMP_UNIT_KEY) {
+    global_settings.TempUnit = new_tuple->value->uint8;
+    // Phone does the conversion; share the unit so it re-sends converted
+    // temps immediately.
+    weather_share_unit();
+  }
   else if (key == HOURLYVIBE_KEY) {
     global_settings.HourlyVibe = new_tuple->value->uint8;
   }
@@ -233,6 +239,7 @@ void settings_default_values() {
   // rarely actionable, and a mostly-blue badge is visual noise.
   global_settings.BluetoothShow = 0;
   global_settings.BatteryIconOnly = 0;
+  global_settings.TempUnit = 0; // Celsius
   colors[c_bg1] = GColorWhite;
   colors[c_bg2] = GColorBlack;
   colors[c_bg3] = GColorWhite;

@@ -15,6 +15,7 @@ var lastSentHi = null;
 var lastSentLo = null;
 var lastFetchAttemptAt = 0;
 var fetchInFlight = false;
+var settings = {}; // watch settings mirrored here; temp conversion needs temp_unit
 
 // Phone battery: sent to the watch for the thin bar under the watch's own
 // battery icon. Uses the browser Battery Status API, which is NOT available
@@ -34,10 +35,16 @@ Pebble.addEventListener("ready", function(e) {
   scheduleWeatherRefresh();
 });
 
-// The watch asks for weather by sending wtemp_req=1. Any other appmessage is
-// not treated as a weather request.
+// The watch asks for weather by sending wtemp_req=1.
 Pebble.addEventListener('appmessage', function(e) {
-    if (e.payload && e.payload.wtemp_req === 1) {
+    if (!e.payload) return;
+    if (e.payload.temp_unit !== undefined && e.payload.temp_unit !== settings.temp_unit) {
+      // Watch shares its unit setting; re-send temps in the new unit.
+      settings.temp_unit = e.payload.temp_unit;
+      console.log('settings: temp_unit=' + settings.temp_unit);
+      if (lastWeather) sendWeatherToWatch(true);
+    }
+    if (e.payload.wtemp_req === 1) {
       handleWeatherRequest();
     }
 });
@@ -199,6 +206,8 @@ function fetchWeatherFor(lat, lon) {
   if (fetchInFlight) {
     return;
   }
+  // Open-Meteo has no "return both units" mode, so we cache CELSIUS (its
+  // native unit) and convert at send time. Unit flips are instant.
   fetchInFlight = true;
   var url = 'https://api.open-meteo.com/v1/forecast' +
             '?latitude=' + lat + '&longitude=' + lon +
@@ -260,18 +269,22 @@ function sendWeatherToWatch(force) {
     console.log('weather: nothing to send (no valid cache)');
     return; // nothing fetched (or partial cache) yet
   }
+  // Convert cached Celsius to the configured unit at send time.
+  var fahrenheit = settings.temp_unit === 1;
+  var hi = fahrenheit ? cToF(lastWeather.hi) : lastWeather.hi;
+  var lo = fahrenheit ? cToF(lastWeather.lo) : lastWeather.lo;
   // Skip duplicate sends with identical values — EXCEPT when the watch
   // explicitly re-requested (force), which means it never got the last one.
-  if (!force && lastWeather.hi === lastSentHi && lastWeather.lo === lastSentLo) {
-    console.log('weather: skipping duplicate send ' + lastWeather.hi + '/' + lastWeather.lo);
+  if (!force && hi === lastSentHi && lo === lastSentLo) {
+    console.log('weather: skipping duplicate send ' + hi + '/' + lo);
     return;
   }
   Pebble.sendAppMessage(
-    { wtemp_hi: lastWeather.hi, wtemp_lo: lastWeather.lo },
+    { wtemp_hi: hi, wtemp_lo: lo },
     function() {
-      console.log('weather: sent to watch ' + lastWeather.hi + '/' + lastWeather.lo);
-      lastSentHi = lastWeather.hi;
-      lastSentLo = lastWeather.lo;
+      console.log('weather: sent to watch ' + hi + '/' + lo + ' (' + (fahrenheit ? 'F' : 'C') + ')');
+      lastSentHi = hi;
+      lastSentLo = lo;
     },
     function(e) {
       console.log('weather: send failed ' + e.error.message);

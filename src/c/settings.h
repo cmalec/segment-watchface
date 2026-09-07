@@ -45,6 +45,7 @@ typedef struct Settings {
   // without these bytes still load (they just keep the defaults below).
   uint8_t BluetoothShow;
   uint8_t BatteryIconOnly; // 0 = icon + percent, 1 = percent only (no icon, no phone bar)
+  uint8_t TempUnit;        // 0 = Celsius, 1 = Fahrenheit
 } __attribute__((__packed__)) Settings;
 
 extern Settings global_settings;
@@ -58,6 +59,7 @@ typedef void (*SettingsChangeCallback)();
 #define BLUETOOTHVIBE_KEY  MESSAGE_KEY_bluetoothvibe
 #define BLUETOOTH_SHOW_KEY MESSAGE_KEY_bluetoothshow
 #define BATTERY_ICON_ONLY_KEY MESSAGE_KEY_battery_icon_only
+#define TEMP_UNIT_KEY      MESSAGE_KEY_temp_unit
 #define HOURLYVIBE_KEY     MESSAGE_KEY_hourlyvibe
 #define BRANDING_MASK_KEY  MESSAGE_KEY_branding_mask
 #define BATTERY_HIDE_KEY   MESSAGE_KEY_battery_hide

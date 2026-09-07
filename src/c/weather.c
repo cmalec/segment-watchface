@@ -70,6 +70,24 @@ void weather_request_scheduled(void) {
   }
 }
 
+// Tell the phone which unit the watch displays, so IT converts before
+// sending temps. Called on settings changes (phone-side conversion keeps
+// the watch simple and makes unit flips instant — cached values just
+// re-convert, no refetch).
+void weather_share_unit(void) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+  if (result != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "unit share: begin failed %d", (int)result);
+    return;
+  }
+  dict_write_uint8(iter, TEMP_UNIT_KEY, global_settings.TempUnit);
+  result = app_message_outbox_send();
+  if (result != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "unit share: send failed %d", (int)result);
+  }
+}
+
 // Call when temps actually arrive to stop the retry loop.
 void weather_request_cancel(void) {
   s_retry_count = WEATHER_RETRY_MAX;  // stop the loop without touching timers in flight
