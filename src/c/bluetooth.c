@@ -21,6 +21,15 @@ bl4 Bluetooth Icon Disconnected
 void bluetooth_settings_callback() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "bluetooth_settings_callback()");
   layer_mark_dirty(bluetooth_layer);
+  #if defined(PBL_PLATFORM_EMERY) && defined(PBL_HEALTH)
+  // BT badge visibility changes the health row's left origin; re-anchor.
+  // bluetooth_icon_toggle also fires this path via the settings dispatch.
+  extern void health_layout_row();
+  if (global_settings.Health) {
+    bluetooth_icon_toggle(global_settings.BluetoothVibe);
+    health_layout_row();
+  }
+  #endif
 }
 
 void bluetooth_circle_layer_update_callback(Layer *my_layer, GContext* ctx) {

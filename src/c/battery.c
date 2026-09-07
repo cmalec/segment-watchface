@@ -31,13 +31,60 @@ bi3 Battery Indicator Critical
 bi4 Battery Charging
 */
 
+// Width (px) reserved at the right edge of the top strip for the battery
+// readout, used by health.c to position the steps/BPM row dynamically.
+// Icon mode: icon + percent. Percent-only: percent alone. Respects
+// BatteryHide (everything hidden -> no reserved space on that side... but
+// health stays put; it simply has room to breathe).
+int16_t battery_right_margin(void) {
+  #ifdef PBL_PLATFORM_EMERY
+    if (global_settings.BatteryHide) return 0;
+    if (global_settings.BatteryIconOnly) return 52;   // percent text only
+    return 85;                                        // percent + icon
+  #else
+    if (global_settings.BatteryHide) return 0;
+    if (global_settings.BatteryIconOnly) return 38;
+    return 60;
+  #endif
+}
+
+// Left origin (screen x) for the health row. With the BT badge hidden, the
+// row slides left to use the freed space.
+int16_t health_left_origin(void) {
+  #ifdef PBL_PLATFORM_EMERY
+    return global_settings.BluetoothShow ? 25 : 10;
+  #else
+    return global_settings.BluetoothShow ? 25 : 12;
+  #endif
+}
+
+void battery_apply_visibility() {
+  bool hideAll = global_settings.BatteryHide;
+  bool iconOnly = global_settings.BatteryIconOnly;
+  layer_set_hidden(battery_layer, hideAll || iconOnly);
+  layer_set_hidden(text_layer_get_layer(battery_percent_layer), hideAll);
+  if (phone_batt_layer != NULL) {
+    // Phone bar shows only when the icon is visible (percent-only mode
+    // deliberately drops it).
+    bool showBar = !hideAll && !iconOnly && phoneBattValid;
+    layer_set_hidden(phone_batt_layer, !showBar);
+  }
+}
+
 void battery_settings_callback() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "battery_settings_callback()");
   text_layer_set_text_color(battery_percent_layer, color_helper(colors[c_bi1], global_settings.Invert));
-  layer_set_hidden(battery_layer, global_settings.BatteryHide);
-  layer_set_hidden(text_layer_get_layer(battery_percent_layer), global_settings.BatteryHide);
+  battery_apply_visibility();
   layer_mark_dirty(text_layer_get_layer(battery_percent_layer));
   layer_mark_dirty(battery_layer);
+  #if defined(PBL_PLATFORM_EMERY) && defined(PBL_HEALTH)
+  // The battery reserve width may have changed (icon vs percent-only vs
+  // hidden); re-anchor the heart-rate readout.
+  extern void health_layout_row();
+  if (global_settings.Health) {
+    health_layout_row();
+  }
+  #endif
 }
 
 void battery_update(BatteryChargeState charge_state) {
@@ -82,7 +129,7 @@ static void phone_batt_layer_update_callback(Layer *my_layer, GContext* ctx) {
 void battery_set_phone_percent(uint8_t percent) {
   phoneBattPercent = percent;
   phoneBattValid = true;
-  if (phone_batt_layer != NULL) {
+  if (phone_batt_layer != NULL && !global_settings.BatteryHide && !global_settings.BatteryIconOnly) {
     layer_set_hidden(phone_batt_layer, false);
     layer_mark_dirty(phone_batt_layer);
   }
@@ -158,10 +205,9 @@ void battery_init() {
   layer_set_hidden(phone_batt_layer, true);
   layer_add_child(my_window_layer, phone_batt_layer);
 
-  // Apply the persisted hide setting immediately (the settings callback only
+  // Apply the persisted hide settings immediately (the settings callback only
   // fires on an incoming settings message, which may never come).
-  layer_set_hidden(battery_layer, global_settings.BatteryHide);
-  layer_set_hidden(text_layer_get_layer(battery_percent_layer), global_settings.BatteryHide);
+  battery_apply_visibility();
 
   // Launch cascade (first init only — not on settings re-init).
   if (!appStarted) {
