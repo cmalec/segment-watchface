@@ -34,6 +34,7 @@
       "branding_mask",
       "battery_hide",
       "battery_icon_only",
+      "temp_unit",
       "seconds",
       "powersave",
       "ps_start",

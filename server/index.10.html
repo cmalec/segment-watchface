@@ -202,6 +202,13 @@
   </section>
 
   <section>
+    <h2>Weather</h2>
+    <div class="row"><div><div class="t">Units</div><div class="d">Temperature scale for the high/low readout</div></div>
+      <div class="ctl"><div class="seg" data-k="temp_unit"><button data-v="0">°C</button><button data-v="1">°F</button></div></div>
+    </div>
+  </section>
+
+  <section>
     <h2>Colors</h2>
     <div class="row"><div><div class="t">Switch color set</div><div class="d">Swap palette 1 ↔ 2 by time or watch tap</div></div>
       <div class="ctl"><div class="seg" data-k="switchset"><button data-v="0">Off</button><button data-v="1">Time</button><button data-v="2">Tap</button></div></div>
@@ -280,6 +287,7 @@ var DEFAULTS = {
   branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
   switchset: 0, switch_start: 47, switch_end: 15,
+  temp_unit: 0,
   setcolors: DEFAULT_COLORS, set2colors: DEFAULT_COLORS
 };
 
@@ -304,6 +312,9 @@ function parseColors(str, target) {
 function serializeColors(src) {
   return ORDER.map(function(k){ return cssToByte(src[k]); }).join('');
 }
+
+/* ---- temperature units: cache is Celsius; convert at send time ---- */
+function cToF(c) { return Math.round(c * 9 / 5 + 32); }
 
 /* ---- state ---- */
 var settings = {}, colors1 = {}, colors2 = {}, editSet = 0;

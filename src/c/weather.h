@@ -11,3 +11,4 @@ void weather_deinit(void);
 void weather_request(void);
 void weather_request_scheduled(void);
 void weather_request_cancel(void);
+void weather_share_unit(void);
