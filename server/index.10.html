@@ -1,1039 +1,509 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Segment Config</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="css/bootstrap.min.css" rel="stylesheet">
-  <link href="css/bootstrap-theme.min.css" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="css/spectrum.css">
-  <link rel="stylesheet" type="text/css" href="css/pebblesim2.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segment — Settings</title>
+<style>
+  :root {
+    --bg: #08090a;
+    --panel: #0f1011;
+    --surface: #17181a;
+    --text: #f7f8f8;
+    --text2: #b4bac4;
+    --text3: #8a8f98;
+    --text4: #5f636b;
+    --border: rgba(255,255,255,0.07);
+    --border-sub: rgba(255,255,255,0.04);
+    --accent: #7170ff;
+    --accent-h: #8b8aff;
+    --r: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { color-scheme: dark; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text2);
+    font-size: 14px; line-height: 1.4;
+    padding-bottom: 84px;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 24px 0 6px; display: flex; align-items: baseline; gap: 10px; }
+  header h1 { font-size: 20px; font-weight: 590; color: var(--text); letter-spacing: -0.3px; }
+  header span { color: var(--text4); font-size: 13px; }
+  header a { color: var(--text3); text-decoration: none; }
+  header a:hover { color: var(--text2); }
+
+  section {
+    background: var(--panel); border: 1px solid var(--border-sub);
+    border-radius: var(--r); margin-top: 10px; overflow: hidden;
+  }
+  section > h2 {
+    font-size: 11px; font-weight: 590; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text4);
+    padding: 10px 14px 8px;
+  }
+
+  /* one-line setting rows */
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 9px 14px; min-height: 44px;
+  }
+  .row + .row { border-top: 1px solid var(--border-sub); }
+  .row .t { font-weight: 500; color: var(--text); font-size: 14px; }
+  .row .d { color: var(--text4); font-size: 12px; margin-top: 1px; }
+  .row .ctl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+
+  /* toggle switch */
+  .sw {
+    position: relative; width: 38px; height: 22px; flex-shrink: 0;
+    background: rgba(255,255,255,0.10); border-radius: 11px; cursor: pointer;
+    transition: background 0.15s; border: none; appearance: none;
+  }
+  .sw::after {
+    content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+    background: #fff; border-radius: 50%; transition: transform 0.15s;
+  }
+  .sw.on { background: var(--accent); }
+  .sw.on::after { transform: translateX(16px); }
+
+  /* segmented control (3-way etc) */
+  .seg { display: inline-flex; background: var(--surface); border-radius: 7px; padding: 2px; gap: 1px; }
+  .seg button {
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    color: var(--text3); font: inherit; font-size: 12px; font-weight: 500;
+    padding: 5px 11px; border-radius: 5px; min-height: 26px;
+  }
+  .seg button:hover { color: var(--text2); }
+  .seg button.on { background: var(--accent); color: #fff; }
+
+  select {
+    appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%238a8f98' stroke-width='1.5'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 8px center;
+    color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 26px 5px 10px; font: inherit; font-size: 13px;
+  }
+  .inrow { display: flex; gap: 8px; padding: 4px 14px 12px; align-items: center; }
+  .inrow label { color: var(--text4); font-size: 12px; }
+  .hidden { display: none !important; }
+
+  /* theme editor */
+  .presets { display: flex; gap: 8px; padding: 10px 14px; align-items: center; }
+  .presets select { flex: 1; }
+  .presets .seg { flex-shrink: 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; padding: 4px 14px 12px; }
+  .crow { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .crow input[type="color"] {
+    width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); padding: 2px; cursor: pointer; flex-shrink: 0;
+  }
+  .crow span { font-size: 12px; color: var(--text3); }
+  .gtitle {
+    font-size: 10px; font-weight: 590; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text4); padding-top: 8px; grid-column: span 1;
+  }
+  .gtitle.first { grid-column: 1 / -1; padding-top: 0; }
+
+  /* preview */
+  .prevwrap { display: flex; justify-content: center; padding: 12px 14px 4px; }
+  .sim {
+    width: 140px; height: 160px; position: relative; overflow: hidden;
+    border-radius: 12px; border: 1px solid var(--border);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .sim * { position: absolute; line-height: 1; }
+  .sim .logo { top: 2px; left: 0; right: 0; text-align: center; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; }
+  .sim .ln { left: 0; right: 0; height: 1px; }
+  .sim .lnt { top: 18px; }
+  .sim .lnb { top: 146px; }
+  .sim .panel { top: 33px; left: 0; right: 0; height: 99px; }
+  .sim .p1 { inset: 0; border-radius: 8px; }
+  .sim .p2 { inset: 2px; border-radius: 6px; }
+  .sim .p3 { inset: 4px; border-radius: 6px; }
+  .sim .time {
+    top: 42px; left: 0; right: 0; text-align: center;
+    font-size: 42px; font-weight: 700; letter-spacing: -1px;
+  }
+  .sim .shadow { top: 44px; left: 0; right: 0; text-align: center; font-size: 42px; font-weight: 700; letter-spacing: -1px; opacity: 0.5; }
+  .sim .date { top: 40px; left: 34px; right: 10px; text-align: right; font-size: 9px; font-weight: 700; }
+  .sim .ampm { top: 52px; left: 12px; font-size: 6px; font-weight: 700; }
+  .sim .pct { top: 42px; right: 24px; font-size: 7px; font-weight: 600; }
+  .sim .batt { top: 42px; right: 5px; width: 14px; height: 8px; border: 1px solid; border-radius: 1px; }
+  .sim .batt::after { content: ''; position: absolute; right: -3px; top: 2px; width: 1.5px; height: 3px; background: currentColor; }
+  .sim .batt .lvl { position: absolute; left: 1px; top: 1px; bottom: 1px; width: 70%; }
+  .sim .steps { top: 42px; left: 12px; font-size: 7px; font-weight: 600; }
+  .sim .steps::before { content: '👣'; font-size: 6px; margin-right: 2px; }
+  .sim .temp-hi { bottom: 8px; left: 6px; font-size: 8px; font-weight: 700; }
+  .sim .temp-lo { bottom: 8px; right: 6px; font-size: 8px; font-weight: 700; }
+  .sim .wrbox { bottom: 3px; left: 50%; transform: translateX(-50%); width: 28px; height: 11px; border: 1px solid; border-radius: 2px 2px 5px 5px; }
+  .sim .btnlbl { font-size: 5px; font-weight: 600; letter-spacing: 0.3px; }
+  .sim .bl-light { top: 21px; left: 6px; }
+  .sim .bl-prev { top: 21px; right: 6px; }
+  .sim .bl-next { bottom: 11px; right: 6px; }
+
+  /* save bar */
+  .savebar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,16,17,0.9); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-sub); padding: 12px 16px;
+  }
+  .savebar .wrap { display: flex; gap: 10px; align-items: center; }
+  .savebar .st { color: var(--text4); font-size: 12px; margin-right: auto; }
+  .btn {
+    appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500;
+    padding: 8px 16px; border-radius: 7px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03); color: var(--text);
+  }
+  .btn:hover { background: rgba(255,255,255,0.07); }
+  .btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.pri:hover { background: var(--accent-h); }
+  footer { text-align: center; color: var(--text4); font-size: 11px; padding: 18px 0; }
+  footer a { color: var(--text3); }
+</style>
 </head>
 <body>
+<header class="wrap">
+  <h1>Segment</h1>
+  <span>seven-segment watchface · <a href="https://github.com/orviwan/91-Dub-v4.0" target="_blank" rel="noopener">based on 91 Dub</a></span>
+</header>
 
-    <div class="container">
+<main class="wrap">
 
-      <h2>Segment</h2>
-      <p>A seven-segment watchface for Pebble Time 2 and friends. Started as a
-        modernization of <a href="https://github.com/orviwan/91-Dub-v4.0" target="_blank">91 Dub v4.0</a> by
-        <a href="http://twitter.com/orviwan" target="_blank">orviwan</a>.</p>
-      <p>Please note that different themes are used for Pebble Time Round.</p>
-      <form id="configure-form" class="form-configure well" action="#" method="POST">
-        <div id="health-panel">
-          <h4>Health</h4>
-          <p><small>Displays Step count throughout the day and Sleep duration in the morning.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="health" id="health1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
-              <input type="radio" name="health" id="health2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
-        <h4>Blink</h4>
-        <p><small>The colon between the hours and minutes will blink every second.</small></p>
-        <div class="btn-group" data-toggle="buttons">
-          <label class="btn btn-primary">
-            <input type="radio" name="blink" id="blink1" value="1"> Yes
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="blink" id="blink2" value="0"> No
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="blink" id="blink3" value="2"> Double Rate
-          </label>
-        </div>
-        <hr />
-        <div>
-          <h4>Invert</h4>
-          <p><small>Inverted colour scheme.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="invert" id="invert1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
-              <input type="radio" name="invert" id="invert2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
-        <h4>Bluetooth Vibe</h4>
-        <p><small>Vibrate on Bluetooth disconnect.</small></p>
-        <div class="btn-group" data-toggle="buttons">
-          <label class="btn btn-primary">
-            <input type="radio" name="bluetoothvibe" id="bluetoothvibe1" value="1"> Yes
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="bluetoothvibe" id="bluetoothvibe2" value="0"> No
-          </label>
-        </div>
-        <hr />
-        <div>
-          <h4>Bluetooth Icon</h4>
-          <p><small>Show the bluetooth badge on the watch face.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="bluetoothshow" id="bluetoothshow1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
-              <input type="radio" name="bluetoothshow" id="bluetoothshow2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
-        <h4>Hourly Vibe</h4>
-        <p><small>Vibrate on the hour.</small></p>
-        <div class="btn-group" data-toggle="buttons">
-          <label class="btn btn-primary">
-            <input type="radio" name="hourlyvibe" id="hourlyvibe1" value="1"> Yes
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="hourlyvibe" id="hourlyvibe2" value="0"> No
-          </label>
-        </div>
-        <hr />
-        <div id="branding-panel">
-          <h4>Hide Branding</h4>
-          <p><small>Don't display 'Pebble Smartwatch' at the top of the watch face.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="branding_mask" id="branding_mask1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
-              <input type="radio" name="branding_mask" id="branding_mask2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
-        <div style="display:none">
-          <h4>Hide Battery Level</h4>
-          <p><small>Don't display the battery icon and percentage on the watch face.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="battery_hide" id="battery_hide1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
-              <input type="radio" name="battery_hide" id="battery_hide2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
-        <div>
-          <h4>Show Seconds</h4>
-          <p><small>Reduces the size of the clock to display seconds.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary">
-              <input type="radio" name="seconds" id="seconds1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary">
+  <section>
+    <h2>Display</h2>
+    <div class="row"><div><div class="t">Health</div><div class="d">Steps and heart rate</div></div><div class="ctl"><button class="sw" data-k="health" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Seconds</div><div class="d">Show seconds — smaller clock, more battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Hide branding</div><div class="d">No “pebble” logo at the top</div></div><div class="ctl"><button class="sw" data-k="branding_mask" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Hide battery</div><div class="d">No battery icon or percent</div></div><div class="ctl"><button class="sw" data-k="battery_hide" data-on="1"></button></div></div>
+  </section>
 
-              <input type="radio" name="seconds" id="seconds2" value="0"> No
-            </label>
-          </div>
-          <hr />
-        </div>
+  <section>
+    <h2>Alerts</h2>
+    <div class="row"><div><div class="t">Bluetooth disconnect vibe</div><div class="d">Buzz when the phone disconnects</div></div><div class="ctl"><button class="sw" data-k="bluetoothvibe" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Bluetooth icon</div><div class="d">Show the badge on the face</div></div><div class="ctl"><button class="sw" data-k="bluetoothshow" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Hourly vibe</div><div class="d">Short buzz on the hour</div></div><div class="ctl"><button class="sw" data-k="hourlyvibe" data-on="1"></button></div></div>
+  </section>
 
-        <div>
-          <h4>Power Saving</h4>
-          <p><small>Set start and end times to save power while you're sleeping. In power save mode, we disable blink, don't vibrate, reduce screen redraw, ignore bluetooth state and disable seconds.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary powersaves">
-              <input type="radio" name="powersave" id="powersave1" value="1"> Yes
-            </label>
-            <label class="btn btn-primary  powersaves">
-              <input type="radio" name="powersave" id="powersave2" value="0"> No
-            </label>
-          </div><br /><br />
-          <div class="btn-group" id="powersave-times" >
-              <label>
-                Start Saving <select id="powersavestart" class="form-control"></select>
-              </label>&nbsp;&nbsp;
-              <label>
-                End Saving <select id="powersaveend" class="form-control"></select>
-              </label>
-          </div>
-          <hr />
-        </div>
-
-        <div id="colourset-panel">
-          <h4>Switch Colourset</h4>
-          <p><small>Switch colourset at specified times, or by tapping.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary switchsets">
-              <input type="radio" name="switchset" id="switchset2" value="2"> Tap
-            </label>
-            <label class="btn btn-primary switchsets">
-              <input type="radio" name="switchset" id="switchset1" value="1"> Time
-            </label>
-            <label class="btn btn-primary  switchsets">
-              <input type="radio" name="switchset" id="switchset0" value="0"> No
-            </label>
-          </div><br /><br />
-          <div class="btn-group" id="switchset-times" >
-              <label>
-                Start Switch <select id="switchsetstart" class="form-control"></select>
-              </label>&nbsp;&nbsp;
-              <label>
-                End Switch <select id="switchsetend" class="form-control"></select>
-              </label>
-          </div>
-          <hr />
-        </div>
-
-        <div id="platform">
-          <h3>Pebble Time</h3>
-          <!-- Presets -->
-
-          <h4>Preset Themes</h4>
-          <div>
-              <select id="presets" class="form-control"></select>
-          </div>
-          <hr />
-
-          <h4>Live Preview (simulated)</h4>
-          <div class="simwrap">
-            <div id="pebblesim">
-                <div class="branding"><strong>pebble</strong> smartwatch</div>
-
-
-                <div class="back"><span class="arrowleft">&ltrif;</span> LIGHT</div>
-                <div class="prev">PREV <span class="arrowright">&rtrif; </span></div>
-                <div class="boxouter">
-                  <div class="boxstroke"></div>
-                  <div class="boxinner"></div>
-                </div>
-
-                <svg width="10" height="10" class="bluetooth" >
-                 <g>
-                  <ellipse y="NaN" x="NaN" y2="NaN" x2="NaN" y1="NaN" x1="NaN" r="NaN" ry="5" rx="5" id="svg_2" cy="5" cx="5" stroke-linecap="null" stroke-linejoin="null" stroke-width="0"/>
-                 </g>
-                 <g>
-                  <g id="svg_7">
-                   <line y="NaN" x="NaN" id="svg_3" y2="8" x2="8" y1="2" x1="2" stroke-linecap="null" stroke-linejoin="null" fill="none"/>
-                   <line y="NaN" x="NaN" id="svg_4" y2="2" x2="8" y1="8" x1="2" stroke-linecap="null" stroke-linejoin="null" fill="none"/>
-                   <line y="NaN" x="NaN" id="svg_5" y2="8" x2="5" y1="1" x1="5" stroke-linecap="null" stroke-linejoin="null" fill="none"/>
-                   <line y="NaN" x="NaN" id="svg_6" y2="8" x2="8" y1="2" x1="8" stroke-linecap="null" stroke-linejoin="null" fill="none"/>
-                  </g>
-                 </g>
-                </svg>
-
-                <div class="timeshadow"><span>8</span><span>8</span><span class="sep">:</span><span>8</span><span>8</span></div>
-                <div class="time"><span>2</span><span>3</span><span class="sep">:</span><span>4</span><span>5</span></div>
-                <div class="ampm">24H</div>
-                <div class="date">WED 22</div>
-                <div class="batterypercent">80%</div>
-                <div class="battery"><div class="fill"></div></div>
-
-                <div class="next">NEXT <span class="arrowright">&rtrif;</span></div>
-                <div class="line"></div>
-                <div class="line line2"></div>
-                <span class="water">WATER</span>
-                <span class="resist">RESIST</span>
-
-                <svg class="wr_box" width="42" height="16">
-                  <path d="m1.2099,3.12781l1.50781,-2.13223l36.27459,0.00001l1.5069,2.13222l-0.0065,7.83829l-4.49977,4.15946l-30.26651,0l-4.51749,-4.15946l0.00097,-7.83829z" id="svg_2" stroke-linecap="null" stroke-linejoin="null"/>
-                </svg>
-
-                <svg class="wr" width="36" height="21"  preserveAspectRatio=" slice" viewBox="0 0 52.5 20">
-                <path
-                     id="path5023"
-                     d="m 4.8975614,16.25 -2.2027547,0 -0.774796,-4.6875 C 1.4938729,8.9843754 1.1390242,5.6093754 1.1314578,4.0625004 L 1.1177008,1.25 l 2.5,0 2.4999997,0 0.06441,4.6875004 L 6.2465205,10.625 8.1908035,5.9375004 10.135085,1.25 l 1.741308,0 1.741307,0 0.121474,4.6875004 L 13.860649,10.625 15.783794,5.9375004 17.70694,1.25 l 1.70538,0 c 0.937959,0 1.70538,0.2311965 1.70538,0.5137699 0,0.2825735 -1.203065,3.6575735 -2.673479,7.4999995 L 15.770744,16.25 l -2.326523,0 -2.326521,0 L 11.05329,11.5625 10.98888,6.8750004 9.0445985,11.5625 7.1003165,16.25 l -2.202754,0 z m 17.3708196,0 -2.59932,0 0.72432,-3.75 c 0.398375,-2.0625 1.056816,-5.4673386 1.463201,-7.5663076 l 0.738883,-3.8163078 5.071311,0.3788078 5.071313,0.3788076 1.26374,2.0175964 1.26374,2.017597 -1.009793,2.357403 C 33.700391,9.5641684 33.369876,11.890625 33.5213,13.4375 l 0.275314,2.8125 -2.443668,0 -2.443667,0 -0.686655,-2.62577 -0.686654,-2.625769 -1.334135,0.824541 C 25.468061,12.276499 24.8677,13.458095 24.8677,14.448771 l 0,1.801229 -2.599319,0 z m 5.724319,-8.7499996 1.875,0 0,-1.25 0,-1.25 -1.875,0 -1.875,0 0,1.25 0,1.25 1.875,0 z"
-                      />
-                </svg>
-                <div class="overlay"></div>
-            </div>
-          </div>
-          <hr />
-
-        <div>
-          <h4>Colour Sets</h4>
-          <p><small>You can store 2 of your own colour sets. Select primary, set your colours, then save.</small></p>
-          <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary colourset">
-              <input type="radio" id="colourset1" value="0"> Primary
-            </label>
-            <label class="btn btn-primary colourset">
-
-              <input type="radio" id="colourset2" value="1"> Secondary
-            </label>
-          </div>
-          <hr />
-        </div>
-
-
-          <h4>Design a Theme</h4>
-
-          <div>
-
-              <label><input name="bg4color" id="bg4color" class="picker">&nbsp;Background</label><br />
-              <label><input name="d9color" id="d9color" class="picker">&nbsp;Branding Text</label><br />
-
-              <h5>Centre Panel</h5>
-              <label><input name="bg1color" id="bg1color" class="picker">&nbsp;Outer Border</label><br />
-              <label><input name="bg2color" id="bg2color" class="picker">&nbsp;Inner Border</label><br />
-              <label><input name="bg3color" id="bg3color" class="picker">&nbsp;Inner Panel</label><br />
-
-              <label><input name="t1color" id="t1color" class="picker">&nbsp;Date</label><br />
-              <label><input name="t2color" id="t2color" class="picker">&nbsp;AM/PM/24H</label><br />
-
-              <label><input name="t4color" id="t4color" class="picker">&nbsp;Time</label><br />
-              <label><input name="t3color" id="t3color" class="picker">&nbsp;Time Shadow</label><br />
-
-              <h5>Lines</h5>
-              <label><input name="d1color" id="d1color" class="picker">&nbsp;Line Top</label><br />
-              <label><input name="d2color" id="d2color" class="picker">&nbsp;Line Bottom</label><br />
-
-              <h5>Water Resist</h5>
-              <label><input name="d3color" id="d3color" class="picker">&nbsp;Box Border</label><br />
-              <label><input name="d4color" id="d4color" class="picker">&nbsp;Box Fill</label><br />
-              <label><input name="d5color" id="d5color" class="picker">&nbsp;WR Letters</label><br />
-              <label><input name="d6color" id="d6color" class="picker">&nbsp;Water Resist Text</label><br />
-
-              <h5>Buttons</h5>
-              <label><input name="d7color" id="d7color" class="picker">&nbsp;Button Labels</label><br />
-              <label><input name="d8color" id="d8color" class="picker">&nbsp;Button Arrows</label><br />
-
-
-              <h5>Battery</h5>
-              <label><input name="bi1color" id="bi1color" class="picker">&nbsp;Battery</label><br />
-              <label><input name="bi2color" id="bi2color" class="picker">&nbsp;Battery Warning</label><br />
-              <label><input name="bi3color" id="bi3color" class="picker">&nbsp;Battery Critical</label><br />
-              <label><input name="bi4color" id="bi4color" class="picker">&nbsp;Battery Charging</label><br />
-
-              <h5>Bluetooth</h5>
-              <label><input name="bl1color" id="bl1color" class="picker">&nbsp;Circle Connected</label><br />
-              <label><input name="bl2color" id="bl2color" class="picker">&nbsp;Icon Connected</label><br />
-              <label><input name="bl3color" id="bl3color" class="picker">&nbsp;Circle Disconnected</label><br />
-              <label><input name="bl4color" id="bl4color" class="picker">&nbsp;Icon Disconnected</label><br />
-
-              <a href="#pebblesim" class="btn btn-info">Preview Theme</a>
-          </div>
-          <hr />
-
-          <h4>Share your Theme</h4>
-          <p><small>If you've created a great theme. Send it to me and i'll include it in the presets, or send it to a friend.</small></p>
-          <div class="clearfix">
-            <input class="btn btn-info"  type="button" value="Submit your theme!" id="sharetheme" />&nbsp;
-            <input class="btn btn-warning" type="button" value="Copy/Paste Theme" id="advancedshare" />
-
-            <div id="share" style="display:none;">
-                <br />
-                <p>Copy your current settings and send to a friend, or paste new settings here and then click 'Apply Settings'.</p>
-                <textarea id="advshare" class="form-control" rows="5"></textarea><br />
-                <input class="btn btn-danger pull-right" type="button" value="Apply Settings" id="advancedload" />
-            </div>
-          </div>
-          <hr />
-
-        </div><!--end platform -->
-
-        <div class="clearfix">
-          <input class="btn btn-info hide"  type="button" value="save 2nd theme" id="theme2" />&nbsp;
-          <input class="btn btn-lg btn-primary btn-block" id="save" type="submit" value="Save"/>
-        </div>
-      </form>
-
+  <section>
+    <h2>Colon</h2>
+    <div class="row"><div><div class="t">Blink</div><div class="d">The colon between hours and minutes</div></div>
+      <div class="ctl"><div class="seg" data-k="blink"><button data-v="0">Steady</button><button data-v="1">Blink</button><button data-v="2">2×</button></div></div>
     </div>
+  </section>
 
-
-    <div class="footer container">
-      <p>Segment — based on 91 Dub v4.0 by <a href="http://twitter.com/orviwan">orviwan</a></p>
-      <br />
+  <section>
+    <h2>Power save</h2>
+    <div class="row"><div><div class="t">Power save</div><div class="d">No blink, vibes or seconds during the window</div></div><div class="ctl"><button class="sw" data-k="powersave" data-on="1"></button></div></div>
+    <div class="inrow hidden" id="ps-times">
+      <label>Start</label><select id="ps_start"></select>
+      <label>End</label><select id="ps_end"></select>
     </div>
+  </section>
 
-    <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="js/spectrum.js"></script>
-    <script type="text/javascript" src="js/gcolor.js"></script>
+  <section>
+    <h2>Colors</h2>
+    <div class="row"><div><div class="t">Switch color set</div><div class="d">Swap palette 1 ↔ 2 by time or watch tap</div></div>
+      <div class="ctl"><div class="seg" data-k="switchset"><button data-v="0">Off</button><button data-v="1">Time</button><button data-v="2">Tap</button></div></div>
+    </div>
+    <div class="inrow hidden" id="ss-times">
+      <label>Start</label><select id="switch_start"></select>
+      <label>End</label><select id="switch_end"></select>
+    </div>
+    <div class="presets">
+      <select id="presets"><option value="">Preset theme…</option></select>
+      <div class="seg" data-k="__edit"><button data-v="0">Set 1</button><button data-v="1">Set 2</button></div>
+    </div>
+    <div class="prevwrap"><div class="sim" id="sim">
+      <div class="logo" id="s-d9">pebble</div>
+      <div class="ln lnt" id="s-d1"></div>
+      <div class="ln lnb" id="s-d1b"></div>
+      <div class="btnlbl bl-light" id="s-d7">‹ LIGHT</div>
+      <div class="btnlbl bl-prev" id="s-d7b">PREV ›</div>
+      <div class="btnlbl bl-next" id="s-d7c">NEXT ›</div>
+      <div class="panel">
+        <div class="p1" id="s-bg1"></div>
+        <div class="p2" id="s-bg2"></div>
+        <div class="p3" id="s-bg3"></div>
+      </div>
+      <div class="shadow" id="s-t3">88:88</div>
+      <div class="time" id="s-t4">23:45</div>
+      <div class="date" id="s-t1">WED 22</div>
+      <div class="ampm" id="s-t2">24H</div>
+      <div class="pct" id="s-bi1p">80%</div>
+      <div class="batt" id="s-bi1b"><div class="lvl" id="s-bi1l"></div></div>
+      <div class="steps" id="s-steps">4,077</div>
+      <div class="temp-hi" id="s-thi">37°</div>
+      <div class="temp-lo" id="s-tlo">23°</div>
+      <div class="wrbox" id="s-d3"></div>
+    </div></div>
+    <div class="grid" id="cgrid"></div>
+  </section>
 
-    <script>
-    (function( $ ){
-        $.fn.serializeJSON=function() {
-            var json = {};
-            jQuery.map($(this).serializeArray(), function(n, i){
-                json[n['name']] = $('#'+n['name']).spectrum("get").toHexString();
-            });
-            return json;
-        };
-    })( jQuery );
+</main>
 
+<div class="savebar"><div class="wrap">
+  <span class="st" id="st"></span>
+  <button class="btn" id="reset">Defaults</button>
+  <button class="btn pri" id="save">Save &amp; close</button>
+</div></div>
 
-    var platform = getQueryParam('platform', '');
-    $('div.simwrap').addClass(platform);
+<footer class="wrap">Segment · MIT · origin: 91 Dub v4.0 by <a href="https://twitter.com/orviwan" target="_blank" rel="noopener">orviwan</a></footer>
 
-    // Something like this to get query variables.
-    function getQueryParam(variable, default_) {
-      var query = location.search.substring(1);
-      var vars = query.split('&');
-      for (var i = 0; i < vars.length; i++) {
-          var pair = vars[i].split('=');
-          if (pair[0] == variable)
-              return decodeURIComponent(pair[1]);
+<script>
+(function () {
+'use strict';
+
+/* ---- wire contract (validated against settings.c + GColor.js) ---- */
+var ORDER = ['bg1','bg2','bg3','bg4','bi1','bi2','bi3','bi4','bl1','bl2','bl3','bl4',
+             'd1','d2','d3','d4','d5','d6','d7','d8','d9','t1','t2','t3','t4'];
+var LABELS = {
+  bg1:'Panel outer', bg2:'Panel inner', bg3:'Panel fill', bg4:'Background',
+  bi1:'Battery', bi2:'Batt warning', bi3:'Batt critical', bi4:'Batt charging',
+  bl1:'BT circle on', bl2:'BT icon on', bl3:'BT circle off', bl4:'BT icon off',
+  d1:'Lines', d2:'Line bottom', d3:'Box border', d4:'Box fill', d5:'WR letters',
+  d6:'Temps', d7:'Button labels', d8:'Button arrows', d9:'Logo text',
+  t1:'Date', t2:'AM/PM + icons', t3:'Time shadow', t4:'Time'
+};
+var GROUPS = [
+  ['Background', ['bg4','d9']],
+  ['Panel', ['bg1','bg2','bg3']],
+  ['Text', ['t4','t3','t1','t2','d6']],
+  ['Chrome', ['d1','d2','d3','d4','d5','d7','d8','d9']],
+  ['Battery', ['bi1','bi2','bi3','bi4']],
+  ['Bluetooth', ['bl1','bl2','bl3','bl4']]
+];
+var DEFAULT_COLORS = 'FFC0FFC0C0C0C0C0FFC0FFFFFFFFFFC0FFFFFFFFFFC0C0FFC0';
+var DEFAULTS = {
+  health: 1, blink: 0, invert: 0,
+  bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
+  branding_mask: 0, battery_hide: 0, seconds: 0,
+  powersave: 0, ps_start: 47, ps_end: 15,
+  switchset: 0, switch_start: 47, switch_end: 15,
+  setcolors: DEFAULT_COLORS, set2colors: DEFAULT_COLORS
+};
+
+/* GColor8 byte (2 hex chars) <-> css */
+function byteToCss(b) {
+  var v = parseInt(b, 16);
+  var r = (v >> 4) & 3, g = (v >> 2) & 3, bl = v & 3;
+  return '#' + [r,g,bl].map(function(x){
+    var s = (x*85).toString(16); return s.length === 1 ? '0'+s : s;
+  }).join('');
+}
+function cssToByte(css) {
+  css = css.replace('#','');
+  var r = Math.min(3, Math.round(parseInt(css.substr(0,2),16)/85));
+  var g = Math.min(3, Math.round(parseInt(css.substr(2,2),16)/85));
+  var b = Math.min(3, Math.round(parseInt(css.substr(4,2),16)/85));
+  return (0xC0 | (r<<4) | (g<<2) | b).toString(16).toUpperCase();
+}
+function parseColors(str, target) {
+  ORDER.forEach(function(k,i){ target[k] = byteToCss((str||'').substr(i*2,2)); });
+}
+function serializeColors(src) {
+  return ORDER.map(function(k){ return cssToByte(src[k]); }).join('');
+}
+
+/* ---- state ---- */
+var settings = {}, colors1 = {}, colors2 = {}, editSet = 0;
+
+function qparam(name, def) {
+  var q = location.search.substring(1).split('&');
+  for (var i=0;i<q.length;i++){ var p=q[i].split('='); if(p[0]===name) return decodeURIComponent(p[1]); }
+  return def || false;
+}
+function load() {
+  try { settings = JSON.parse(qparam('settings','')); } catch(e){ settings = null; }
+  var ok = settings && typeof settings === 'object' && Object.keys(settings).length >= 3;
+  if (!ok) {
+    try { settings = JSON.parse(localStorage.getItem('settings_v2')); } catch(e){ settings = null; }
+    ok = settings && typeof settings === 'object' && Object.keys(settings).length >= 3;
+  }
+  if (!ok) settings = JSON.parse(JSON.stringify(DEFAULTS));
+  Object.keys(DEFAULTS).forEach(function(k){ if (settings[k]===undefined) settings[k]=DEFAULTS[k]; });
+  parseColors(settings.setcolors, colors1);
+  parseColors(settings.set2colors, colors2);
+}
+
+/* ---- toggles ---- */
+function paintSw(el) {
+  var on = settings[el.dataset.k] === parseInt(el.dataset.on, 10);
+  el.classList.toggle('on', on);
+}
+document.querySelectorAll('.sw').forEach(function (el) {
+  paintSw(el);
+  el.addEventListener('click', function () {
+    var onVal = parseInt(el.dataset.on, 10);
+    var offVal = onVal === 1 ? 0 : 1;
+    settings[el.dataset.k] = (settings[el.dataset.k] === onVal) ? offVal : onVal;
+    paintSw(el);
+    if (el.dataset.k === 'powersave') show('#ps-times', settings.powersave === 1);
+  });
+});
+
+/* ---- segments ---- */
+function paintSeg(seg) {
+  var key = seg.dataset.k;
+  var val = key === '__edit' ? editSet : settings[key];
+  seg.querySelectorAll('button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.v === String(val));
+  });
+}
+document.querySelectorAll('.seg').forEach(function (seg) {
+  paintSeg(seg);
+  seg.addEventListener('click', function (e) {
+    var btn = e.target.closest('button'); if (!btn) return;
+    var key = seg.dataset.k, val = parseInt(btn.dataset.v, 10);
+    if (key === '__edit') { editSet = val; renderColors(); paintSeg(seg); return; }
+    settings[key] = val;
+    paintSeg(seg);
+    if (key === 'switchset') show('#ss-times', val === 1);
+  });
+});
+
+function show(sel, yes) { document.querySelector(sel).classList.toggle('hidden', !yes); }
+
+/* ---- time selects: value = half-hour index 0..47 (matches settings.c) ---- */
+function fillTimes() {
+  ['#ps_start','#ps_end','#switch_start','#switch_end'].forEach(function (id, idx) {
+    var sel = document.querySelector(id);
+    if (!sel.options.length) {
+      for (var i = 0; i < 48; i++) {
+        var h = Math.floor(i/2), m = (i%2) ? '30' : '00';
+        sel.appendChild(new Option((h<10?'0':'')+h+':'+m, String(i)));
       }
-      return default_ || false;
     }
+    var key = id.slice(1);
+    sel.value = String(settings[key]);
+    if (sel.value !== String(settings[key])) { sel.value = '0'; }
+    sel.onchange = function () { settings[key] = parseInt(this.value, 10); };
+  });
+}
 
-    function getThemes() {
-        if(platform=='basalt') {
-          var filename = "themes.json";
-        }
-        else if(platform == 'chalk') {
-          var filename = "themes-chalk.json";
-        }
-        if(filename) {
-          $.get(filename,{ "_": $.now() }, function( data ) {
-            var sel = $("#presets");
-            sel.empty();
-            sel.append('<option></option>');
-            for (var i=0; i<data.length; i++) {
-              sel.append('<option value="' + encodeURIComponent(JSON.stringify(data[i])) + '">' + data[i].theme[0].name + '</option>');
-            }
-          });
-        }
-    }
-    function initTimePicker() {
-      var sel1 = $('#powersavestart');
-      var sel2 = $('#powersaveend');
-      var sel3 = $('#switchsetstart');
-      var sel4 = $('#switchsetend');
-      sel1.append('<option></option>');
-      sel2.append('<option></option>');
-      sel3.append('<option></option>');
-      sel4.append('<option></option>');
+/* ---- preview ---- */
+function setS(id, prop, val) { var el = document.getElementById(id); if (el) el.style[prop] = val; }
+function renderPreview() {
+  var c = editSet === 0 ? colors1 : colors2;
+  setS('sim', 'background', c.bg4);
+  setS('s-bg1','background',c.bg1); setS('s-bg2','background',c.bg2); setS('s-bg3','background',c.bg3);
+  setS('s-t4','color',c.t4); setS('s-t3','color',c.t3);
+  setS('s-t1','color',c.t1); setS('s-t2','color',c.t2);
+  setS('s-bi1p','color',c.bi1); setS('s-bi1b','borderColor',c.bi1); setS('s-bi1l','background',c.bi1);
+  setS('s-steps','color',c.t2);
+  setS('s-thi','color',c.d6); setS('s-tlo','color',c.d6);
+  setS('s-d3','borderColor',c.d3); setS('s-d3','background',c.d4);
+  setS('s-d1','background',c.d1); setS('s-d1b','background',c.d2);
+  setS('s-d9','color',c.d9);
+  ['s-d7','s-d7b','s-d7c'].forEach(function(id){ setS(id,'color',c.d7); });
+  // hide branding/battery/bluetooth when configured off
+  document.getElementById('s-d9').style.display = settings.branding_mask ? 'none' : '';
+  ['s-bi1p','s-bi1b'].forEach(function(id){ document.getElementById(id).style.display = settings.battery_hide ? 'none' : ''; });
+  document.getElementById('s-steps').style.display = settings.health ? '' : 'none';
+  document.getElementById('s-thi').textContent = '37°';
+  document.getElementById('s-tlo').textContent = '23°';
+}
 
-      for(var i=0;i<24;i++) {
-          sel1.append('<option value="' + i + '">' + addZero(i) + ':00</option>');
-          sel1.append('<option value="' + i + '.5">' + addZero(i) + ':30</option>');
-          sel2.append('<option value="' + i + '">' + addZero(i) + ':00</option>');
-          sel2.append('<option value="' + i + '.5">' + addZero(i) + ':30</option>');
-          sel3.append('<option value="' + i + '">' + addZero(i) + ':00</option>');
-          sel3.append('<option value="' + i + '.5">' + addZero(i) + ':30</option>');
-          sel4.append('<option value="' + i + '">' + addZero(i) + ':00</option>');
-          sel4.append('<option value="' + i + '.5">' + addZero(i) + ':30</option>');
-      }
-    }
-
-    $('#platform').hide();
-
-
-    if(platform!=='aplite' && platform!=='diorite') {
-      $('#platform').show();
-    }
-
-    var settings = {};
-
-    var defaultcolors="FFC0FFC0C0C0C0C0FFC0FFFFFFFFFFC0FFFFFFFFFFC0C0FFC0";
-
-  	var colorsEnum = {
-  		"bg1": 0, "bg2": 1, "bg3": 2, "bg4": 3, //background
-  		"bi1": 4, "bi2": 5, "bi3": 6, "bi4": 7, //battery
-  		"bl1": 8, "bl2": 9, "bl3": 10, "bl4": 11, //bluetooth
-  		"d1": 12, "d2": 13, "d3": 14, "d4": 15, "d5": 16, "d6": 17, "d7": 18, "d8": 19, "d9": 20, //decorations
-  		"t1": 21, "t2": 22, "t3": 23, "t4": 24, //time digits
-  	};
-
-	  var curruntSet =0; // keep which colour Set is active.
-
-    function updatePreview() {
-
-      /*
-      BACKGROUND
-      bg1 Centre Panel Outer Stroke
-      bg2 Centre Panel Stroke
-      bg3 Centre Panel
-      bg4 Background Color
-      */
-      $("#pebblesim .boxouter").css("backgroundColor", '#'+GColor.toSunnyHex($("#bg1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .boxstroke").css("backgroundColor", '#'+GColor.toSunnyHex($("#bg2color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .boxinner").css("backgroundColor", '#'+GColor.toSunnyHex($("#bg3color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim").css("backgroundColor", '#'+GColor.toSunnyHex($("#bg4color").spectrum("get").toHexString().substring(1)));
-
-      /*
-      TIME
-      t1  Date
-      t2  AM/PM/24H Indicator
-      t3  Clock Shadow
-      t4  Clock
-      */
-      $("#pebblesim .date").css("color", '#'+GColor.toSunnyHex($("#t1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .ampm").css("color", '#'+GColor.toSunnyHex($("#t2color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .timeshadow").css("color", '#'+GColor.toSunnyHex($("#t3color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .time").css("color", '#'+GColor.toSunnyHex($("#t4color").spectrum("get").toHexString().substring(1)));
-
-      /*
-      DECORATIONS
-      d1  Horizontal Line Top
-      d2  Horizontal Line Bottom
-      d3  Water Resist Box Stroke
-      d4  Water Resist Box Fill
-      d5  WR Letters
-      d6  Water Resist Text
-      d7  Button Labels
-      d8  Button Icons
-      d9  Branding Text
-      */
-      $("#pebblesim .line").css("borderColor", '#'+GColor.toSunnyHex($("#d1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .line2").css("borderColor", '#'+GColor.toSunnyHex($("#d2color").spectrum("get").toHexString().substring(1)));
-      $('div#pebblesim .wr_box path').css("stroke", '#'+GColor.toSunnyHex($("#d3color").spectrum("get").toHexString().substring(1)));
-      $('div#pebblesim .wr_box path').css("fill", '#'+GColor.toSunnyHex($("#d4color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .wr path").css("fill", '#'+GColor.toSunnyHex($("#d5color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .water, #pebblesim .resist").css("color", '#'+GColor.toSunnyHex($("#d6color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .next, #pebblesim .prev, #pebblesim .back").css("color", '#'+GColor.toSunnyHex($("#d7color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .arrowleft, #pebblesim .arrowright").css("color", '#'+GColor.toSunnyHex($("#d8color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .branding").css("color", '#'+GColor.toSunnyHex($("#d9color").spectrum("get").toHexString().substring(1)));
-
-      /*
-      BATTERY
-      bi1 Battery Indicator
-      bi2 Battery Indicator Warning
-      bi3 Battery Indicator Critical
-      bi4 Battery Charging
-      */
-      $("#pebblesim .battery").css("borderColor", '#'+GColor.toSunnyHex($("#bi1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .batterypercent").css("color", '#'+GColor.toSunnyHex($("#bi1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .fill").css("backgroundColor", '#'+GColor.toSunnyHex($("#bi1color").spectrum("get").toHexString().substring(1)));
-
-      /*
-      BLUETOOTH
-      bl1 Bluetooth Circle Connected
-      bl2 Bluetooth Icon Connected
-      bl3 Bluetooth Circle Disconnected
-      bl4 Bluetooth Icon Disconnected
-      */
-      $("#pebblesim .bluetooth ellipse").css("fill", '#'+GColor.toSunnyHex($("#bl1color").spectrum("get").toHexString().substring(1)));
-      $("#pebblesim .bluetooth line").css("stroke", '#'+GColor.toSunnyHex($("#bl2color").spectrum("get").toHexString().substring(1)));
-
-      var obj = {"theme": [$('#configure-form .picker').serializeJSON() ]};
-      $('#advshare').html(JSON.stringify(obj));
-
-    }
-
-    $('#sharetheme').on('click', function() {
-      var obj = {"theme": [$('#configure-form .picker').serializeJSON() ]};
-      window.open('mailto:orviwan@gmail.com?subject='+platform+' - New%2091%20Dub%20v3.0%20theme&body=' + encodeURIComponent('Theme name: ????\n\n' + JSON.stringify(obj)));
-
-    });
-
-    $('#advancedshare').on('click', function() {
-      $('#share').toggle();
-    });
-
-    $('#advancedload').on('click', function() {
-      try {
-        var newsettings = JSON.parse($('#advshare').val());
-        $.each(newsettings.theme[0], function(key,value){
-            $('#' + key).spectrum("set", value);
-        });
-        updatePreview();
-      }
-      catch(ex) {
-        alert('failed to load settings');
-      }
-    });
-
-    $('#presets').on('change', function() {
-      var newsettings = JSON.parse(decodeURIComponent(this.value));
-      $.each(newsettings.theme[0], function(key,value){
-          $('#' + key).spectrum("set", value);
+/* ---- color grid ---- */
+function buildGrid() {
+  var grid = document.getElementById('cgrid');
+  GROUPS.forEach(function (g, gi) {
+    var t = document.createElement('div');
+    t.className = 'gtitle' + (gi === 0 ? ' first' : '');
+    t.textContent = g[0];
+    grid.appendChild(t);
+    g[1].forEach(function (key) {
+      var row = document.createElement('div'); row.className = 'crow';
+      var input = document.createElement('input'); input.type = 'color'; input.dataset.key = key;
+      input.addEventListener('input', function () {
+        (editSet === 0 ? colors1 : colors2)[key] = this.value;
+        renderPreview();
       });
-      updatePreview();
+      var span = document.createElement('span'); span.textContent = LABELS[key];
+      row.appendChild(input); row.appendChild(span);
+      grid.appendChild(row);
     });
+  });
+}
+function renderColors() {
+  var src = editSet === 0 ? colors1 : colors2;
+  document.querySelectorAll('#cgrid input[type=color]').forEach(function (input) {
+    input.value = src[input.dataset.key];
+  });
+  renderPreview();
+}
 
-    $('.colourset').on('click', function() {
-
-        $('.colourset').prop('checked', false);
-        $('.colourset').parent().removeClass('active');
-
-        $(this).prop('checked', true);
-        $(this).parent().addClass('active');
-
-        //
-        var selected = parseInt( $(this).find('input').val() );
-
-        if (curruntSet != selected) {
-		      curruntSet = selected;
-          var colstring= settings.set2colors;
-          //0 is primary set, 1 is secondary set
-          //alert(curruntSet);
-          if(curruntSet==0) { //if selected primary, save secondary and load primary
-            settings.set2colors = "";
-            Object.keys(colorsEnum).forEach(function(x) {settings.set2colors +=
-              GColor.shortHex($('#'+x+'color').spectrum('get').toHexString().substring(1));
-            });
-            colstring= settings.setcolors;
-          }
-          else if (curruntSet==1) {
-            settings.setcolors = "";
-            Object.keys(colorsEnum).forEach(function(x) {settings.setcolors +=
-              GColor.shortHex($('#'+x+'color').spectrum('get').toHexString().substring(1));
-            });
-            //colstring= settings.set2colors;
-          }
-          if (!colstring) {
-            colstring= defaultcolors;
-          }
-          var counter=0;
-          Object.keys(colorsEnum).forEach(function(x) {
-            $('#'+x+'color').spectrum("set", '#' + GColor.expandHex(colstring.substr(counter * 2, 2)));
-            counter++;
-          });
-          updatePreview();
-		    }
-
+/* ---- presets ---- */
+function loadPresets() {
+  var file = qparam('platform','basalt') === 'chalk' ? 'themes-chalk.json' : 'themes.json';
+  fetch(file).then(function(r){ return r.json(); }).then(function(data) {
+    var sel = document.getElementById('presets');
+    data.forEach(function (entry) {
+      var name = entry.theme && entry.theme[0] && entry.theme[0].name;
+      if (name) sel.appendChild(new Option(name, JSON.stringify(entry.theme[0])));
     });
-
-    $('.switchsets').on('click', function() {
-
-        $('.switchset').prop('checked', false);
-        $('.switchset').parent().removeClass('active');
-
-        $(this).prop('checked', true);
-        $(this).parent().addClass('active');
-
-        //
-        var selected = parseInt( $(this).find('input').val() );
-        //alert(selected)
-    });
-
-
-    $("textarea#advshare").on("click", function () {
-       $(this).select();
-    });
-
-    $('#theme2').on('click', function() {
-        if(platform!=='aplite' && platform!=='diorite') {
-          settings.set2colors = "";
-          Object.keys(colorsEnum).forEach(function(x) {settings.set2colors +=
-            GColor.shortHex($('#'+x+'color').spectrum('get').toHexString().substring(1));
-          });
-    	   }
-    });
-
-    $('input[name=powersave]').on('change', function() {
-      if(parseInt($("input[name=powersave]:checked").val())) {
-        $('#powersave-times').show();
-      }
-      else {
-        $('#powersave-times').hide();
-      }
-    });
-
-    $('input[name=switchset]').on('change', function() {
-      if(parseInt($("input[name=switchset]:checked").val())==1) {
-        $('#switchset-times').show();
-      }
-      else {
-        $('#switchset-times').hide();
-      }
-    });
-
-
-    function updateDate() {
-      var currentdate = new Date();
-      var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var formattedDate = days[currentdate.getDay()] + ' ' + addZero(currentdate.getDate());
-
-      $('.date').text(formattedDate);
+  }).catch(function(){});
+}
+document.getElementById('presets').addEventListener('change', function () {
+  if (!this.value) return;
+  var theme = JSON.parse(this.value);
+  var src = editSet === 0 ? colors1 : colors2;
+  Object.keys(theme).forEach(function (k) {
+    var key = k.replace(/color$/, '');
+    if (ORDER.indexOf(key) !== -1 && typeof theme[k] === 'string') {
+      src[key] = byteToCss(cssToByte(theme[k]));
     }
-
-    function addZero(i) {
-      if (i < 10) {
-          i = "0" + i;
-      }
-      return i;
-    }
-
-    function updateClock() {
-      var currentdate = new Date();
-
-      //why am I bothering to do this?
-      if(currentdate.getHours()==0 && currentdate.getMinutes()==0) {
-        updateDate();
-      }
-      var hours = addZero(currentdate.getHours());
-      var mins = addZero(currentdate.getMinutes());
-
-      $("#pebblesim .time span").each(function(index,value) {
-        switch(index) {
-          case 0:
-            value.innerHTML = hours.toString().charAt(0);
-            break;
-          case 1:
-            value.innerHTML = hours.toString().charAt(1);
-            break;
-          case 3:
-            value.innerHTML = mins.toString().charAt(0);
-            break;
-          case 4:
-            value.innerHTML = mins.toString().charAt(1);
-            break;
-        }
-      });
-    };
-
-    setInterval(updateClock, 5000);
-
-
-
-    $().ready(function () {
-
-      updateClock();
-      updateDate();
-      initTimePicker();
-      getThemes();
-
-      $(".picker").spectrum({
-          showPaletteOnly: true,
-          hideAfterPaletteSelect:true,
-          preferredFormat: "hex3",
-          change: function() {
-              updatePreview();
-          },
-          palette: [
-            [ '000', '005', '00a', '00f', '050', '055', '05a', '05f' ],
-            [ '500', '505', '50a', '50f', '550', '555', '55a', '55f' ],
-            [ 'a00', 'a05', 'a0a', 'a0f', 'a50', 'a55', 'a5a', 'a5f' ],
-            [ 'f00', 'f05', 'f0a', 'f0f', 'f50', 'f55', 'f5a', 'f5f' ],
-            [ '0a0', '0a5', '0aa', '0af', '0f0', '0f5', '0fa', '0ff' ],
-            [ '5a0', '5a5', '5aa', '5af', '5f0', '5f5', '5fa', '5ff' ],
-            [ 'aa0', 'aa5', 'aaa', 'aaf', 'af0', 'af5', 'afa', 'aff' ],
-            [ 'fa0', 'fa5', 'faa', 'faf', 'ff0', 'ff5', 'ffa', 'fff' ]
-          ]
-      });
-
-      try { //give priority to optional settings in URL
-        settings = JSON.parse(getQueryParam('settings', ''));
-      }
-      catch(err) {
-        settings = null;
-      }
-
-      if ((settings==null) || (typeof settings !== 'object') || Object.keys(settings).length<3) {
-        try {
-          settings = JSON.parse(localStorage.getItem("settings_v2"));
-        }
-        catch(err) {
-          settings = null;
-        }
-      }
-
-      if((settings===null) || (Object.keys(settings).length<3) ) {
-        settings = {};
-
-        settings.health = 0;
-        settings.blink = 0;
-        settings.invert = 0;
-        settings.bluetoothvibe = 1;
-        settings.bluetoothshow = 0;
-        settings.hourlyvibe = 1;
-        settings.branding_mask = 0;
-        settings.battery_hide = 0;
-        settings.seconds = 0;
-        settings.powersave = 0;
-        settings.ps_start = 47; //11PM
-        settings.ps_end = 15; // 7AM
-        settings.switchset = 0;
-        settings.switch_start = 47; //11PM
-        settings.switch_end = 15; // 7AM
-        settings.setcolors = defaultcolors;
-        settings.set2colors = defaultcolors;
-      }
-
-      if(settings.health == 1) {
-        $('#health1').prop('checked', true);
-        $('#health1').parent().addClass('active');
-
-        $('#health2').prop('checked', false);
-        $('#health2').parent().removeClass('active');
-      }
-      else {
-        $('#health1').prop('checked', false);
-        $('#health1').parent().removeClass('active');
-
-        $('#health2').prop('checked', true);
-        $('#health2').parent().addClass('active');
-      }
-
-      if(settings.blink == 1) {
-        $('#blink1').prop('checked', true);
-        $('#blink1').parent().addClass('active');
-
-        $('#blink2').prop('checked', false);
-        $('#blink2').parent().removeClass('active');
-
-        $('#blink3').prop('checked', false);
-        $('#blink3').parent().removeClass('active');
-      }
-      else if (settings.blink == 2) {
-        $('#blink1').prop('checked', false);
-        $('#blink1').parent().removeClass('active');
-
-        $('#blink2').prop('checked', false);
-        $('#blink2').parent().removeClass('active');
-
-        $('#blink3').prop('checked', true);
-        $('#blink3').parent().addClass('active');
-      }
-      else {
-        $('#blink1').prop('checked', false);
-        $('#blink1').parent().removeClass('active');
-
-        $('#blink2').prop('checked', true);
-        $('#blink2').parent().addClass('active');
-
-        $('#blink3').prop('checked', false);
-        $('#blink3').parent().removeClass('active');
-      }
-
-
-
-      if(settings.invert) {
-        $('#invert1').prop('checked', true);
-        $('#invert1').parent().addClass('active');
-
-        $('#invert2').prop('checked', false);
-        $('#invert2').parent().removeClass('active');
-      }
-      else {
-        $('#invert1').prop('checked', false);
-        $('#invert1').parent().removeClass('active');
-
-        $('#invert2').prop('checked', true);
-        $('#invert2').parent().addClass('active');
-      }
-
-
-      if(settings.bluetoothvibe) {
-        $('#bluetoothvibe1').prop('checked', true);
-        $('#bluetoothvibe1').parent().addClass('active');
-
-        $('#bluetoothvibe2').prop('checked', false);
-        $('#bluetoothvibe2').parent().removeClass('active');
-      }
-      else {
-        $('#bluetoothvibe1').prop('checked', false);
-        $('#bluetoothvibe1').parent().removeClass('active');
-
-        $('#bluetoothvibe2').prop('checked', true);
-        $('#bluetoothvibe2').parent().addClass('active');
-      }
-
-
-      if(settings.bluetoothshow) {
-        $('#bluetoothshow1').prop('checked', true);
-        $('#bluetoothshow1').parent().addClass('active');
-
-        $('#bluetoothshow2').prop('checked', false);
-        $('#bluetoothshow2').parent().removeClass('active');
-      }
-      else {
-        $('#bluetoothshow1').prop('checked', false);
-        $('#bluetoothshow1').parent().removeClass('active');
-
-        $('#bluetoothshow2').prop('checked', true);
-        $('#bluetoothshow2').parent().addClass('active');
-      }
-
-
-      if(settings.hourlyvibe) {
-        $('#hourlyvibe1').prop('checked', true);
-        $('#hourlyvibe1').parent().addClass('active');
-
-        $('#hourlyvibe2').prop('checked', false);
-        $('#hourlyvibe2').parent().removeClass('active');
-      }
-      else {
-        $('#hourlyvibe1').prop('checked', false);
-        $('#hourlyvibe1').parent().removeClass('active');
-
-        $('#hourlyvibe2').prop('checked', true);
-        $('#hourlyvibe2').parent().addClass('active');
-      }
-
-      if(settings.branding_mask) {
-        $('#branding_mask1').prop('checked', true);
-        $('#branding_mask1').parent().addClass('active');
-
-        $('#branding_mask2').prop('checked', false);
-        $('#branding_mask2').parent().removeClass('active');
-      }
-      else {
-        $('#branding_mask1').prop('checked', false);
-        $('#branding_mask1').parent().removeClass('active');
-
-        $('#branding_mask2').prop('checked', true);
-        $('#branding_mask2').parent().addClass('active');
-      }
-
-      if(settings.battery_hide) {
-        $('#battery_hide1').prop('checked', true);
-        $('#battery_hide1').parent().addClass('active');
-
-        $('#battery_hide2').prop('checked', false);
-        $('#battery_hide2').parent().removeClass('active');
-      }
-      else {
-        $('#battery_hide1').prop('checked', false);
-        $('#battery_hide1').parent().removeClass('active');
-
-        $('#battery_hide2').prop('checked', true);
-        $('#battery_hide2').parent().addClass('active');
-      }
-
-      if(settings.seconds) {
-        $('#seconds1').prop('checked', true);
-        $('#seconds1').parent().addClass('active');
-
-        $('#seconds2').prop('checked', false);
-        $('#seconds2').parent().removeClass('active');
-      }
-      else {
-        $('#seconds1').prop('checked', false);
-        $('#seconds1').parent().removeClass('active');
-
-        $('#seconds2').prop('checked', true);
-        $('#seconds2').parent().addClass('active');
-      }
-
-      if(settings.powersave) {
-        $('#powersave1').prop('checked', true);
-        $('#powersave1').parent().addClass('active');
-
-        $('#powersave-times').show();
-
-        $('#powersave2').prop('checked', false);
-        $('#powersave2').parent().removeClass('active');
-      }
-      else {
-        $('#powersave1').prop('checked', false);
-        $('#powersave1').parent().removeClass('active');
-
-        $('#powersave-times').hide();
-
-        $('#powersave2').prop('checked', true);
-        $('#powersave2').parent().addClass('active');
-      }
-
-      if(settings.switchset==1) { //time
-        $('#switchset1').prop('checked', true);
-        $('#switchset1').parent().addClass('active');
-
-        $('#switchset-times').show();
-
-        $('#switchset0').prop('checked', false);
-        $('#switchset0').parent().removeClass('active');
-
-        $('#switchset2').prop('checked', false);
-        $('#switchset2').parent().removeClass('active');
-      }
-      else if(settings.switchset==2) { //tap
-        $('#switchset1').prop('checked', false);
-        $('#switchset1').parent().removeClass('active');
-
-        $('#switchset0').prop('checked', false);
-        $('#switchset0').parent().removeClass('active');
-
-        $('#switchset-times').hide();
-
-        $('#switchset2').prop('checked', true);
-        $('#switchset2').parent().addClass('active');
-      }
-      else { //none
-        $('#switchset1').prop('checked', false);
-        $('#switchset1').parent().removeClass('active');
-
-        $('#switchset2').prop('checked', false);
-        $('#switchset2').parent().removeClass('active');
-
-        $('#switchset-times').hide();
-
-        $('#switchset0').prop('checked', true);
-        $('#switchset0').parent().addClass('active');
-      }
-
-
-      //
-      $('#powersavestart').prop('selectedIndex', settings.ps_start);
-      $('#powersaveend').prop('selectedIndex', settings.ps_end);
-
-      //
-      $('#switchsetstart').prop('selectedIndex', settings.switch_start);
-      $('#switchsetend').prop('selectedIndex', settings.switch_end);
-
-      $('#colourset1').prop('checked', true);
-      $('#colourset1').parent().addClass('active');
-
-
-      var colstring = defaultcolors; //default BW colors
-
-        if(platform!=='aplite' && platform!=='diorite') {
-          if (settings.setcolors) {
-            colstring= settings.setcolors;
-          }
-
-          var counter=0;
-          Object.keys(colorsEnum).forEach(function(x) {
-              $('#'+x+'color').spectrum("set", '#' + GColor.expandHex(colstring.substr(counter * 2, 2)));
-              counter++;
-          });
-
-          updatePreview();
-        }
-
-
-        if(platform=='aplite' || platform=='diorite') {
-          $('#colourset-panel').hide();
-        }
-
-        if(platform=='aplite') {
-          $('#health-panel').hide();
-        }
-
-    });  //ready
-
-    $("#configure-form").submit(function(e) {
-
-      e.preventDefault();
-
-      settings.health = parseInt($('input:radio[name=health]:checked').val());
-      settings.blink = parseInt($('input:radio[name=blink]:checked').val());
-      settings.invert = $('#invert1').prop('checked') ? 1 : 0;
-      settings.bluetoothvibe = $('#bluetoothvibe1').prop('checked') ? 1 : 0;
-      settings.bluetoothshow = $('input:radio[name=bluetoothshow]:checked').val() === undefined ? 0 : parseInt($('input:radio[name=bluetoothshow]:checked').val());
-      settings.hourlyvibe = $('#hourlyvibe1').prop('checked') ? 1 : 0;
-      settings.branding_mask = $('#branding_mask1').prop('checked') ? 1 : 0;
-      settings.battery_hide = $('#battery_hide1').prop('checked') ? 1 : 0;
-      settings.seconds = $('#seconds1').prop('checked') ? 1 : 0;
-      settings.powersave = $('#powersave1').prop('checked') ? 1 : 0;
-      //
-      settings.ps_start = $('#powersavestart').prop('selectedIndex');
-      settings.ps_end = $('#powersaveend').prop('selectedIndex');
-
-      settings.switchset = parseInt($("input[name=switchset]:checked").val());
-      //
-      settings.switch_start = $('#switchsetstart').prop('selectedIndex');
-      settings.switch_end = $('#switchsetend').prop('selectedIndex');
-
-      if(platform!=='aplite' && platform!=='diorite') { // ToDo: check which is active set and save it. (now if set2 is active primary will be overwritten by it) Alternatively, just run the function of the colorset button
-        var lodedColors = "";
-        Object.keys(colorsEnum).forEach(function(x) {lodedColors +=
-           GColor.shortHex($('#'+x+'color').spectrum('get').toHexString().substring(1));});
-        if (curruntSet==0)
-          settings.setcolors = lodedColors;
-        else
-          settings.set2colors = lodedColors;
-
-      }
-
-      localStorage.setItem("settings_v2", JSON.stringify(settings));
-
-      var return_to = getQueryParam('return_to', 'pebblejs://close#');
-      document.location = return_to + encodeURIComponent(JSON.stringify(settings));
-
-
-    });
-  </script>
+  });
+  renderColors();
+  flash('preset applied');
+});
+
+/* ---- status ---- */
+var ft;
+function flash(msg) {
+  var el = document.getElementById('st');
+  el.textContent = msg; clearTimeout(ft);
+  ft = setTimeout(function(){ el.textContent=''; }, 2200);
+}
+
+/* ---- clock in preview ---- */
+function tick() {
+  var d = new Date();
+  var hh = (d.getHours()<10?'0':'')+d.getHours(), mm = (d.getMinutes()<10?'0':'')+d.getMinutes();
+  document.getElementById('s-t4').textContent = hh+':'+mm;
+  document.getElementById('s-t3').textContent = hh+':'+mm;
+  var days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  document.getElementById('s-t1').textContent = days[d.getDay()]+' '+d.getDate();
+}
+
+/* ---- hydrate / save ---- */
+function hydrate() {
+  document.querySelectorAll('.sw').forEach(paintSw);
+  document.querySelectorAll('.seg').forEach(paintSeg);
+  show('#ps-times', settings.powersave === 1);
+  show('#ss-times', settings.switchset === 1);
+  fillTimes();
+  renderColors();
+}
+document.getElementById('reset').addEventListener('click', function () {
+  settings = JSON.parse(JSON.stringify(DEFAULTS));
+  parseColors(DEFAULT_COLORS, colors1); parseColors(DEFAULT_COLORS, colors2);
+  hydrate(); flash('defaults');
+});
+document.getElementById('save').addEventListener('click', function () {
+  settings.setcolors = serializeColors(colors1);
+  settings.set2colors = serializeColors(colors2);
+  localStorage.setItem('settings_v2', JSON.stringify(settings));
+  document.location = qparam('return_to', 'pebblejs://close#') + encodeURIComponent(JSON.stringify(settings));
+});
+
+/* ---- init ---- */
+load();
+buildGrid();
+hydrate();
+loadPresets();
+tick();
+setInterval(tick, 10000);
+})();
+</script>
 </body>
 </html>
