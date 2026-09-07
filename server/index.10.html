@@ -280,9 +280,11 @@ var GROUPS = [
   ['Battery', ['bi1','bi2','bi3','bi4']],
   ['Bluetooth', ['bl1','bl2','bl3','bl4']]
 ];
-var DEFAULT_COLORS = 'FFC0FFC0C0C0C0C0FFC0FFFFFFFFFFC0FFFFFFFFFFC0C0FFC0';
+// Matches settings_default_values() in src/c/settings.c (GColor8 per slot,
+// ORDER above): white/black panel, orange/red batt states, blue BT badge.
+var DEFAULT_COLORS = 'FFC0FFC0C0C0C0C0FF45D3D3D3AAB0AAFFC0FFFFFFFFFFC0C0FFC0';
 var DEFAULTS = {
-  health: 1, blink: 0, invert: 0,
+  health: 1, blink: 1, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
   branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
@@ -312,9 +314,6 @@ function parseColors(str, target) {
 function serializeColors(src) {
   return ORDER.map(function(k){ return cssToByte(src[k]); }).join('');
 }
-
-/* ---- temperature units: cache is Celsius; convert at send time ---- */
-function cToF(c) { return Math.round(c * 9 / 5 + 32); }
 
 /* ---- state ---- */
 var settings = {}, colors1 = {}, colors2 = {}, editSet = 0;
