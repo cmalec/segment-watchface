@@ -1,0 +1,120 @@
+{
+  "name": "segment-watchface",
+  "author": "cmalec",
+  "version": "5.0.0",
+  "keywords": ["pebble-app", "pebble-watchface"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Segment",
+    "uuid": "c3c75c5a-f27b-4686-920f-0bd79ef71277",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "capabilities": [
+      "configurable",
+      "health",
+      "location"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "blink",
+      "invert",
+      "bluetoothvibe",
+      "bluetoothshow",
+      "hourlyvibe",
+      "branding_mask",
+      "battery_hide",
+      "seconds",
+      "powersave",
+      "ps_start",
+      "ps_end",
+      "switchset",
+      "switch_start",
+      "switch_end",
+      "health",
+      "wtemp_req",
+      "wtemp_hi",
+      "wtemp_lo",
+      "pbatt_level",
+      "setcolors",
+      "set1colors",
+      "set2colors"
+    ],
+    "resources": {
+      "media": [
+        {
+          "characterRegex": "[:0-9]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_71",
+          "type": "font"
+        },
+        {
+          "characterRegex": "[:0-9]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_56",
+          "type": "font"
+        },
+        {
+          "characterRegex": "[:0-9]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_99",
+          "type": "font",
+          "targetPlatforms": ["emery"]
+        },
+        {
+          "characterRegex": "[:0-9]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_78",
+          "type": "font",
+          "targetPlatforms": ["emery"]
+        },
+        {
+          "characterRegex": "[:0-9A-Z ]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_22",
+          "type": "font"
+        },
+        {
+          "characterRegex": "[:0-9A-Z ]",
+          "file": "fonts/DS-Digital-Bold.ttf",
+          "name": "FONT_DIGITALE_31",
+          "type": "font",
+          "targetPlatforms": ["emery"]
+        },
+        {
+          "characterRegex": "[0-9 A-Za-z°%.:, --/' ~]",
+          "file": "fonts/lucon.ttf",
+          "name": "FONT_LUCIDIA_10",
+          "type": "font"
+        },
+        {
+          "characterRegex": "[0-9 A-Za-z°%.:, --/' ~]",
+          "file": "fonts/lucon.ttf",
+          "name": "FONT_LUCIDIA_14",
+          "type": "font",
+          "targetPlatforms": ["emery"]
+        },
+        {
+          "file": "images/logo_pebble.png",
+          "name": "IMAGE_LOGO_PEBBLE",
+          "type": "png"
+        },
+        {
+          "file": "images/menu_icon_segment.png",
+          "menuIcon": true,
+          "name": "IMAGE_MENU_ICON",
+          "type": "png"
+        }
+      ]
+    }
+  }
+}
