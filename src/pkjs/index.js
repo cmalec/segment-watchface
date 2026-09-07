@@ -50,10 +50,13 @@ Pebble.addEventListener('appmessage', function(e) {
 });
 
 Pebble.addEventListener("showConfiguration", function(e) {
-	var url = mConfigURL;
+	var url = mConfigURL + '?';
 	if(Pebble.getActiveWatchInfo) {
-		url += '?platform=' + Pebble.getActiveWatchInfo().platform;
+		url += 'platform=' + Pebble.getActiveWatchInfo().platform + '&';
 	}
+	// Hydrate the page from the same settings blob the watch runs on, so
+	// toggles open in their actual current state (not localStorage/default).
+	url += 'settings=' + encodeURIComponent(JSON.stringify(mConfig || {}));
 	Pebble.openURL(url);
 });
 
@@ -72,6 +75,12 @@ Pebble.addEventListener("webviewclosed", function(e) {
     if (config === null || typeof config !== 'object' || Array.isArray(config)) {
       console.log('config: response is not an object, keeping existing settings');
       return;
+    }
+    // Primary path for the temp unit: the settings page itself knows the
+    // choice, so take it now instead of waiting for the watch's echo.
+    if (typeof config.temp_unit === 'number') {
+      settings.temp_unit = config.temp_unit;
+      console.log('settings: temp_unit=' + settings.temp_unit + ' (from config page)');
     }
     saveLocalData(config);
     returnConfigToPebble();
@@ -157,9 +166,10 @@ function fetchWeather() {
       fetchInFlight = false;
       console.log('weather: geolocation error (' + err.message + '), trying IP fallback');
       if (err.code === err.PERMISSION_DENIED) {
-        // Stop hourly GPS retries while permission is denied; IP fallback
-        // will still be attempted by the timer via fetchWeatherIp().
-        if (weatherTimer) { clearInterval(weatherTimer); weatherTimer = null; }
+        // Stop hammering a denied permission: switch the hourly timer over
+        // to the IP fallback (coarse but works without any permission).
+        if (weatherTimer) { clearInterval(weatherTimer); }
+        weatherTimer = setInterval(fetchWeatherIp, WEATHER_REFRESH_MS);
         // One immediate IP-based attempt now.
         fetchWeatherIp();
       }
@@ -269,10 +279,12 @@ function sendWeatherToWatch(force) {
     console.log('weather: nothing to send (no valid cache)');
     return; // nothing fetched (or partial cache) yet
   }
-  // Convert cached Celsius to the configured unit at send time.
+  // Convert cached Celsius to the configured unit at send time. The
+  // conversion is INLINED: standalone top-level helpers can be renamed away
+  // by the webpack bundler (the "cToF is not defined" ReferenceError).
   var fahrenheit = settings.temp_unit === 1;
-  var hi = fahrenheit ? cToF(lastWeather.hi) : lastWeather.hi;
-  var lo = fahrenheit ? cToF(lastWeather.lo) : lastWeather.lo;
+  var hi = fahrenheit ? Math.round(lastWeather.hi * 9 / 5 + 32) : lastWeather.hi;
+  var lo = fahrenheit ? Math.round(lastWeather.lo * 9 / 5 + 32) : lastWeather.lo;
   // Skip duplicate sends with identical values — EXCEPT when the watch
   // explicitly re-requested (force), which means it never got the last one.
   if (!force && hi === lastSentHi && lo === lastSentLo) {

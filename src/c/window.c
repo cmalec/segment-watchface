@@ -3,7 +3,7 @@
 #include "window.h"
 
 Window *my_window;
-Layer *my_window_layer, *my_shifting_layer;
+Layer *my_window_layer;
 
 void window_init() {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "launch_reason() %d", (int)launch_reason());
@@ -18,6 +18,6 @@ void window_init() {
 void window_deinit() {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "window_deinit()");
 
-  layer_remove_from_parent(my_window_layer);
-  layer_destroy(my_window_layer);
+  // Destroys the root layer (and everything still parented to it) with it.
+  window_destroy(my_window);
 }

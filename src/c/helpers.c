@@ -9,8 +9,8 @@
 static void animation_slide_in_stopped(Animation *animation, bool finished, void *context);
 
 void duration_to_time(int duration_s, int *hours, int *minutes) {
-  *hours = (duration_s / 3600) ?: 0;
-  *minutes = ((duration_s % 3600) / 60) ?: 0;
+  *hours = duration_s / 3600;
+  *minutes = (duration_s % 3600) / 60;
 }
 
 void format_commas(int n, char *out)
@@ -31,19 +31,6 @@ void format_commas(int n, char *out)
     *--out = 0;
 }
 
-const char* get_gcolor_text(GColor m_color){
-  if(gcolor_equal(m_color, GColorClear)) {
-    return "GColorClear";
-  }
-  if(gcolor_equal(m_color, GColorWhite)) {
-    return "GColorWhite";
-  }
-  if(gcolor_equal(m_color, GColorBlack)) {
-    return "GColorBlack";
-  }
-  return "";
-}
-
 char *upcase(char *str) {
   char *s = str;
   while (*s) {
@@ -52,13 +39,14 @@ char *upcase(char *str) {
   return str;
 }
 
-// quick implementation, can be improved
 uint8_t hex_to_num (char h){
   uint8_t rslt=0;
-  if ((h>='0') & (h<='9'))
+  if ((h>='0') && (h<='9'))
     rslt= h-'0';
-  else if ((h>='A') & (h<='F'))
+  else if ((h>='A') && (h<='F'))
     rslt = h-'A'+10;
+  else if ((h>='a') && (h<='f'))
+    rslt = h-'a'+10;
   return rslt;
 }
 

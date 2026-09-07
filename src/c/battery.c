@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "_globals.h"
 #include "battery.h"
+#include "vector.h"
 #include "settings.h"
 #include "helpers.h"
 #include "window.h"
@@ -18,11 +19,6 @@ static bool batteryCharging = false;
 static uint8_t batteryPercent;
 
 static GPath *bolt_path_ptr = NULL;
-
-static GPathInfo BOLT_PATH_INFO = {
-  .num_points = 13,
-  .points = (GPoint []) {{4,4},{6,4},{6,3},{8,3},{8,2},{8,4},{12,4},{10,4},{10,5},{8,5},{8,6},{8,4},{11,4}}
-};
 
 /*
 bi1 Battery Indicator
@@ -73,7 +69,9 @@ void battery_apply_visibility() {
 
 void battery_settings_callback() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "battery_settings_callback()");
-  text_layer_set_text_color(battery_percent_layer, color_helper(colors[c_bi1], global_settings.Invert));
+  // Refresh text color via the charge-state path (handles warning/critical
+  // states AND the invert flag uniformly).
+  battery_update(battery_state_service_peek());
   battery_apply_visibility();
   layer_mark_dirty(text_layer_get_layer(battery_percent_layer));
   layer_mark_dirty(battery_layer);
@@ -93,16 +91,22 @@ void battery_update(BatteryChargeState charge_state) {
   if(batteryPercent==0) {
     batteryPercent=1;
   }
-  /*if(batteryPercent==100) {
-    layer_set_hidden(text_layer_get_layer(battery_percent_layer),true);
-  }
-  else {*/
-    layer_set_hidden(text_layer_get_layer(battery_percent_layer), global_settings.BatteryHide);
-    static char txt[5];
-    snprintf(txt, sizeof(txt), "%u%%", batteryPercent);
-    text_layer_set_text(battery_percent_layer, txt);
-  //}
+  layer_set_hidden(text_layer_get_layer(battery_percent_layer), global_settings.BatteryHide);
+  static char txt[5];
+  snprintf(txt, sizeof(txt), "%u%%", batteryPercent);
+  text_layer_set_text(battery_percent_layer, txt);
 
+  // Percent text color tracks the fill color (warning/critical states);
+  // this lives here, NOT in the draw callback (which is for drawing only).
+  GColor color = color_helper(colors[c_bi1], global_settings.Invert);
+  if(batteryPercent<20) {
+    color = color_helper(colors[c_bi3], global_settings.Invert);
+  }
+  else if(batteryPercent<30) {
+    color = color_helper(colors[c_bi2], global_settings.Invert);
+  }
+  text_layer_set_text_color(battery_percent_layer, color);
+  layer_mark_dirty(battery_layer);
 }
 
 // Phone battery bar: only drawn once the phone has actually reported a
@@ -144,30 +148,28 @@ void battery_layer_update_callback(Layer *my_layer, GContext* ctx) {
     color = color_helper(colors[c_bi2], global_settings.Invert);
   }
 
-  text_layer_set_text_color(battery_percent_layer, color);
-
   graphics_context_set_stroke_color(ctx, color);
   graphics_draw_rect(ctx, BATTERY_ICON);
   graphics_draw_rect(ctx, BATTERY_ICON_TERMINAL);
 
-  graphics_context_set_stroke_color(ctx, color);
   graphics_context_set_fill_color(ctx, color);
 
   if(batteryCharging) {
-  graphics_context_set_stroke_color(ctx, color_helper(colors[c_bi4], global_settings.Invert));
-  gpath_draw_outline(ctx, bolt_path_ptr);
+    graphics_context_set_stroke_color(ctx, color_helper(colors[c_bi4], global_settings.Invert));
+    gpath_draw_outline(ctx, bolt_path_ptr);
   }
   else {
-  // Inner width of the battery icon (border + terminal inset accounted).
-  #ifdef PBL_PLATFORM_EMERY
-    const float inner_max_w = 17.0f;
-  #else
-    const float inner_max_w = 11.0f;
-  #endif
-  uint8_t width = ((batteryPercent/100.0)*inner_max_w);
-  if(width<inner_max_w+1) {
-    width++;
-  }
+    // Fill width proportional to charge, clamped to the icon's inner width
+    // so 100% can't overflow the border by a pixel.
+    #ifdef PBL_PLATFORM_EMERY
+      const int16_t inner_max_w = 17;
+    #else
+      const int16_t inner_max_w = 11;
+    #endif
+    int16_t width = (batteryPercent * inner_max_w) / 100 + 1;
+    if (width > inner_max_w) {
+      width = inner_max_w;
+    }
     #ifdef PBL_PLATFORM_EMERY
     graphics_fill_rect(ctx, GRect(3, 3, width, 7), 0, GCornerNone);
     #else
@@ -186,7 +188,7 @@ void battery_init() {
                                 PBL_IF_RECT_ELSE(GTextAlignmentRight, GTextAlignmentLeft), font_tiny);
   layer_add_child(my_window_layer, text_layer_get_layer(battery_percent_layer));
 
-  bolt_path_ptr = gpath_create(&BOLT_PATH_INFO);
+  bolt_path_ptr = vector_create(&BatteryBoltPathInfo);
   battery_layer = layer_create(BATTERY_LAYER);
   //layer_set_hidden(battery_layer, true);
   layer_set_update_proc(battery_layer, battery_layer_update_callback);

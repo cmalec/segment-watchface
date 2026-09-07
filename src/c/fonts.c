@@ -26,7 +26,6 @@ void fonts_settings_callback() {
 
   fonts_unload_custom_font(font_big);
   int32_t font_res= (global_settings.Seconds && !powerSaveEngaged) ? FONT_BIG_SEC_SIZE : FONT_BIG_SIZE;
-  //if (global_settings.Seconds) //ToDo: update font size for seconds mode.
   font_big = fonts_load_custom_font(resource_get_handle(font_res));
 }
 void fonts_init() {
