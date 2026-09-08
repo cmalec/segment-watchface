@@ -10,13 +10,7 @@
     "uuid": "c3c75c5a-f27b-4686-920f-0bd79ef71277",
     "sdkVersion": "3",
     "enableMultiJS": true,
-    "targetPlatforms": [
-      "aplite",
-      "basalt",
-      "chalk",
-      "diorite",
-      "emery"
-    ],
+    "targetPlatforms": ["emery"],
     "capabilities": [
       "configurable",
       "health",
@@ -56,18 +50,6 @@
         {
           "characterRegex": "[:0-9]",
           "file": "fonts/DS-Digital-Bold.ttf",
-          "name": "FONT_DIGITALE_71",
-          "type": "font"
-        },
-        {
-          "characterRegex": "[:0-9]",
-          "file": "fonts/DS-Digital-Bold.ttf",
-          "name": "FONT_DIGITALE_56",
-          "type": "font"
-        },
-        {
-          "characterRegex": "[:0-9]",
-          "file": "fonts/DS-Digital-Bold.ttf",
           "name": "FONT_DIGITALE_99",
           "type": "font",
           "targetPlatforms": ["emery"]
@@ -80,23 +62,11 @@
           "targetPlatforms": ["emery"]
         },
         {
-          "characterRegex": "[:0-9A-Z ]",
-          "file": "fonts/DS-Digital-Bold.ttf",
-          "name": "FONT_DIGITALE_22",
-          "type": "font"
-        },
-        {
-          "characterRegex": "[:0-9A-Z ]",
+          "characterRegex": "[:0-9]",
           "file": "fonts/DS-Digital-Bold.ttf",
           "name": "FONT_DIGITALE_31",
           "type": "font",
           "targetPlatforms": ["emery"]
-        },
-        {
-          "characterRegex": "[0-9 A-Za-z°%.:, --/' ~]",
-          "file": "fonts/lucon.ttf",
-          "name": "FONT_LUCIDIA_10",
-          "type": "font"
         },
         {
           "characterRegex": "[0-9 A-Za-z°%.:, --/' ~]",

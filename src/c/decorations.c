@@ -202,20 +202,7 @@ void decorations_init() {
     animation_slide_in(wr_outer_layer, 700, UP);
   }
 
-  #if defined (PBL_ROUND)
-    layer_set_hidden(button_back_icon_layer, true);
-    layer_set_hidden(button_next_icon_layer, true);
-    layer_set_hidden(button_prev_icon_layer, true);
-    layer_set_hidden(text_layer_get_layer(button_back_layer), true);
-    layer_set_hidden(text_layer_get_layer(button_next_layer), true);
-    layer_set_hidden(text_layer_get_layer(button_prev_layer), true);
-
-    layer_set_hidden(bitmap_layer_get_layer(logo_layer), true);
-
-    layer_set_hidden(text_layer_get_layer(temp_hi_layer), true);
-    layer_set_hidden(text_layer_get_layer(temp_lo_layer), true);
-
-  #endif
+  // Emery is rectangular, so all decoration layers remain visible.
 
   //animation_slide_in(decorations_layer, 700, RIGHT);
   //animation_slide_in(wr_outer_layer, 700, UP);

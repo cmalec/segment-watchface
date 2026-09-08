@@ -1,5 +1,5 @@
-/* Geometry invariants for the seconds-mode layout on emery (and friends).
- * Guards the regression where the big digits painted ~48px low and the small
+/* Geometry invariants for the native Emery layout.
+ * Guards the regression where the big digits painted low and the small
  * seconds clipped to nothing. Host build; evaluates the real _globals.h. */
 #include "pebble.h"
 #include "test_util.h"
@@ -48,6 +48,20 @@ static void test_normal_and_seconds_heights_differ(void) {
   ASSERT_TRUE(TIMEDIGITS_SECONDS_HEIGHT != TIMEDIGITS_HEIGHT, "seconds frame uses small layout");
 }
 
+static void test_native_screen_bounds(void) {
+  ASSERT_TRUE(FULLSCREEN.size.w == 200 && FULLSCREEN.size.h == 228, "fullscreen is native Emery");
+  ASSERT_TRUE(BACKGROUND_PANEL.origin.y >= 0, "panel starts on-screen");
+  ASSERT_TRUE(BACKGROUND_PANEL.origin.y + BACKGROUND_PANEL.size.h <= 228, "panel fits screen");
+  ASSERT_TRUE(DECORATIONS_TEMP_HI.origin.y + DECORATIONS_TEMP_HI.size.h <= 228, "high temp fits screen");
+  ASSERT_TRUE(DECORATIONS_TEMP_LO.origin.y + DECORATIONS_TEMP_LO.size.h <= 228, "low temp fits screen");
+  ASSERT_TRUE(BATTERY_LAYER.origin.x + BATTERY_LAYER.size.w <= 200, "battery icon fits screen");
+  ASSERT_TRUE(BATTERY_PERCENT.origin.x + BATTERY_PERCENT.size.w <= 200, "battery text fits screen");
+  ASSERT_TRUE(TIMEDIGITS_DATE.origin.y >= HEALTH_LAYER.origin.y + HEALTH_LAYER.size.h,
+              "date is below health row");
+  ASSERT_TRUE(TIMEDIGITS_OFFSET_TOP >= TIMEDIGITS_DATE.origin.y,
+              "clock starts below metadata row");
+}
+
 int main(void) {
   RUN(test_big_digit_frame_fits_font);
   RUN(test_seconds_digits_within_screen);
@@ -55,5 +69,6 @@ int main(void) {
   RUN(test_small_seconds_below_big_digits);
   RUN(test_small_seconds_dont_overlap_digit4);
   RUN(test_normal_and_seconds_heights_differ);
+  RUN(test_native_screen_bounds);
   TEST_SUMMARY();
 }
