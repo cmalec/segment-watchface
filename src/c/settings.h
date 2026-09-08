@@ -2,6 +2,7 @@
 #include <pebble.h>
 
 #define SETTINGS_KEY 1336
+#define SETTINGS_VERSION 3   // bump when the Settings struct layout changes
 #define COLORSET1_KEY 1341
 #define COLORSET2_KEY 1342
 
@@ -27,6 +28,7 @@ enum {
  };
 
 typedef struct Settings {
+  uint8_t version;  // = SETTINGS_VERSION; guards against reading a stale/short blob
   uint8_t Health;
   uint8_t Blink;
   uint8_t Invert;

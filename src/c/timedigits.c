@@ -3,6 +3,7 @@
 #include "_globals.h"
 #include "settings.h"
 #include "helpers.h"
+#include "animation.h"
 #include "window.h"
 #include "fonts.h"
 #include "bluetooth.h"
@@ -233,39 +234,12 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 
   if (units_changed & DAY_UNIT) {
-
-    static char date_day[4];
-    static char date_monthday[3];
-    static char date_month[6];
-    static char full_date_text[20];
-
-    strftime(date_day, sizeof(date_day), "%a", tick_time);
-
-    strftime(date_monthday,
-      sizeof(date_monthday),
-      "%d",
-      tick_time);
-
-      strftime(date_month,
-             sizeof(date_month),
-             "%b",
-             tick_time);
-
-    /* snprintf(full_date_text,
-      sizeof(full_date_text),
-      "%s %s %s",
-      upcase(date_day),
-      date_monthday,
-      upcase(date_month)); */
-
-    snprintf(full_date_text,
-      sizeof(full_date_text),
-      "%s %s",
-      upcase(date_day),
-      date_monthday);
-
+    // Localized date via the system locale: %D is the locale's date
+    // representation (e.g. "09/07/26" US, "07.09.26" de). setlocale(LC_ALL)
+    // is called in main.c. 22px font box is sized for the short numeric form.
+    static char full_date_text[24];
+    strftime(full_date_text, sizeof(full_date_text), "%D", tick_time);
     text_layer_set_text(t_layer[t_date], full_date_text);
-
   }
 
 }

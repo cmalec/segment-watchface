@@ -4,6 +4,7 @@
 #include "vector.h"
 #include "settings.h"
 #include "helpers.h"
+#include "animation.h"
 #include "window.h"
 #include "fonts.h"
 #include "battery.h"

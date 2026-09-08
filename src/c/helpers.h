@@ -1,15 +1,8 @@
 #pragma once
 #include <pebble.h>
-#include "_globals.h"
 
+// Pure helpers (no UI dependencies) — unit-testable on the host.
 void duration_to_time(int duration_s, int *hours, int *minutes);
 void format_commas(int n, char *out);
-char *upcase(char *str);
 uint8_t hex_to_num (char h);
-//void animation_slide_in_cleanup();
-void animation_slide_in(Layer *layer, int delay, direction_t direction);
-// Used to detect calls before init (e.g. during settings re-init when the
-// layer was already destroyed); see animation_slide_in.
-bool animation_layer_valid(Layer *layer);
-TextLayer *text_layer_create_detailed(GRect frame, bool hidden, GColor background_color, GColor foreground_color, GTextAlignment alignment, GFont font);
 GColor color_helper(GColor color, uint8_t inverted);
