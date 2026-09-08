@@ -4,6 +4,7 @@
 #include "vector.h"
 #include "settings.h"
 #include "helpers.h"
+#include "animation.h"
 #include "window.h"
 
 static Layer *bluetooth_layer, *bluetooth_icon_layer, *bluetooth_circle_layer;

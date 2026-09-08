@@ -50,7 +50,8 @@ void handle_init(void) {
     bluetooth_init();
   }
 
-  //APP_LOG(APP_LOG_LEVEL_DEBUG, "memfree %d", heap_bytes_free());
+  // One-time memory report (aplite budget is tight); logs show it at launch.
+  APP_LOG(APP_LOG_LEVEL_INFO, "heap free %d", (int)heap_bytes_free());
 
   //delay started flag. Prevent settings vibe during first few seconds (HOUR_UNIT included in settings update)
   started_timer = app_timer_register(4000, app_started_callback, NULL);

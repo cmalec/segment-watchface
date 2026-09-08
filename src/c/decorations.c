@@ -3,6 +3,7 @@
 #include "_globals.h"
 #include "vector.h"
 #include "helpers.h"
+#include "animation.h"
 #include "settings.h"
 #include "fonts.h"
 #include "window.h"

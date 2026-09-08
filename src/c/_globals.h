@@ -103,16 +103,19 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define TIMEDIGITS_SECONDS_DIGIT1 SCREEN_ELSE(4, 3, 3)
 #define TIMEDIGITS_SECONDS_DIGIT2 SCREEN_ELSE(39, 28, 28)
 #define TIMEDIGITS_SECONDS_DIGIT3 SCREEN_ELSE(86, 62, 62)
-#define TIMEDIGITS_SECONDS_DIGIT4 SCREEN_ELSE(121, 87, 87)
+#define TIMEDIGITS_SECONDS_DIGIT4 SCREEN_ELSE(115, 87, 87)
 // Small trailing seconds right-align to the battery icon (x167-189).
-#define TIMEDIGITS_SECONDS_DIGIT5 SCREEN_ELSE(158, 117, 117)
-#define TIMEDIGITS_SECONDS_DIGIT6 SCREEN_ELSE(176, 128, 128)
+#define TIMEDIGITS_SECONDS_DIGIT5 SCREEN_ELSE(155, 117, 117)
+#define TIMEDIGITS_SECONDS_DIGIT6 SCREEN_ELSE(172, 128, 128)
 #define TIMEDIGITS_SECONDS_SEPARATOR SCREEN_ELSE(50, 36, 36)
 // Frame height = the font's FULL line box (cap+descender): 95 for the 78px
 // digits, 38 for the 31px small seconds. Anything shorter clips the glyph.
 #define TIMEDIGITS_SECONDS_OFFSET_TOP SCREEN_ELSE(42, 52, 52)
 #define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP SCREEN_ELSE(94, 76, 76)
-#define TIMEDIGITS_SECONDS_WIDTH SCREEN_ELSE(42, 30, 30)
+// Frame width = glyph advance (~40 for 78px, ~16 for 31px). Right-aligned
+// digits overhang left in a wider box, so size to the advance to avoid
+// overlapping the neighbouring digit.
+#define TIMEDIGITS_SECONDS_WIDTH SCREEN_ELSE(40, 30, 30)
 #define TIMEDIGITS_SECONDS_SMALL_WIDTH SCREEN_ELSE(17, 11, 11)
 #define TIMEDIGITS_SECONDS_HEIGHT SCREEN_ELSE(95, 56, 56)
 #define TIMEDIGITS_SECONDS_SMALL_HEIGHT SCREEN_ELSE(38, 22, 22)

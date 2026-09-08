@@ -187,6 +187,12 @@ void update_settings() {
   }
 }
 
+// Strongly encouraged by the SDK: surface dropped/failed comms so a lost
+// settings message is visible in logs instead of silently ignored.
+static void settings_inbox_dropped(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_WARNING, "settings: inbox dropped %d", (int)reason);
+}
+
 void settings_inbox(DictionaryIterator *iter, void *context) {
   Tuple *t = dict_read_first(iter);
   if(t) {
@@ -216,6 +222,7 @@ void settings_inbox(DictionaryIterator *iter, void *context) {
 
 
 void settings_default_values() {
+  global_settings.version = SETTINGS_VERSION;
   // Health ON by default: the feature is the watch's raison d'être and a
   // fresh install (new UUID = wiped persisted settings) should show steps.
   global_settings.Health = 1;
@@ -309,9 +316,15 @@ void settings_init() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "settings_init()");
 
   settings_default_values();
-  //persist_delete(1337);
+  // Versioned load: only trust a blob whose header matches the current
+  // struct version; otherwise keep defaults (avoids reading a stale/short
+  // blob after the struct grows). Older fields are re-merged below.
   if(persist_exists(SETTINGS_KEY)) {
-    persist_read_data(SETTINGS_KEY, &global_settings, sizeof(global_settings));
+    Settings stored;
+    int n = persist_read_data(SETTINGS_KEY, &stored, sizeof(stored));
+    if (n >= (int)sizeof(stored) && stored.version == SETTINGS_VERSION) {
+      global_settings = stored;
+    }
   }
   #ifdef PBL_COLOR
     if(persist_exists(COLORSET1_KEY)) {
@@ -334,8 +347,13 @@ void settings_init() {
     powerSaveEngaged = setting_is_power_save(tick_time->tm_hour,tick_time->tm_min);
   }
 
+  // Register callbacks BEFORE app_message_open so no message is missed in the
+  // window between open and registration (SDK-recommended order).
   app_message_register_inbox_received(settings_inbox);
-  app_message_open(512, 512);
+  app_message_register_inbox_dropped(settings_inbox_dropped);
+  // Largest real message is a color set: key header + 50 hex chars. Anything
+  // bigger just wastes heap on aplite (24KB total budget).
+  app_message_open(128, 128);
 
 
   if (global_settings.SwitchSet==2) {
