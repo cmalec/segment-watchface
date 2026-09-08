@@ -2,96 +2,57 @@
 #include "vector.h"
 
 /*
- * GPathInfo arrays and one-time scaling.
- *
- * CRITICAL SDK FACT: gpath_create() copies the POINTS POINTER from the
- * GPathInfo, not the array contents. Any mutation through path->points
- * mutates the shared array. Therefore the arrays below are scaled EXACTLY
- * ONCE per app lifetime (guarded by s_scaled), and every GPath created from
- * them afterwards shares the scaled points. Never scale a second time —
- * see the garbled-icons incident.
+ * Native Emery vector art. These coordinates are authored at the actual
+ * 200x228 target size. No legacy-platform scale factor is applied at runtime.
  */
 
 GPathInfo HealthFootPathInfo = {
   .num_points = 13,
-  .points = (GPoint []) {{0,1}, {1,1}, {1,0}, {2,0}, {2,1}, {3,1}, {3,3}, {2,3}, {2,5}, {1,5}, {1,4}, {0,4}, {0,1}}
+  .points = (GPoint []) {{0,1}, {1,1}, {1,0}, {2,0}, {2,1}, {4,1}, {4,4}, {2,4}, {2,6}, {1,6}, {1,5}, {0,5}, {0,1}}
 };
 GPathInfo HealthHeelPathInfo = {
   .num_points = 4,
-  .points = (GPoint []) {{1,7}, {2,7}, {2,8}, {1,8}}
+  .points = (GPoint []) {{1,9}, {2,9}, {2,11}, {1,11}}
 };
 GPathInfo HealthZee1PathInfo = {
   .num_points = 6,
-  .points = (GPoint []) {{0,2}, {2,2}, {2,3}, {0,5}, {0,6}, {2,6}}
+  .points = (GPoint []) {{0,2}, {2,2}, {2,4}, {0,6}, {0,8}, {2,8}}
 };
 GPathInfo HealthZee2PathInfo = {
   .num_points = 6,
-  .points = (GPoint []) {{3,1}, {6,1}, {6,2}, {3,5}, {3,6}, {6,6}}
+  .points = (GPoint []) {{4,1}, {8,1}, {8,2}, {4,6}, {4,8}, {8,8}}
 };
 GPathInfo HealthZee3PathInfo = {
   .num_points = 6,
-  .points = (GPoint []) {{7,0}, {11,0}, {11,1}, {7,5}, {7,6}, {11,6}}
+  .points = (GPoint []) {{9,0}, {15,0}, {15,1}, {9,6}, {9,8}, {15,8}}
 };
 GPathInfo HealthHeartPathInfo = {
   .num_points = 13,
-  .points = (GPoint []) {{0,4}, {2,1}, {4,2}, {5,3}, {6,2}, {8,1}, {10,4}, {5,10}, {0,4}, {0,4}, {0,4}, {0,4}, {0,4}}
+  .points = (GPoint []) {{0,5}, {2,1}, {5,2}, {6,4}, {8,2}, {11,1}, {13,5}, {6,13}, {0,5}, {0,5}, {0,5}, {0,5}, {0,5}}
 };
 
 GPathInfo BluetoothPathInfo = {
   .num_points = 18,
-  .points = (GPoint []) {{0, 1}, {2, 3}, {3, 3}, {3, 0}, {4, 0}, {6, 2}, {4, 4}, {6, 6}, {4, 8}, {3, 8}, {3, 5}, {2, 5}, {0, 7}, {2, 5}, {3, 5}, {3, 3}, {2, 3}, {0, 1}}
+  .points = (GPoint []) {{0,1}, {2,4}, {4,4}, {4,0}, {5,0}, {8,2}, {5,5}, {8,8}, {5,11}, {4,11}, {4,6}, {2,6}, {0,9}, {2,6}, {4,6}, {4,4}, {2,4}, {0,1}}
 };
 
 GPathInfo ArrowLeftPathInfo = {
   .num_points = 5,
-  .points = (GPoint []) {{0,2}, {4,0}, {4,5}, {0,3}, {0,2}}
+  .points = (GPoint []) {{0,2}, {5,0}, {5,6}, {0,4}, {0,2}}
 };
 GPathInfo ArrowRightPathInfo = {
   .num_points = 5,
-  .points = (GPoint []) {{0,0}, {4,2}, {4,3}, {0,5}, {0,0}}
+  .points = (GPoint []) {{0,0}, {5,2}, {5,4}, {0,6}, {0,0}}
 };
 GPathInfo WaterResistOuterPathInfo = {
   .num_points = 9,
-  .points = (GPoint []) {{0,2}, {2,0}, {39,0}, {41,2}, {41,9}, {35,15}, {5,15}, {0,10}, {0,2}}
+  .points = (GPoint []) {{0,2}, {2,0}, {54,0}, {56,2}, {56,12}, {48,20}, {6,20}, {0,13}, {0,2}}
 };
 GPathInfo BatteryBoltPathInfo = {
   .num_points = 13,
-  .points = (GPoint []) {{4,4},{6,4},{6,3},{8,3},{8,2},{8,4},{12,4},{10,4},{10,5},{8,5},{8,6},{8,4},{11,4}}
+  .points = (GPoint []) {{5,5}, {8,5}, {8,4}, {11,4}, {11,2}, {11,5}, {16,5}, {13,5}, {13,6}, {11,6}, {11,8}, {11,5}, {15,5}}
 };
 
-static bool s_scaled = false;
-
-static void scale_info_once(GPathInfo *info) {
-  for (uint32_t i = 0; i < info->num_points; i++) {
-    info->points[i].x = (info->points[i].x * GPATH_SCALE_NUM) >> 10;
-    info->points[i].y = (info->points[i].y * GPATH_SCALE_NUM) >> 10;
-  }
-}
-
-static void ensure_scaled(void) {
-  if (s_scaled) {
-    return;
-  }
-#if defined(PBL_PLATFORM_EMERY)
-  scale_info_once(&HealthFootPathInfo);
-  scale_info_once(&HealthHeelPathInfo);
-  scale_info_once(&HealthZee1PathInfo);
-  scale_info_once(&HealthZee2PathInfo);
-  scale_info_once(&HealthZee3PathInfo);
-  scale_info_once(&HealthHeartPathInfo);
-  scale_info_once(&BluetoothPathInfo);
-  scale_info_once(&ArrowLeftPathInfo);
-  scale_info_once(&ArrowRightPathInfo);
-  scale_info_once(&WaterResistOuterPathInfo);
-  scale_info_once(&BatteryBoltPathInfo);
-#endif
-  s_scaled = true;
-}
-
-// Create a GPath from a shared GPathInfo, with the platform scale applied
-// exactly once per array (app lifetime). This is the ONLY sanctioned way to
-// create GPaths from the arrays in this file.
 GPath *vector_create(const GPathInfo *info) {
-  ensure_scaled();
   return gpath_create(info);
 }

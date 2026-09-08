@@ -15,10 +15,10 @@ node tests/test_pkjs.js   # phone-side pkjs logic (temp conversion, staleness, c
 
 | Suite | Platform(s) | What it guards |
 |-------|-------------|----------------|
-| `test_helpers` | aplite + emery | `duration_to_time`, `format_commas` (steps grouping), `hex_to_num` |
-| `test_settings` | aplite + emery | `setting_is_set2` / `setting_is_power_save` half-hour window math, incl. overnight wrap and end-exclusive boundary |
-| `test_colors` | aplite | settings-page GColor8 hex ⇄ watch `hex_to_num` unpack round-trip (the B1 wire contract) |
-| `test_layout` | emery + basalt | seconds-mode frame geometry — the DS-Digital baseline bug regression guard (frame height = full font line box, digits on-screen, separator between digit pairs, small seconds clear of digit 4) |
+| `test_helpers_emery` | emery | `duration_to_time`, `format_commas` (steps grouping), `hex_to_num` |
+| `test_settings_emery` | emery | `setting_is_set2` / `setting_is_power_save` half-hour window math, incl. overnight wrap and end-exclusive boundary |
+| `test_colors_emery` | emery | settings-page GColor8 hex ⇄ watch `hex_to_num` unpack round-trip (the B1 wire contract) |
+| `test_layout_emery` | emery | native 200×228 bounds and seconds-mode frame geometry — full font line boxes, on-screen digits, separator ordering, and non-overlapping seconds |
 | `test_pkjs.js` | node | `isStale` weather cache, `Math.round(c*9/5+32)` °F conversion, cssToByte/hex color round-trip |
 
 ## Adding a test

@@ -25,13 +25,11 @@ void bluetooth_settings_callback() {
   // a BT connect/disconnect event to take effect.
   bluetooth_icon_toggle(global_settings.BluetoothVibe);
   layer_mark_dirty(bluetooth_layer);
-  #if defined(PBL_PLATFORM_EMERY) && defined(PBL_HEALTH)
   // BT badge visibility changes the health row's left origin; re-anchor.
   extern void health_layout_row();
   if (global_settings.Health) {
     health_layout_row();
   }
-  #endif
 }
 
 void bluetooth_circle_layer_update_callback(Layer *my_layer, GContext* ctx) {
@@ -40,11 +38,7 @@ void bluetooth_circle_layer_update_callback(Layer *my_layer, GContext* ctx) {
     color = color_helper(colors[c_bl3], global_settings.Invert);
   }
   graphics_context_set_fill_color(ctx, color);
-  #ifdef PBL_PLATFORM_EMERY
-  graphics_fill_circle(ctx, GPoint(7,7), 7);
-  #else
-  graphics_fill_circle(ctx, GPoint(5,5), 5);
-  #endif
+  graphics_fill_circle(ctx, GPoint(7, 7), 7);
 }
 
 void bluetooth_layer_update_callback(Layer *my_layer, GContext* ctx) {
