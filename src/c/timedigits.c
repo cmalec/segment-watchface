@@ -20,8 +20,8 @@ static PropertyAnimation *separator_animation;
 static char time_text[] = "0000";
 
 typedef struct  __attribute__((__packed__)){
-  uint8_t left;
-  uint8_t top;
+  int16_t left;
+  int16_t top;
   uint8_t width;
   uint8_t hight;
   char*   text;
@@ -286,7 +286,11 @@ TextLayer *timedigits_init_big_digit(int d) {
   TextLayer *text_layer = text_layer_create(GRect(digit_data[d].left, digit_data[d].top, digit_data[d].width, digit_data[d].hight));
   text_layer_set_background_color(text_layer, GColorClear);
   text_layer_set_text_color(text_layer, color_helper(colors[digit_data[d].color] , global_settings.Invert));
-  text_layer_set_text_alignment(text_layer, GTextAlignmentRight);
+  // Small trailing seconds use a frame ~1px wider than the glyph advance;
+  // centering them avoids the left-bearing overhang that right alignment
+  // clips to nothing. Big digits keep right alignment (box == advance).
+  text_layer_set_text_alignment(text_layer,
+      (digit_data[d].font == f_sec) ? GTextAlignmentCenter : GTextAlignmentRight);
   if (digit_data[d].font== f_big) {
     text_layer_set_font(text_layer, font_big);
   }
