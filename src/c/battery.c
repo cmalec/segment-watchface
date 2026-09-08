@@ -34,25 +34,15 @@ bi4 Battery Charging
 // BatteryHide (everything hidden -> no reserved space on that side... but
 // health stays put; it simply has room to breathe).
 int16_t battery_right_margin(void) {
-  #ifdef PBL_PLATFORM_EMERY
-    if (global_settings.BatteryHide) return 0;
-    if (global_settings.BatteryIconOnly) return 52;   // percent text only
-    return 85;                                        // percent + icon
-  #else
-    if (global_settings.BatteryHide) return 0;
-    if (global_settings.BatteryIconOnly) return 38;
-    return 60;
-  #endif
+  if (global_settings.BatteryHide) return 0;
+  if (global_settings.BatteryIconOnly) return 52; // percent text only
+  return 85;                                      // percent + icon
 }
 
 // Left origin (screen x) for the health row. With the BT badge hidden, the
 // row slides left to use the freed space.
 int16_t health_left_origin(void) {
-  #ifdef PBL_PLATFORM_EMERY
-    return global_settings.BluetoothShow ? 25 : 10;
-  #else
-    return global_settings.BluetoothShow ? 25 : 12;
-  #endif
+  return global_settings.BluetoothShow ? 25 : 10;
 }
 
 void battery_apply_visibility() {
@@ -76,14 +66,12 @@ void battery_settings_callback() {
   battery_apply_visibility();
   layer_mark_dirty(text_layer_get_layer(battery_percent_layer));
   layer_mark_dirty(battery_layer);
-  #if defined(PBL_PLATFORM_EMERY) && defined(PBL_HEALTH)
-  // The battery reserve width may have changed (icon vs percent-only vs
+  // The battery reserve width may have changed (icon vs percent-only or
   // hidden); re-anchor the heart-rate readout.
   extern void health_layout_row();
   if (global_settings.Health) {
     health_layout_row();
   }
-  #endif
 }
 
 void battery_update(BatteryChargeState charge_state) {
@@ -162,20 +150,12 @@ void battery_layer_update_callback(Layer *my_layer, GContext* ctx) {
   else {
     // Fill width proportional to charge, clamped to the icon's inner width
     // so 100% can't overflow the border by a pixel.
-    #ifdef PBL_PLATFORM_EMERY
-      const int16_t inner_max_w = 17;
-    #else
-      const int16_t inner_max_w = 11;
-    #endif
+    const int16_t inner_max_w = 17;
     int16_t width = (batteryPercent * inner_max_w) / 100 + 1;
     if (width > inner_max_w) {
       width = inner_max_w;
     }
-    #ifdef PBL_PLATFORM_EMERY
     graphics_fill_rect(ctx, GRect(3, 3, width, 7), 0, GCornerNone);
-    #else
-    graphics_fill_rect(ctx, GRect(2, 2, width, 5), 0, GCornerNone);
-    #endif
   }
 }
 
@@ -186,16 +166,13 @@ void battery_init() {
 
   battery_percent_layer = text_layer_create_detailed(BATTERY_PERCENT, false,
                                 GColorClear, color_helper(colors[c_bi1], global_settings.Invert),
-                                PBL_IF_RECT_ELSE(GTextAlignmentRight, GTextAlignmentLeft), font_tiny);
+                                GTextAlignmentRight, font_tiny);
   layer_add_child(my_window_layer, text_layer_get_layer(battery_percent_layer));
 
   bolt_path_ptr = vector_create(&BatteryBoltPathInfo);
   battery_layer = layer_create(BATTERY_LAYER);
-  //layer_set_hidden(battery_layer, true);
   layer_set_update_proc(battery_layer, battery_layer_update_callback);
-  #if defined(PBL_RECT)
-    layer_add_child(my_window_layer, battery_layer);
-  #endif
+  layer_add_child(my_window_layer, battery_layer);
 
   battery_update(battery_state_service_peek());
   battery_state_service_subscribe(&battery_update);

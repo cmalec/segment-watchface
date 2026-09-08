@@ -20,20 +20,18 @@ build_and_run() {
   "./$OUT/$name" || fail=1
 }
 
-# pure helpers (platform-independent, but build once per a couple platforms)
-build_and_run test_helpers aplite tests/host/test_helpers.c src/c/helpers.c
+# Segment targets Emery only. Build each pure suite against the Emery mock so
+# the layout contract cannot silently regress to a legacy form factor.
 build_and_run test_helpers_emery PBL_PLATFORM_EMERY tests/host/test_helpers.c src/c/helpers.c
 
 # settings range logic
-build_and_run test_settings aplite tests/host/test_settings.c src/c/settings.c src/c/helpers.c
 build_and_run test_settings_emery PBL_PLATFORM_EMERY tests/host/test_settings.c src/c/settings.c src/c/helpers.c
 
 # color packing contract
-build_and_run test_colors aplite tests/host/test_colors.c src/c/helpers.c
+build_and_run test_colors_emery PBL_PLATFORM_EMERY tests/host/test_colors.c src/c/helpers.c
 
-# seconds-mode layout invariants (regression guard for the DS-Digital bug)
+# native Emery layout invariants
 build_and_run test_layout_emery PBL_PLATFORM_EMERY tests/host/test_layout.c
-build_and_run test_layout_basalt PBL_PLATFORM_BASALT tests/host/test_layout.c
 
 echo
 if [ $fail -eq 0 ]; then echo "ALL TESTS PASSED"; else echo "SOME TESTS FAILED"; exit 1; fi

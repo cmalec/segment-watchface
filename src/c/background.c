@@ -24,32 +24,16 @@ void background_layer_update_callback(Layer *my_layer, GContext* ctx) {
 }
 
 void background_panel_layer_update_callback(Layer *my_layer, GContext* ctx) {
-	GRect bounds = layer_get_bounds(my_layer);
-  GPoint center = grect_center_point(&bounds);
+  (void)my_layer;
 
 	graphics_context_set_fill_color(ctx, color_helper(colors[c_bg1], global_settings.Invert));
-	#if defined (PBL_RECT)
-		graphics_fill_rect(ctx, BACKGROUND_PANEL_OUTER, BACKGROUND_PANEL_RADIUS, GCornersAll);
-	#else
-		//graphics_fill_radial(ctx, FULLSCREEN, GOvalScaleModeFillCircle, 65, 0, 360);
-		graphics_fill_circle(ctx, center, 82);
-	#endif
+	graphics_fill_rect(ctx, BACKGROUND_PANEL_OUTER, BACKGROUND_PANEL_RADIUS, GCornersAll);
 
 	graphics_context_set_fill_color(ctx, color_helper(colors[c_bg2], global_settings.Invert));
-	#if defined (PBL_RECT)
-		graphics_fill_rect(ctx, BACKGROUND_PANEL_MIDDLE, BACKGROUND_PANEL_RADIUS, GCornersAll);
-	#else
-		//graphics_fill_radial(ctx, BACKGROUND_PANEL_MIDDLE, GOvalScaleModeFillCircle, 65, 0, 360);
-		graphics_fill_circle(ctx, center, 80);
-	#endif
+	graphics_fill_rect(ctx, BACKGROUND_PANEL_MIDDLE, BACKGROUND_PANEL_RADIUS, GCornersAll);
 
 	graphics_context_set_fill_color(ctx, color_helper(colors[c_bg3], global_settings.Invert));
-	#if defined (PBL_RECT)
-		graphics_fill_rect(ctx, BACKGROUND_PANEL_INNER, BACKGROUND_PANEL_RADIUS - 1, GCornersAll);
-	#else
-		//graphics_fill_radial(ctx, BACKGROUND_PANEL_INNER, GOvalScaleModeFillCircle, 65, 0, 360);
-		graphics_fill_circle(ctx, center, 78);
-	#endif
+	graphics_fill_rect(ctx, BACKGROUND_PANEL_INNER, BACKGROUND_PANEL_RADIUS - 1, GCornersAll);
 }
 
 void background_init() {

@@ -3,8 +3,7 @@
  * test the pure logic in src/c/ (settings ranges, comma/hex formatting,
  * color packing). NOT a full SDK — only the pieces the tested code touches.
  *
- * Define exactly one of PBL_PLATFORM_APLITE / PBL_PLATFORM_EMERY per test
- * binary to exercise platform-gated paths.
+ * Tests define PBL_PLATFORM_EMERY to match the sole supported target.
  */
 #pragma once
 
@@ -20,7 +19,9 @@
 typedef struct { int16_t x, y; } GPoint;
 typedef struct { int16_t w, h; } GSize;
 typedef struct GRect { GPoint origin; GSize size; } GRect;
-#define GRect(x, y, w, h) ((GRect){ .origin = GPoint(x, y), .size = GSize(w, h) })
+#define GPoint(px, py) ((GPoint){ .x = (px), .y = (py) })
+#define GSize(pw, ph) ((GSize){ .w = (pw), .h = (ph) })
+#define GRect(px, py, pw, ph) ((GRect){ .origin = GPoint(px, py), .size = GSize(pw, ph) })
 
 /* ---- color ---- */
 typedef struct GColor8 { uint8_t argb; } GColor8;
@@ -116,20 +117,20 @@ typedef struct { uint8_t charge_percent; bool is_charging; bool is_plugged; } Ba
 #define MESSAGE_KEY_hourlyvibe 10004
 #define MESSAGE_KEY_branding_mask 10005
 #define MESSAGE_KEY_battery_hide 10006
-#define MESSAGE_KEY_seconds 10007
-#define MESSAGE_KEY_powersave 10008
-#define MESSAGE_KEY_ps_start 10009
-#define MESSAGE_KEY_ps_end 10010
-#define MESSAGE_KEY_switchset 10011
-#define MESSAGE_KEY_switch_start 10012
-#define MESSAGE_KEY_switch_end 10013
-#define MESSAGE_KEY_health 10014
-#define MESSAGE_KEY_wtemp_req 10015
-#define MESSAGE_KEY_wtemp_hi 10016
-#define MESSAGE_KEY_wtemp_lo 10017
-#define MESSAGE_KEY_pbatt_level 10018
-#define MESSAGE_KEY_battery_icon_only 10022
-#define MESSAGE_KEY_temp_unit 10023
-#define MESSAGE_KEY_setcolors 10019
-#define MESSAGE_KEY_set1colors 10020
-#define MESSAGE_KEY_set2colors 10021
+#define MESSAGE_KEY_seconds 10009
+#define MESSAGE_KEY_powersave 10010
+#define MESSAGE_KEY_ps_start 10011
+#define MESSAGE_KEY_ps_end 10012
+#define MESSAGE_KEY_switchset 10013
+#define MESSAGE_KEY_switch_start 10014
+#define MESSAGE_KEY_switch_end 10015
+#define MESSAGE_KEY_health 10016
+#define MESSAGE_KEY_wtemp_req 10017
+#define MESSAGE_KEY_wtemp_hi 10018
+#define MESSAGE_KEY_wtemp_lo 10019
+#define MESSAGE_KEY_pbatt_level 10020
+#define MESSAGE_KEY_battery_icon_only 10007
+#define MESSAGE_KEY_temp_unit 10008
+#define MESSAGE_KEY_setcolors 10021
+#define MESSAGE_KEY_set1colors 10022
+#define MESSAGE_KEY_set2colors 10023

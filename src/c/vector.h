@@ -2,14 +2,10 @@
 #include <pebble.h>
 
 /*
- * Shared GPathInfo arrays for all vector art in the app + one-time scaling.
+ * Shared native Emery GPathInfo arrays for all vector art in the app.
  *
- * CRITICAL SDK FACT: gpath_create() copies the POINTS POINTER, not the
- * array. Mutating path->points mutates the shared array. So the arrays are
- * scaled exactly once per app lifetime inside vector_create(); callers must
- * use vector_create() and must NEVER touch path->points.
- *
- * Rule for every module: GPath *p = vector_create(&SomePathInfo);
+ * GPath creation does not mutate these arrays. Callers use vector_create()
+ * so ownership and construction stay consistent across the face.
  */
 
 // health.c (foot, heel, zzz, heart)
@@ -31,14 +27,5 @@ extern GPathInfo WaterResistOuterPathInfo;
 // battery.c (charging bolt)
 extern GPathInfo BatteryBoltPathInfo;
 
-// Emery uniform scale factor (1.389 << 10). Identity on other platforms.
-#if defined(PBL_PLATFORM_EMERY)
-#define GPATH_SCALE_NUM 1422
-#else
-#define GPATH_SCALE_NUM 1024
-#endif
-
-// Create a GPath from a shared GPathInfo with the platform scale applied
-// exactly once per array (app lifetime). The only sanctioned constructor
-// for the arrays in vector.c.
+// Create a GPath from a native Emery path definition.
 GPath *vector_create(const GPathInfo *info);
