@@ -53,6 +53,4 @@ GPathInfo BatteryBoltPathInfo = {
   .points = (GPoint []) {{5,5}, {8,5}, {8,4}, {11,4}, {11,2}, {11,5}, {16,5}, {13,5}, {13,6}, {11,6}, {11,8}, {11,5}, {15,5}}
 };
 
-GPath *vector_create(const GPathInfo *info) {
-  return gpath_create(info);
-}
+

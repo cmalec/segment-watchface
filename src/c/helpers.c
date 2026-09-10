@@ -35,33 +35,13 @@ uint8_t hex_to_num (char h){
   return rslt;
 }
 
-GColor color_inverted(GColor source) {
-    GColor inverted = source;
-  if(gcolor_equal(source, GColorBlack))
-    inverted= GColorWhite;
-  if(gcolor_equal(source, GColorWhite))
-    inverted= GColorBlack;
-  #ifdef PBL_COLOR
-    if(!gcolor_equal(source, GColorClear)) //GColorClear should not change
-      inverted.argb= source.argb ^ 0b00111111;
-  #endif
-  return inverted;
-}
-
+// Emery-only target: PBL_COLOR is always defined, so the single XOR
+// (`^ 0b00111111`, flipping the 6 color bits and leaving alpha untouched)
+// covers Black<->White and every other color. GColorClear is exempt so an
+// alpha-zero color stays transparent.
 GColor color_helper(GColor color, uint8_t inverted) {
-  #ifdef PBL_BW
-    if(inverted) {
-      if(gcolor_equal(color, GColorBlack)) {
-        color = GColorWhite;
-      }
-      else {
-        color = GColorBlack;
-      }
-    }
-  #else
-    if(inverted) {
-      color = color_inverted(color);
-    }
-  #endif
+  if(inverted && !gcolor_equal(color, GColorClear)) {
+    color.argb = color.argb ^ 0b00111111;
+  }
   return color;
 }

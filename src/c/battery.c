@@ -164,12 +164,12 @@ void battery_init() {
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "battery_init()");
 
-  battery_percent_layer = text_layer_create_detailed(BATTERY_PERCENT, false,
+  battery_percent_layer = text_layer_create_detailed(BATTERY_PERCENT,
                                 GColorClear, color_helper(colors[c_bi1], global_settings.Invert),
                                 GTextAlignmentRight, font_tiny);
   layer_add_child(my_window_layer, text_layer_get_layer(battery_percent_layer));
 
-  bolt_path_ptr = vector_create(&BatteryBoltPathInfo);
+  bolt_path_ptr = gpath_create(&BatteryBoltPathInfo);
   battery_layer = layer_create(BATTERY_LAYER);
   layer_set_update_proc(battery_layer, battery_layer_update_callback);
   layer_add_child(my_window_layer, battery_layer);

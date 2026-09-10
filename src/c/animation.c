@@ -57,9 +57,8 @@ bool animation_layer_valid(Layer *layer) {
   return layer != NULL && layer_get_window(layer) != NULL;
 }
 
-TextLayer *text_layer_create_detailed(GRect frame, bool hidden, GColor background_color, GColor foreground_color, GTextAlignment alignment, GFont font) {
+TextLayer *text_layer_create_detailed(GRect frame, GColor background_color, GColor foreground_color, GTextAlignment alignment, GFont font) {
   TextLayer *text_layer = text_layer_create(frame);
-  layer_set_hidden(text_layer_get_layer(text_layer), hidden);
   text_layer_set_background_color(text_layer, background_color);
   text_layer_set_text_color(text_layer, foreground_color);
   text_layer_set_text_alignment(text_layer, alignment);
