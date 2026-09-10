@@ -62,6 +62,15 @@ static void test_native_screen_bounds(void) {
               "clock starts below metadata row");
 }
 
+static void test_small_seconds_bottom_aligned_with_big_digits(void) {
+  // Both sizes bottom-anchor to their font ascent: 78px ink bottom is at
+  // frame_top + 80, 31px at frame_top + 32 (TTF-measured). The tops must
+  // differ by 48 so both rows share one baseline — otherwise the seconds
+  // sink below the big digits (regression: 131 left them 4px low).
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP + 32 == TIMEDIGITS_SECONDS_OFFSET_TOP + 80,
+              "small seconds share the big digits' baseline");
+}
+
 int main(void) {
   RUN(test_big_digit_frame_fits_font);
   RUN(test_seconds_digits_within_screen);
@@ -69,6 +78,7 @@ int main(void) {
   RUN(test_small_seconds_below_big_digits);
   RUN(test_small_seconds_dont_overlap_digit4);
   RUN(test_normal_and_seconds_heights_differ);
+  RUN(test_small_seconds_bottom_aligned_with_big_digits);
   RUN(test_native_screen_bounds);
   TEST_SUMMARY();
 }
