@@ -75,12 +75,17 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 // TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP = 127 makes the small seconds' ink
 // bottom 127+32 = 159 = the big digits' 79+80, so both rows sit on the same
 // baseline. The previous 131 dropped the seconds 4px below the big digits.
+//
+// Horizontal: the 78px glyph advance is 40px, so adjacent minute digits
+// must start >= 40px apart or their ink overlaps (a narrow tens '1' then
+// sat inside the ones digit). DIGIT4 = DIGIT3 + 40; the small seconds keep
+// the same box-touch spacing, ending 2px inside the right screen edge.
 #define TIMEDIGITS_SECONDS_DIGIT1 4
 #define TIMEDIGITS_SECONDS_DIGIT2 39
 #define TIMEDIGITS_SECONDS_DIGIT3 86
-#define TIMEDIGITS_SECONDS_DIGIT4 115
-#define TIMEDIGITS_SECONDS_DIGIT5 155
-#define TIMEDIGITS_SECONDS_DIGIT6 172
+#define TIMEDIGITS_SECONDS_DIGIT4 126
+#define TIMEDIGITS_SECONDS_DIGIT5 166
+#define TIMEDIGITS_SECONDS_DIGIT6 181
 #define TIMEDIGITS_SECONDS_SEPARATOR 50
 #define TIMEDIGITS_SECONDS_OFFSET_TOP 79
 #define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP 127
