@@ -178,18 +178,18 @@ void health_init() {
   health_layer = layer_create(HEALTH_LAYER);
   layer_add_child(my_window_layer, health_layer);
 
-  health_text_layer = text_layer_create_detailed(HEALTH_TEXT_LAYER, false,
+  health_text_layer = text_layer_create_detailed(HEALTH_TEXT_LAYER,
                                 GColorClear, color_helper(colors[c_t2], global_settings.Invert),
                                 GTextAlignmentLeft, font_tiny);
   layer_add_child(health_layer, text_layer_get_layer(health_text_layer));
 
-  foot_path_ptr = vector_create(&HealthFootPathInfo);
-  heel_path_ptr = vector_create(&HealthHeelPathInfo);
-  zee1_path_ptr = vector_create(&HealthZee1PathInfo);
-  zee2_path_ptr = vector_create(&HealthZee2PathInfo);
-  zee3_path_ptr = vector_create(&HealthZee3PathInfo);
+  foot_path_ptr = gpath_create(&HealthFootPathInfo);
+  heel_path_ptr = gpath_create(&HealthHeelPathInfo);
+  zee1_path_ptr = gpath_create(&HealthZee1PathInfo);
+  zee2_path_ptr = gpath_create(&HealthZee2PathInfo);
+  zee3_path_ptr = gpath_create(&HealthZee3PathInfo);
 
-  heart_path_ptr = vector_create(&HealthHeartPathInfo);
+  heart_path_ptr = gpath_create(&HealthHeartPathInfo);
 
   // Native Emery bounds leave room for the complete zzz path.
   health_zee_layer = layer_create(GRect(0, 3, 17, 10));
@@ -208,7 +208,7 @@ void health_init() {
   layer_set_update_proc(health_bpm_icon_layer, health_bpm_icon_layer_update_callback);
   layer_add_child(health_layer, health_bpm_icon_layer);
 
-  health_bpm_layer = text_layer_create_detailed(HEALTH_BPM_TEXT, false,
+  health_bpm_layer = text_layer_create_detailed(HEALTH_BPM_TEXT,
                                 GColorClear, color_helper(colors[c_t2], global_settings.Invert),
                                 GTextAlignmentRight, font_tiny);
   layer_add_child(health_layer, text_layer_get_layer(health_bpm_layer));

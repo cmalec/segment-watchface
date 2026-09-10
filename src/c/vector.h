@@ -4,8 +4,8 @@
 /*
  * Shared native Emery GPathInfo arrays for all vector art in the app.
  *
- * GPath creation does not mutate these arrays. Callers use vector_create()
- * so ownership and construction stay consistent across the face.
+ * GPath creation does not mutate these arrays. Callers construct with
+ * gpath_create() directly.
  */
 
 // health.c (foot, heel, zzz, heart)
@@ -27,5 +27,4 @@ extern GPathInfo WaterResistOuterPathInfo;
 // battery.c (charging bolt)
 extern GPathInfo BatteryBoltPathInfo;
 
-// Create a GPath from a native Emery path definition.
-GPath *vector_create(const GPathInfo *info);
+

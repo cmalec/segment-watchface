@@ -9,18 +9,12 @@
 static bool s_screen_is_obstructed;
 
 // Event fires once, before the obstruction appears or disappears
-void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, void *context) {
-  if (s_screen_is_obstructed) {
-    // Obstruction is about disappear
-  } else {
-    // Obstruction is about to appear
-    // Hide the things
-    decorations_toggle(true);
-  }
+static void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, void *context) {
+  // only need the did_change side; appearance itself is handled there
 }
 
 // Event fires once, after obstruction appears or disappears
-void prv_unobstructed_did_change(void *context) {
+static void prv_unobstructed_did_change(void *context) {
   // Keep track if the screen is obstructed or not
   s_screen_is_obstructed = !s_screen_is_obstructed;
 
@@ -32,7 +26,7 @@ void prv_unobstructed_did_change(void *context) {
 }
 
 // Event fires frequently, while obstruction is appearing or disappearing
-void prv_unobstructed_change(AnimationProgress progress, void *context) {
+static void prv_unobstructed_change(AnimationProgress progress, void *context) {
   // Current unobstructed window size
   GRect full_bounds = layer_get_bounds(my_window_layer);
   GRect bounds = layer_get_unobstructed_bounds(my_window_layer);

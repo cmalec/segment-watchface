@@ -128,10 +128,10 @@ void decorations_init() {
   layer_set_update_proc(button_prev_icon_layer, prev_icon_layer_update_callback);
   layer_add_child(decorations_layer, button_prev_icon_layer);
 
-  arrow_left_path_ptr = vector_create(&ArrowLeftPathInfo);
-  arrow_right_path_ptr = vector_create(&ArrowRightPathInfo);
+  arrow_left_path_ptr = gpath_create(&ArrowLeftPathInfo);
+  arrow_right_path_ptr = gpath_create(&ArrowRightPathInfo);
 
-  wr_outer_path_ptr = vector_create(&WaterResistOuterPathInfo);
+  wr_outer_path_ptr = gpath_create(&WaterResistOuterPathInfo);
 
   wr_outer_layer = layer_create(DECORATIONS_WR_OUTER);
   //layer_set_hidden(wr_outer_layer, true);
@@ -141,13 +141,13 @@ void decorations_init() {
   // "CM" label removed per feedback — the WR box stays decorative for now.
 
   // DAY HIGH TEMP (was "WATER")
-  temp_hi_layer = text_layer_create_detailed(DECORATIONS_TEMP_HI, false,
+  temp_hi_layer = text_layer_create_detailed(DECORATIONS_TEMP_HI,
                                 GColorClear, color_helper(colors[c_d6], global_settings.Invert),
                                 GTextAlignmentRight, font_tiny);
   layer_add_child(decorations_layer, text_layer_get_layer(temp_hi_layer));
 
   // DAY LOW TEMP (was "RESIST")
-  temp_lo_layer = text_layer_create_detailed(DECORATIONS_TEMP_LO, false,
+  temp_lo_layer = text_layer_create_detailed(DECORATIONS_TEMP_LO,
                                 GColorClear, color_helper(colors[c_d6], global_settings.Invert),
                                 GTextAlignmentLeft, font_tiny);
   layer_add_child(decorations_layer, text_layer_get_layer(temp_lo_layer));
@@ -158,7 +158,7 @@ void decorations_init() {
   decorations_update_temp_layers();
 
   // BACK BUTTON LABEL
-  button_back_layer = text_layer_create_detailed(DECORATIONS_BUTTON_BACK_LABEL, false, GColorClear
+  button_back_layer = text_layer_create_detailed(DECORATIONS_BUTTON_BACK_LABEL, GColorClear
                                                  , color_helper(colors[c_d7], global_settings.Invert),
                                                  GTextAlignmentLeft, font_tiny);
   text_layer_set_text(button_back_layer, "LIGHT");
@@ -166,7 +166,7 @@ void decorations_init() {
 
 
   // NEXT BUTTON LABEL
-  button_next_layer = text_layer_create_detailed(DECORATIONS_BUTTON_NEXT_LABEL, false, GColorClear
+  button_next_layer = text_layer_create_detailed(DECORATIONS_BUTTON_NEXT_LABEL, GColorClear
                                                  , color_helper(colors[c_d7], global_settings.Invert),
                                                  GTextAlignmentRight, font_tiny);
   text_layer_set_text(button_next_layer, "NEXT");
@@ -174,7 +174,7 @@ void decorations_init() {
 
 
   // PREV BUTTON LABEL
-  button_prev_layer = text_layer_create_detailed(DECORATIONS_BUTTON_PREV_LABEL, false, GColorClear,
+  button_prev_layer = text_layer_create_detailed(DECORATIONS_BUTTON_PREV_LABEL, GColorClear,
                                                   color_helper(colors[c_d7], global_settings.Invert),
                                                   GTextAlignmentRight, font_tiny);
   text_layer_set_text(button_prev_layer, "PREV");

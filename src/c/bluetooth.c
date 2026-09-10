@@ -86,7 +86,7 @@ void bluetooth_init() {
   layer_set_update_proc(bluetooth_circle_layer, bluetooth_circle_layer_update_callback);
   layer_add_child(bluetooth_layer, bluetooth_circle_layer);
   
-  bt_path_ptr = vector_create(&BluetoothPathInfo);
+  bt_path_ptr = gpath_create(&BluetoothPathInfo);
   bluetooth_icon_layer = layer_create(BLUETOOTH_ICON_SYMBOL);
   layer_set_update_proc(bluetooth_icon_layer, bluetooth_layer_update_callback);
   layer_add_child(bluetooth_layer, bluetooth_icon_layer);

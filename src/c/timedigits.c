@@ -311,13 +311,13 @@ void timedigits_init() {
   layer_add_child(my_window_layer, center_layer);
 
   //Date - SUN 15
-  t_layer[t_date] = text_layer_create_detailed(TIMEDIGITS_DATE, false,
+  t_layer[t_date] = text_layer_create_detailed(TIMEDIGITS_DATE,
                                 GColorClear, color_helper(colors[c_t1], global_settings.Invert),
                                 GTextAlignmentRight, font_tiny);
   layer_add_child(center_layer, text_layer_get_layer(t_layer[t_date]));
 
   //Indicator - AM/PM/24H
-  t_layer[t_ampm] = text_layer_create_detailed(TIMEDIGITS_AMPM, false,
+  t_layer[t_ampm] = text_layer_create_detailed(TIMEDIGITS_AMPM,
                                 GColorClear, color_helper(colors[c_t2], global_settings.Invert),
                                 GTextAlignmentLeft, font_tiny);
   if (clock_is_24h_style()) {

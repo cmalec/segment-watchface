@@ -7,4 +7,4 @@ void animation_slide_in(Layer *layer, int delay, direction_t direction);
 // True when the layer is attached to a window and safe to animate.
 bool animation_layer_valid(Layer *layer);
 // Convenience: create + fully configure a TextLayer.
-TextLayer *text_layer_create_detailed(GRect frame, bool hidden, GColor background_color, GColor foreground_color, GTextAlignment alignment, GFont font);
+TextLayer *text_layer_create_detailed(GRect frame, GColor background_color, GColor foreground_color, GTextAlignment alignment, GFont font);
