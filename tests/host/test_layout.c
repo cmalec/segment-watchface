@@ -71,6 +71,17 @@ static void test_small_seconds_bottom_aligned_with_big_digits(void) {
               "small seconds share the big digits' baseline");
 }
 
+static void test_minute_digits_dont_overlap(void) {
+  // 78px glyph advance is 40px (TTF-measured); the minute tens and ones
+  // boxes must start >= 40px apart or their ink overlaps — visible as a
+  // narrow '1' sitting inside the ones digit (regression: DIGIT4 was 115,
+  // only 29px after DIGIT3).
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT4 - TIMEDIGITS_SECONDS_DIGIT3 >= 40,
+              "minute tens/ones start >= 40px apart (78px advance)");
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= 200,
+              "small seconds end inside the right screen edge");
+}
+
 int main(void) {
   RUN(test_big_digit_frame_fits_font);
   RUN(test_seconds_digits_within_screen);
@@ -79,6 +90,7 @@ int main(void) {
   RUN(test_small_seconds_dont_overlap_digit4);
   RUN(test_normal_and_seconds_heights_differ);
   RUN(test_small_seconds_bottom_aligned_with_big_digits);
+  RUN(test_minute_digits_dont_overlap);
   RUN(test_native_screen_bounds);
   TEST_SUMMARY();
 }
