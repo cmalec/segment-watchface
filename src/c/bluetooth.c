@@ -52,23 +52,26 @@ void bluetooth_layer_update_callback(Layer *my_layer, GContext* ctx) {
 
 void bluetooth_icon_toggle(uint8_t BluetoothVibe) {
   // The icon is only drawn when the user has opted in via BluetoothShow.
-  // The vibe still fires on disconnect regardless, since that's the useful
-  // part of "bluetooth awareness" without the always-on badge.
+  // Rendering only — the vibe lives in bluetooth_connection_callback(), on
+  // the actual connected->disconnected transition. Firing from here would
+  // re-pulse on every unrelated call while disconnected (settings pushes,
+  // hourly weather/phone-battery refreshes, tap/color switches), which is
+  // the "random vibes" on a flaky link.
   bool show = global_settings.BluetoothShow && IsBluetoothConnected;
   layer_set_hidden(bluetooth_circle_layer, !show);
   layer_set_hidden(bluetooth_icon_layer, !show);
-  if(appStarted && !IsBluetoothConnected) {
-    if(BluetoothVibe && !powerSaveEngaged) {
-      vibes_long_pulse();
-    }
-  }
   layer_mark_dirty(bluetooth_circle_layer);
   layer_mark_dirty(bluetooth_icon_layer);
 }
 
 void bluetooth_connection_callback(bool connected) {
+  bool dropped = !connected && IsBluetoothConnected;
   IsBluetoothConnected = connected;
   bluetooth_icon_toggle(global_settings.BluetoothVibe);
+  // One long pulse per real drop, never on reconnect or on unrelated calls.
+  if (dropped && appStarted && global_settings.BluetoothVibe && !powerSaveEngaged) {
+    vibes_long_pulse();
+  }
 }
 
 void bluetooth_init() {
@@ -89,8 +92,13 @@ void bluetooth_init() {
   layer_add_child(bluetooth_layer, bluetooth_icon_layer);
 
   bluetooth_connection_service_subscribe(bluetooth_connection_callback);
-  
-  bluetooth_connection_callback(bluetooth_connection_service_peek());
+
+  // Seed state from peek WITHOUT routing through the callback: on launch
+  // (appStarted=false) the vibe is suppressed anyway, but on power-save
+  // re-init a stale IsBluetoothConnected=true + peek=false would mimic a
+  // fresh drop and pulse for a disconnect that happened while unsubscribed.
+  IsBluetoothConnected = bluetooth_connection_service_peek();
+  bluetooth_icon_toggle(global_settings.BluetoothVibe);
 
   settings_register_callback(bluetooth_settings_callback, SETTINGS_CALLBACK_BLUETOOTH);
   // Launch cascade (first init only).
