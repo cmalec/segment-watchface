@@ -68,6 +68,13 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 
 // Seconds mode: big minute/hour digits use the 78px font, with the small
 // seconds pair placed below and right-aligned inside the display.
+//
+// DS-Digital metrics (TTF-measured): both sized glyphs bottom-anchor to the
+// font ascent — 78px font: ink bottom = frame_top + 80; 31px font: ink
+// bottom = frame_top + 32 (line boxes 95/38, cap offsets 14/12).
+// TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP = 127 makes the small seconds' ink
+// bottom 127+32 = 159 = the big digits' 79+80, so both rows sit on the same
+// baseline. The previous 131 dropped the seconds 4px below the big digits.
 #define TIMEDIGITS_SECONDS_DIGIT1 4
 #define TIMEDIGITS_SECONDS_DIGIT2 39
 #define TIMEDIGITS_SECONDS_DIGIT3 86
@@ -76,7 +83,7 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define TIMEDIGITS_SECONDS_DIGIT6 172
 #define TIMEDIGITS_SECONDS_SEPARATOR 50
 #define TIMEDIGITS_SECONDS_OFFSET_TOP 79
-#define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP 131
+#define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP 127
 #define TIMEDIGITS_SECONDS_WIDTH 40
 #define TIMEDIGITS_SECONDS_SMALL_WIDTH 17
 #define TIMEDIGITS_SECONDS_HEIGHT 95
