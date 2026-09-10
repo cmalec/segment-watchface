@@ -447,7 +447,7 @@ function renderColors() {
 
 /* ---- presets ---- */
 function loadPresets() {
-  var file = qparam('platform','basalt') === 'chalk' ? 'themes-chalk.json' : 'themes.json';
+  var file = 'themes.json';
   fetch(file).then(function(r){ return r.json(); }).then(function(data) {
     var sel = document.getElementById('presets');
     data.forEach(function (entry) {
