@@ -351,9 +351,13 @@ void settings_init() {
   // window between open and registration (SDK-recommended order).
   app_message_register_inbox_received(settings_inbox);
   app_message_register_inbox_dropped(settings_inbox_dropped);
-  // Largest real message is a color set: key header + 50 hex chars. Anything
-  // bigger just wastes heap on aplite (24KB total budget).
-  app_message_open(128, 128);
+  // Inbound must hold the WHOLE settings save from the phone: pkjs sends all
+  // keys in one dictionary — 17 numeric tuples (~8B each) plus BOTH 50-char
+  // color sets (~60B each) ≈ 264B. Claiming less (the old 128B) made every
+  // config save exceed the buffer and get dropped with APP_MSG_BUFFER_OVERFLOW
+  // on device — toggles appeared to do nothing. Outbound stays small
+  // (weather request / unit share = 1 byte).
+  app_message_open(512, 128);
 
 
   if (global_settings.SwitchSet==2) {
