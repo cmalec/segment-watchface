@@ -47,16 +47,20 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 // derived at runtime.
 #define TOP_STRIP_EDGE_GAP 4   // cluster -> panel outline
 #define TOP_STRIP_ITEM_GAP 4   // between cluster members
-#define TOP_STRIP_Y 53         // badge band top
+// The strip starts a little below the panel's inner top edge: its icon column
+// sits at the panel's left edge, where the outline's corner radius cuts in, so
+// at PANEL_INNER_TOP the foot/zzz ink rode over the curve.
+#define TOP_STRIP_INSET 3
+#define TOP_STRIP_Y (PANEL_INNER_TOP + TOP_STRIP_INSET)
 
 // BATTERY (right-most cluster member when shown)
-#define BATTERY_LAYER GRect(167, 54, 23, 13)
+#define BATTERY_LAYER GRect(167, TOP_STRIP_Y + 1, 23, 13)
 #define BATTERY_ICON GRect(0, 0, 22, 13)
 #define BATTERY_ICON_TERMINAL GRect(21, 3, 2, 7)
-#define BATTERY_PERCENT GRect(111, 51, 52, 22)  // right-aligned text box
+#define BATTERY_PERCENT GRect(111, TOP_STRIP_Y - 2, 52, 22)  // right-aligned
 #define BATTERY_PERCENT_W 52
 #define BATTERY_PERCENT_INK_W 33 // "100%" at Lucida 14: 32px advance + % overhang
-#define PHONE_BATT_BAR GRect(167, 71, 22, 3)
+#define PHONE_BATT_BAR GRect(167, TOP_STRIP_Y + 18, 22, 3)
 
 // HEALTH
 // Two stacked rows in the panel's left column, so a long step count can never
@@ -71,8 +75,9 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define HEALTH_LEFT (PANEL_INNER_LEFT + 4)
 #define HEALTH_TEXT_X 21     // local: the icon column occupies 0..18
 #define HEALTH_TEXT_W 163    // nominal: widest case, nothing drawn on the right
-#define HEALTH_LAYER GRect(HEALTH_LEFT, PANEL_INNER_TOP, PANEL_INNER_RIGHT - HEALTH_LEFT, 24)
-#define HEALTH_TEXT_LAYER GRect(HEALTH_TEXT_X, 0, HEALTH_TEXT_W, 22)
+// Row 1 shares the top strip's band, which ends where row 2 begins.
+#define HEALTH_LAYER GRect(HEALTH_LEFT, TOP_STRIP_Y, PANEL_INNER_RIGHT - HEALTH_LEFT, 21)
+#define HEALTH_TEXT_LAYER GRect(HEALTH_TEXT_X, 0, HEALTH_TEXT_W, 21)
 #define HEALTH_BPM_ROW GRect(HEALTH_LEFT, 77, PANEL_INNER_RIGHT - HEALTH_LEFT, 18)
 #define HEALTH_BPM_ICON GRect(4, 1, 14, 14)   // centred in row 1's icon column
 #define HEALTH_BPM_TEXT GRect(HEALTH_TEXT_X, 0, 20, 18)
@@ -115,15 +120,20 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 //
 // Horizontal: the 78px glyph advance is 40px, so adjacent minute digits
 // must start >= 40px apart or their ink overlaps (a narrow tens '1' then
-// sat inside the ones digit). DIGIT4 = DIGIT3 + 40; the small seconds keep
-// the same box-touch spacing, ending 2px inside the right screen edge.
-#define TIMEDIGITS_SECONDS_DIGIT1 4
-#define TIMEDIGITS_SECONDS_DIGIT2 39
-#define TIMEDIGITS_SECONDS_DIGIT3 86
-#define TIMEDIGITS_SECONDS_DIGIT4 126
-#define TIMEDIGITS_SECONDS_DIGIT5 166
-#define TIMEDIGITS_SECONDS_DIGIT6 181
-#define TIMEDIGITS_SECONDS_SEPARATOR 50
+// sat inside the ones digit). DIGIT4 = DIGIT3 + 40.
+//
+// The whole readout sits 4px left of where it used to: the small seconds'
+// box used to end 5px past the panel's inner edge, which put their ink flush
+// on the outline (the rightmost column lit at the panel border). At -4 the
+// box ends exactly on PANEL_INNER_RIGHT and the ink keeps the same 4px of air
+// the top-strip cluster keeps.
+#define TIMEDIGITS_SECONDS_DIGIT1 0
+#define TIMEDIGITS_SECONDS_DIGIT2 35
+#define TIMEDIGITS_SECONDS_DIGIT3 82
+#define TIMEDIGITS_SECONDS_DIGIT4 122
+#define TIMEDIGITS_SECONDS_DIGIT5 162
+#define TIMEDIGITS_SECONDS_DIGIT6 177
+#define TIMEDIGITS_SECONDS_SEPARATOR 46
 #define TIMEDIGITS_SECONDS_OFFSET_TOP 79
 #define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP 127
 #define TIMEDIGITS_SECONDS_WIDTH 40

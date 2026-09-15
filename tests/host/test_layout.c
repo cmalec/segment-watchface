@@ -11,6 +11,17 @@
  *   99px font: cap_offset = 36 (ink top = TIMEDIGITS_OFFSET_TOP + 36)
  * A frame SHORTER than the line box clips the glyph. */
 
+static void test_top_strip_clears_the_panel_corner(void) {
+  // The strip's icon column starts at the panel's left edge, where the
+  // outline's corner radius cuts the fill away: at PANEL_INNER_TOP the ink
+  // rides over the curve, so the band must be inset.
+  ASSERT_TRUE(TOP_STRIP_INSET > 0, "top strip inset below the panel edge");
+  ASSERT_TRUE(HEALTH_LAYER.origin.y == TOP_STRIP_Y, "health row shares the strip band");
+  ASSERT_TRUE(BATTERY_LAYER.origin.y >= TOP_STRIP_Y, "battery icon inside the strip band");
+  ASSERT_TRUE(TOP_STRIP_Y + HEALTH_LAYER.size.h <= HEALTH_BPM_ROW.origin.y,
+              "strip band ends where the heart rate row begins");
+}
+
 static void test_top_strip_cluster_hugs_panel_edge(void) {
   // The battery icon is the cluster's anchor and sits a fixed gap inside the
   // panel's inner right edge. Deriving it from the screen edge instead is how
@@ -64,6 +75,14 @@ static void test_seconds_digits_within_screen(void) {
   ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT4 + TIMEDIGITS_SECONDS_WIDTH <= w, "digit4 fits width");
   ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= w, "digit6 fits width");
   ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT1 >= 0, "digit1 on-screen");
+}
+
+static void test_seconds_ink_clears_the_panel_outline(void) {
+  // The small seconds' box must end at (not past) the panel's inner edge:
+  // their glyph is centred in the box, so a box ending on PANEL_INNER_RIGHT
+  // leaves their ink the standard edge gap before the outline.
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= PANEL_INNER_RIGHT,
+              "seconds box ends inside the panel outline");
 }
 
 static void test_seconds_separator_between_digit_pairs(void) {
@@ -134,6 +153,8 @@ int main(void) {
   RUN(test_small_seconds_bottom_aligned_with_big_digits);
   RUN(test_minute_digits_dont_overlap);
   RUN(test_native_screen_bounds);
+  RUN(test_seconds_ink_clears_the_panel_outline);
+  RUN(test_top_strip_clears_the_panel_corner);
   RUN(test_top_strip_cluster_hugs_panel_edge);
   RUN(test_bluetooth_badge_clears_battery_percent);
   RUN(test_health_rows_stack_without_overlap);
