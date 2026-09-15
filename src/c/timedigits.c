@@ -12,7 +12,7 @@
 
 enum {t_dig1, t_dig2, t_sep, t_dig3, t_dig4, t_dig5, t_dig6,
       t_shadow_dig1, t_shadow_dig2, t_shadow_sep, t_shadow_dig3, t_shadow_dig4, t_shadow_dig5, t_shadow_dig6,
-      t_ampm, t_date};
+      t_date};
 #define tl_last t_date
 static TextLayer * t_layer[tl_last+1] = {NULL};
 static Layer *clock_layer, *center_layer;
@@ -81,7 +81,7 @@ static void separator_animation_stopped(Animation *animation, bool finished, voi
 
 /*
 t1  Date
-t2  AM/PM/24H Indicator
+t2  Health readouts (steps/sleep and heart rate)
 t3  Clock Shadow
 t4  Clock
 */
@@ -98,7 +98,6 @@ void timedigits_settings_callback() {
   timedigits_background_color(color_helper(colors[c_t3], global_settings.Invert));
   timedigits_foreground_color(color_helper(colors[c_t4], global_settings.Invert));
   text_layer_set_text_color(t_layer[t_date], color_helper(colors[c_t1], global_settings.Invert));
-  text_layer_set_text_color(t_layer[t_ampm], color_helper(colors[c_t2], global_settings.Invert));
 
   tick_timer_service_unsubscribe();
 
@@ -219,16 +218,6 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     digit2[0] = time_text[1];
     text_layer_set_text(t_layer[t_dig1], digit1);
     text_layer_set_text(t_layer[t_dig2], digit2);
-
-    //AM/PM indicator
-    if (!clock_is_24h_style()) {
-      if (tick_time->tm_hour >= 12) {
-        text_layer_set_text(t_layer[t_ampm], "PM");
-      }
-      else {
-        text_layer_set_text(t_layer[t_ampm], "AM");
-      }
-    }
   } //HOUR_UNIT
 
 
@@ -316,14 +305,6 @@ void timedigits_init() {
                                 GTextAlignmentRight, font_tiny);
   layer_add_child(center_layer, text_layer_get_layer(t_layer[t_date]));
 
-  //Indicator - AM/PM/24H
-  t_layer[t_ampm] = text_layer_create_detailed(TIMEDIGITS_AMPM,
-                                GColorClear, color_helper(colors[c_t2], global_settings.Invert),
-                                GTextAlignmentLeft, font_tiny);
-  if (clock_is_24h_style()) {
-    text_layer_set_text(t_layer[t_ampm], "24H");
-  }
-  layer_add_child(center_layer, text_layer_get_layer(t_layer[t_ampm]));
   //Clock
   clock_layer = layer_create(FULLSCREEN);
   //layer_set_hidden(clock_layer, true);
@@ -336,7 +317,6 @@ void timedigits_init() {
   if (!appStarted) {
     animation_slide_in(clock_layer, 150, LEFT);
     animation_slide_in(text_layer_get_layer(t_layer[t_date]), 300, RIGHT);
-    animation_slide_in(text_layer_get_layer(t_layer[t_ampm]), 375, RIGHT);
   }
 
   //Somebody set us up the CLOCK
@@ -354,9 +334,6 @@ void timedigits_init() {
 
   settings_register_callback(timedigits_settings_callback, SETTINGS_CALLBACK_TIMEDIGITS);
   timedigits_settings_callback();
-  //animation_slide_in(text_layer_get_layer(t_layer[t_date]), 600, LEFT);
-  //animation_slide_in(text_layer_get_layer(t_layer[t_ampm]), 800, RIGHT);
-  //animation_slide_in(clock_layer, 400, LEFT);
 }
 
 void timedigits_deinit() {

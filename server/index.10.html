@@ -125,7 +125,10 @@
   }
   .sim .shadow { top: 44px; left: 0; right: 0; text-align: center; font-size: 42px; font-weight: 700; letter-spacing: -1px; opacity: 0.5; }
   .sim .date { top: 40px; left: 34px; right: 10px; text-align: right; font-size: 9px; font-weight: 700; }
-  .sim .ampm { top: 52px; left: 12px; font-size: 6px; font-weight: 700; }
+  .sim .steps { top: 42px; left: 12px; font-size: 7px; font-weight: 600; }
+  .sim .steps::before { content: '👣'; font-size: 6px; margin-right: 2px; }
+  .sim .bpm { top: 52px; left: 12px; font-size: 7px; font-weight: 600; }
+  .sim .bpm::before { content: '♥'; font-size: 6px; margin-right: 2px; }
   .sim .pct { top: 42px; right: 24px; font-size: 7px; font-weight: 600; }
   .sim .batt { top: 42px; right: 5px; width: 14px; height: 8px; border: 1px solid; border-radius: 1px; }
   .sim .batt::after { content: ''; position: absolute; right: -3px; top: 2px; width: 1.5px; height: 3px; background: currentColor; }
@@ -236,10 +239,10 @@
       <div class="shadow" id="s-t3">88:88</div>
       <div class="time" id="s-t4">23:45</div>
       <div class="date" id="s-t1">WED 22</div>
-      <div class="ampm" id="s-t2">24H</div>
       <div class="pct" id="s-bi1p">80%</div>
       <div class="batt" id="s-bi1b"><div class="lvl" id="s-bi1l"></div></div>
       <div class="steps" id="s-steps">4,077</div>
+      <div class="bpm" id="s-t2">72</div>
       <div class="temp-hi" id="s-thi">37°</div>
       <div class="temp-lo" id="s-tlo">23°</div>
       <div class="wrbox" id="s-d3"></div>
@@ -270,7 +273,7 @@ var LABELS = {
   bl1:'BT circle on', bl2:'BT icon on', bl3:'BT circle off', bl4:'BT icon off',
   d1:'Lines', d2:'Line bottom', d3:'Box border', d4:'Box fill', d5:'WR letters',
   d6:'Temps', d7:'Button labels', d8:'Button arrows', d9:'Logo text',
-  t1:'Date', t2:'AM/PM + icons', t3:'Time shadow', t4:'Time'
+  t1:'Date', t2:'Health readouts', t3:'Time shadow', t4:'Time'
 };
 var GROUPS = [
   ['Background', ['bg4','d9']],
@@ -411,7 +414,7 @@ function renderPreview() {
   var battVisible = !settings.battery_hide && !settings.battery_icon_only;
   ['s-bi1p','s-bi1b'].forEach(function(id){ document.getElementById(id).style.display = settings.battery_hide ? 'none' : ''; });
   document.getElementById('s-bi1b').style.display = battVisible ? '' : 'none';
-  document.getElementById('s-steps').style.display = settings.health ? '' : 'none';
+  ['s-steps','s-t2'].forEach(function(id){ document.getElementById(id).style.display = settings.health ? '' : 'none'; });
   document.getElementById('s-thi').textContent = '37°';
   document.getElementById('s-tlo').textContent = '23°';
 }

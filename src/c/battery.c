@@ -7,6 +7,7 @@
 #include "animation.h"
 #include "window.h"
 #include "fonts.h"
+#include "health.h"
 
 
 static Layer *battery_layer;
@@ -28,21 +29,75 @@ bi3 Battery Indicator Critical
 bi4 Battery Charging
 */
 
-// Width (px) reserved at the right edge of the top strip for the battery
-// readout, used by health.c to position the steps/BPM row dynamically.
-// Icon mode: icon + percent. Percent-only: percent alone. Respects
-// BatteryHide (everything hidden -> no reserved space on that side... but
-// health stays put; it simply has room to breathe).
-int16_t battery_right_margin(void) {
-  if (global_settings.BatteryHide) return 0;
-  if (global_settings.BatteryIconOnly) return 52; // percent text only
-  return 85;                                      // percent + icon
+// Width the top strip's left column has to keep clear of the right-hand
+// cluster. Set by battery_cluster_slot(); health.c bounds the step count with
+// it.
+static int16_t cluster_reserve = 0;
+
+// Whether the badge's slot is part of the cluster, pushed in by bluetooth.c
+// (the badge's owner): the user's icon setting, not the current connection
+// state. Cached so battery_settings_callback, which doesn't own the badge, can
+// re-run the same layout.
+static bool cluster_badge_slot = false;
+
+/*
+ * Lay out the top strip's right-hand cluster for the current visibility
+ * combination:
+ *
+ *   [bluetooth badge] gap [battery %] gap [battery icon] gap | panel outline
+ *
+ * Everything is derived right-to-left from the inner panel's edge, so the
+ * reserve handed to health.c is always the width something is actually drawn
+ * in. (The old magic numbers - 85 for percent+icon, 52 for percent-only - were
+ * measured from the screen edge and ignored the badge entirely, which is how
+ * the step count ended up painting over the heart rate.)
+ *
+ * Returns the bluetooth badge's slot so bluetooth.c can move its own layer;
+ * the battery percentage is positioned here. Callers that don't own the badge
+ * ignore the result.
+ */
+GRect battery_cluster_slot(bool bluetooth_slot_used) {
+  bool show_percent = !global_settings.BatteryHide;
+  bool show_icon = show_percent && !global_settings.BatteryIconOnly;
+  cluster_badge_slot = bluetooth_slot_used;
+
+  // Right edge (exclusive) the cluster's ink stops at.
+  int16_t ink_right = PANEL_INNER_RIGHT - TOP_STRIP_EDGE_GAP;
+  // Left edge of the left-most ink drawn so far, walking right-to-left. With
+  // nothing drawn yet there is nothing to keep clear of, so the first member
+  // takes the cluster's right edge.
+  int16_t ink_left = ink_right;
+
+  if (show_icon) {
+    ink_left = BATTERY_LAYER.origin.x;
+  }
+
+  if (show_percent && battery_percent_layer != NULL) {
+    // Right-aligned text: only the box's right edge places it.
+    GRect pct = BATTERY_PERCENT;
+    pct.origin.x = (show_icon ? BATTERY_LAYER.origin.x - TOP_STRIP_ITEM_GAP : ink_right)
+                   - BATTERY_PERCENT_W;
+    layer_set_frame(text_layer_get_layer(battery_percent_layer), pct);
+    ink_left = pct.origin.x + BATTERY_PERCENT_W - BATTERY_PERCENT_INK_W;
+  }
+
+  GRect badge = BLUETOOTH_LAYER;
+  if (bluetooth_slot_used) {
+    bool drawn = show_icon || show_percent;
+    badge.origin.x = (drawn ? ink_left - TOP_STRIP_ITEM_GAP : ink_right)
+                     - BLUETOOTH_BADGE_INK_W;
+    ink_left = badge.origin.x;
+  }
+
+  cluster_reserve = PANEL_INNER_RIGHT - ink_left;
+  // The health row is bounded by this reserve. Re-bound it here so every
+  // caller of the strip layout gets the pair in step for free.
+  health_layout_row();
+  return badge;
 }
 
-// Left origin (screen x) for the health row. With the BT badge hidden, the
-// row slides left to use the freed space.
-int16_t health_left_origin(void) {
-  return global_settings.BluetoothShow ? 25 : 10;
+int16_t battery_top_reserve(void) {
+  return cluster_reserve;
 }
 
 void battery_apply_visibility() {
@@ -66,12 +121,9 @@ void battery_settings_callback() {
   battery_apply_visibility();
   layer_mark_dirty(text_layer_get_layer(battery_percent_layer));
   layer_mark_dirty(battery_layer);
-  // The battery reserve width may have changed (icon vs percent-only or
-  // hidden); re-anchor the heart-rate readout.
-  extern void health_layout_row();
-  if (global_settings.Health) {
-    health_layout_row();
-  }
+  // Percent-only / hidden change what the cluster occupies, which changes both
+  // the percentage's own anchor and the reserve the health row keeps clear.
+  battery_cluster_slot(cluster_badge_slot);
 }
 
 void battery_update(BatteryChargeState charge_state) {
@@ -186,8 +238,10 @@ void battery_init() {
   layer_add_child(my_window_layer, phone_batt_layer);
 
   // Apply the persisted hide settings immediately (the settings callback only
-  // fires on an incoming settings message, which may never come).
+  // fires on an incoming settings message, which may never come). The cluster
+  // starts without the badge; bluetooth_init() pushes the real visibility.
   battery_apply_visibility();
+  battery_cluster_slot(false);
 
   // Launch cascade (first init only — not on settings re-init).
   if (!appStarted) {
@@ -209,6 +263,7 @@ void battery_deinit() {
   bolt_path_ptr = NULL;
 
   text_layer_destroy(battery_percent_layer);
+  battery_percent_layer = NULL;
 
   layer_remove_from_parent(phone_batt_layer);
   layer_destroy(phone_batt_layer);
@@ -217,4 +272,10 @@ void battery_deinit() {
   layer_remove_from_parent(battery_layer);
 
   layer_destroy(battery_layer);
+  battery_layer = NULL;
+
+  // Nothing of the cluster is drawn any more (power save tears the battery and
+  // the badge down together), so release the space for the health column.
+  cluster_reserve = 0;
+  health_layout_row();
 }

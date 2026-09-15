@@ -14,7 +14,8 @@ static bool health_enabled = false;
 #ifdef PBL_HEALTH
 
 static TextLayer *health_text_layer;
-static Layer *health_layer, *health_foot_layer, *health_foot2_layer, *health_zee_layer, *health_bpm_icon_layer;
+static Layer *health_layer, *health_foot_layer, *health_foot2_layer, *health_zee_layer;
+static Layer *health_bpm_row_layer, *health_bpm_icon_layer;
 static TextLayer *health_bpm_layer;
 
 // GPaths are native Emery geometry defined in vector.c.
@@ -104,49 +105,32 @@ void health_update() {
 }
 
 /*
- * Dynamic horizontal layout of the health row.
+ * Row 1 (steps or sleep) shares the top strip with the battery cluster, so its
+ * text box stops at whatever the cluster occupies:
  *
- * The top strip holds: [steps ... heart rate] on the left and
- * [battery % (icon)] on the right. The heart-rate number sits close to the
- * battery readout, which crowds at 100%. So the BPM text is right-anchored
- * against the battery margin (dynamic: percent-only mode frees ~33px, BT
- * icon visibility frees the left edge), and the steps text keeps a fixed
- * left origin.
+ *   PANEL_INNER_RIGHT - battery_top_reserve()
  *
- * Called on every health update and on settings changes.
+ * The text is left-aligned, so the count grows rightwards into this box and is
+ * clipped by it - it can no longer paint over anything, however many digits a
+ * day accumulates. Row 2 (heart rate) sits below on its own row and needs no
+ * re-anchoring at all.
+ *
+ * Called on every health update and whenever the strip's geometry changes.
  */
-// Last-applied anchors; reset on every health_init so a settings-driven
-// deinit/re-init cycle can't skip re-anchoring the rebuilt layers.
-static int16_t last_right = -1;
-static int16_t last_left = -1;
+// Last-applied text width; reset on every health_init so a settings-driven
+// deinit/re-init cycle can't skip re-bounding the rebuilt layer.
+static int16_t last_text_w = -1;
 
 void health_layout_row(void) {
-  if (health_layer == NULL || health_bpm_layer == NULL) {
+  if (!health_enabled) {
     return;
   }
-  // BPM text right edge = screen width minus the battery reserve.
-  GRect full = layer_get_bounds(my_window_layer);
-  int16_t right_edge = full.size.w - battery_right_margin();
-  // Health row slides left when the BT badge is hidden (frees left space).
-  int16_t left_origin = health_left_origin();
-
-  if (right_edge != last_right || left_origin != last_left) {
-    // Move the whole health row to the new left origin.
-    GRect hl = layer_get_frame(health_layer);
-    hl.origin.x = left_origin;
-    layer_set_frame(health_layer, hl);
-
-    // Anchor the BPM text so its RIGHT edge lands at right_edge (screen
-    // coords); the heart icon sits to its left.
-    GRect bpm = layer_get_frame(text_layer_get_layer(health_bpm_layer));
-    int16_t desired_local_right = right_edge - left_origin;
-    bpm.origin.x = desired_local_right - bpm.size.w;
-    layer_set_frame(text_layer_get_layer(health_bpm_layer), bpm);
-    GRect icon = layer_get_frame(health_bpm_icon_layer);
-    icon.origin.x = bpm.origin.x - icon.size.w - 2;
-    layer_set_frame(health_bpm_icon_layer, icon);
-    last_right = right_edge;
-    last_left = left_origin;
+  int16_t text_w = PANEL_INNER_RIGHT - battery_top_reserve() - HEALTH_LEFT - HEALTH_TEXT_X;
+  if (text_w != last_text_w) {
+    GRect text = layer_get_frame(text_layer_get_layer(health_text_layer));
+    text.size.w = text_w;
+    layer_set_frame(text_layer_get_layer(health_text_layer), text);
+    last_text_w = text_w;
   }
 }
 
@@ -167,13 +151,14 @@ void health_handler(HealthEventType event, void *context) {
 
 void health_init() {
 
-  // Fresh layer set: force health_layout_row to re-anchor.
-  last_right = -1;
-  last_left = -1;
+  // Fresh layer set: force health_layout_row to re-bound the steps text.
+  last_text_w = -1;
 
   if(!global_settings.Health) {
     return;
   }
+
+  health_enabled = true;
 
   health_layer = layer_create(HEALTH_LAYER);
   layer_add_child(my_window_layer, health_layer);
@@ -204,22 +189,23 @@ void health_init() {
   layer_set_update_proc(health_foot2_layer, health_icon_layer_update_callback);
   layer_add_child(health_layer, health_foot2_layer);
 
+  health_bpm_row_layer = layer_create(HEALTH_BPM_ROW);
+  layer_add_child(my_window_layer, health_bpm_row_layer);
+
   health_bpm_icon_layer = layer_create(HEALTH_BPM_ICON);
   layer_set_update_proc(health_bpm_icon_layer, health_bpm_icon_layer_update_callback);
-  layer_add_child(health_layer, health_bpm_icon_layer);
+  layer_add_child(health_bpm_row_layer, health_bpm_icon_layer);
 
   health_bpm_layer = text_layer_create_detailed(HEALTH_BPM_TEXT,
                                 GColorClear, color_helper(colors[c_t2], global_settings.Invert),
-                                GTextAlignmentRight, font_tiny);
-  layer_add_child(health_layer, text_layer_get_layer(health_bpm_layer));
+                                GTextAlignmentLeft, font_tiny);
+  layer_add_child(health_bpm_row_layer, text_layer_get_layer(health_bpm_layer));
 
   health_service_events_subscribe(health_handler, NULL);
 	health_handler(HealthEventMovementUpdate, NULL);
 	health_handler(HealthEventSleepUpdate, NULL);
 
   settings_register_callback(health_settings_callback, SETTINGS_CALLBACK_HEALTH);
-
-  health_enabled = true;
 }
 
 void health_deinit() {
@@ -245,7 +231,11 @@ void health_deinit() {
   gpath_destroy(heart_path_ptr);
   heart_path_ptr = NULL;
   layer_destroy(health_bpm_icon_layer);
+  health_bpm_icon_layer = NULL;
   text_layer_destroy(health_bpm_layer);
+  health_bpm_layer = NULL;
+  layer_destroy(health_bpm_row_layer);
+  health_bpm_row_layer = NULL;
 
   health_enabled = false;
 

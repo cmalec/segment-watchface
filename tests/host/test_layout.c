@@ -8,7 +8,49 @@
 /* DS-Digital metrics (measured with PIL; documented in _globals.h):
  *   78px font: cap_offset (ink top below frame top) = 14, line box = 95
  *   31px font: cap_offset = 12, line box = 38
+ *   99px font: cap_offset = 36 (ink top = TIMEDIGITS_OFFSET_TOP + 36)
  * A frame SHORTER than the line box clips the glyph. */
+
+static void test_top_strip_cluster_hugs_panel_edge(void) {
+  // The battery icon is the cluster's anchor and sits a fixed gap inside the
+  // panel's inner right edge. Deriving it from the screen edge instead is how
+  // the old reserve drifted away from what was actually drawn.
+  ASSERT_TRUE(BATTERY_LAYER.origin.x == PANEL_INNER_RIGHT - TOP_STRIP_EDGE_GAP - BATTERY_LAYER.size.w,
+              "battery icon anchored to the panel edge, not the screen edge");
+  ASSERT_TRUE(BATTERY_LAYER.origin.y >= PANEL_INNER_TOP,
+              "battery icon inside the panel");
+}
+
+static void test_bluetooth_badge_clears_battery_percent(void) {
+  // [badge] gap [100%]: the badge's nominal slot must not touch the widest
+  // percentage the text can render.
+  int percent_ink_left = BATTERY_PERCENT.origin.x + BATTERY_PERCENT_W - BATTERY_PERCENT_INK_W;
+  ASSERT_TRUE(BLUETOOTH_LAYER.origin.x + BLUETOOTH_BADGE_INK_W + TOP_STRIP_ITEM_GAP <= percent_ink_left,
+              "badge clears the battery percentage ink");
+  ASSERT_TRUE(BLUETOOTH_LAYER.origin.x >= HEALTH_LEFT,
+              "badge stays right of the health column");
+}
+
+static void test_health_rows_stack_without_overlap(void) {
+  // Row 1 (steps) then row 2 (heart rate), neither reaching the digits.
+  ASSERT_TRUE(HEALTH_BPM_ROW.origin.y >= HEALTH_LAYER.origin.y + HEALTH_LAYER.size.h,
+              "heart rate row sits below the steps row");
+  ASSERT_TRUE(HEALTH_BPM_ROW.origin.y + HEALTH_BPM_ROW.size.h <= TIMEDIGITS_OFFSET_TOP + 36,
+              "heart rate row clears the clock's ink");
+  ASSERT_TRUE(HEALTH_BPM_TEXT.origin.y + HEALTH_BPM_TEXT.size.h <= HEALTH_BPM_ROW.size.h,
+              "bpm text fits its row");
+}
+
+static void test_steps_text_fits_beside_the_cluster(void) {
+  // The reserve re-bounds this at runtime; the nominal width is the widest
+  // case (nothing drawn on the right).
+  ASSERT_TRUE(HEALTH_TEXT_W == PANEL_INNER_RIGHT - HEALTH_LEFT - HEALTH_TEXT_X,
+              "nominal steps text box reaches the panel edge");
+  // Worst case: badge shown. Lucida 14 advances 8px per glyph, so the widest
+  // realistic count ("999,999") still fits the space left of the cluster.
+  int worst_case = BLUETOOTH_LAYER.origin.x - TOP_STRIP_ITEM_GAP - HEALTH_LEFT - HEALTH_TEXT_X;
+  ASSERT_TRUE(worst_case >= 7 * 8, "seven-glyph step count fits beside the badge");
+}
 
 static void test_big_digit_frame_fits_font(void) {
   // height must be >= the 78px line box on emery, >= 56px box on rect
@@ -92,5 +134,9 @@ int main(void) {
   RUN(test_small_seconds_bottom_aligned_with_big_digits);
   RUN(test_minute_digits_dont_overlap);
   RUN(test_native_screen_bounds);
+  RUN(test_top_strip_cluster_hugs_panel_edge);
+  RUN(test_bluetooth_badge_clears_battery_percent);
+  RUN(test_health_rows_stack_without_overlap);
+  RUN(test_steps_text_fits_beside_the_cluster);
   TEST_SUMMARY();
 }

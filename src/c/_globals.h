@@ -25,25 +25,63 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define BACKGROUND_PANEL_INNER GRect(6, 6, 188, 130)
 #define BACKGROUND_PANEL_RADIUS 11
 
-// BATTERY
+// PANEL
+// The inner display box (the bg3 fill) in screen coordinates. The top strip
+// and the health rows anchor to its edges, so the air between an item and the
+// outline is a stated constant instead of an accident of a number measured
+// from the screen edge.
+#define PANEL_INNER_LEFT 6
+#define PANEL_INNER_TOP 53
+#define PANEL_INNER_RIGHT 194   // exclusive: 193 is the last lit column
+
+// TOP STRIP
+// The top strip holds the health column on the left and one right-anchored
+// cluster on the right, laid out right-to-left from the panel edge:
+//
+//   [badge] gap [100%] gap [battery icon] gap | panel outline
+//
+// battery.c owns that arithmetic (battery_cluster_slot / battery_top_reserve)
+// so the reserve health.c bounds its text with can never drift from what is
+// actually drawn. The rects below are the nominal ones for the default case
+// (percent + icon, badge hidden); position of the percent and the badge is
+// derived at runtime.
+#define TOP_STRIP_EDGE_GAP 4   // cluster -> panel outline
+#define TOP_STRIP_ITEM_GAP 4   // between cluster members
+#define TOP_STRIP_Y 53         // badge band top
+
+// BATTERY (right-most cluster member when shown)
 #define BATTERY_LAYER GRect(167, 54, 23, 13)
 #define BATTERY_ICON GRect(0, 0, 22, 13)
 #define BATTERY_ICON_TERMINAL GRect(21, 3, 2, 7)
-#define BATTERY_PERCENT GRect(112, 51, 52, 22)
+#define BATTERY_PERCENT GRect(111, 51, 52, 22)  // right-aligned text box
+#define BATTERY_PERCENT_W 52
+#define BATTERY_PERCENT_INK_W 33 // "100%" at Lucida 14: 32px advance + % overhang
 #define PHONE_BATT_BAR GRect(167, 71, 22, 3)
 
 // HEALTH
-// These frames are child rectangles inside HEALTH_LAYER. The health row is
-// re-anchored horizontally by health_layout_row() when BT/battery settings
-// change.
-#define HEALTH_LAYER GRect(25, 53, 115, 24)
-#define HEALTH_TEXT_LAYER GRect(21, 0, 70, 22)
-#define HEALTH_BPM_ICON GRect(68, 0, 14, 14)
-#define HEALTH_BPM_TEXT GRect(85, 0, 20, 22)
+// Two stacked rows in the panel's left column, so a long step count can never
+// reach the heart rate:
+//
+//   row 1: [steps/zzz icon] [steps or sleep]  — beside the battery cluster
+//   row 2: [heart icon] [BPM]                 — beside the date
+//
+// health_layout_row() re-bounds row 1's text box against whatever the cluster
+// occupies (the text is left-aligned, so it grows into that box and is clipped
+// by it). Row 2 is left-anchored and needs no re-anchoring.
+#define HEALTH_LEFT (PANEL_INNER_LEFT + 4)
+#define HEALTH_TEXT_X 21     // local: the icon column occupies 0..18
+#define HEALTH_TEXT_W 163    // nominal: widest case, nothing drawn on the right
+#define HEALTH_LAYER GRect(HEALTH_LEFT, PANEL_INNER_TOP, PANEL_INNER_RIGHT - HEALTH_LEFT, 24)
+#define HEALTH_TEXT_LAYER GRect(HEALTH_TEXT_X, 0, HEALTH_TEXT_W, 22)
+#define HEALTH_BPM_ROW GRect(HEALTH_LEFT, 77, PANEL_INNER_RIGHT - HEALTH_LEFT, 18)
+#define HEALTH_BPM_ICON GRect(4, 1, 14, 14)   // centred in row 1's icon column
+#define HEALTH_BPM_TEXT GRect(HEALTH_TEXT_X, 0, 20, 18)
 #define HEALTH_STEP_MIN 400
 
-// BLUETOOTH
-#define BLUETOOTH_LAYER GRect(6, 53, 18, 18)
+// BLUETOOTH (left-most cluster member when shown)
+#define BLUETOOTH_BADGE_W 18
+#define BLUETOOTH_BADGE_INK_W 15 // circle centre (7,7) radius 7 -> ink 0..14
+#define BLUETOOTH_LAYER GRect(111, TOP_STRIP_Y, BLUETOOTH_BADGE_W, BLUETOOTH_BADGE_W)
 #define BLUETOOTH_ICON_CIRCLE GRect(0, 0, 18, 18)
 #define BLUETOOTH_ICON_SYMBOL GRect(3, 2, 10, 13)
 
@@ -52,7 +90,6 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 // therefore use screen coordinates too, avoiding the old double-origin bug.
 #define TIMEDIGITS_CENTER FULLSCREEN
 #define TIMEDIGITS_DATE GRect(42, 77, 150, 18)
-#define TIMEDIGITS_AMPM GRect(8, 77, 30, 18)
 
 // Normal time: the 99px Emery font has approximately 50px digit advances.
 // The separator box overlaps the neighbouring boxes intentionally because

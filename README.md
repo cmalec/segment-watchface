@@ -8,7 +8,7 @@ A seven-segment digital watchface for the Pebble Time 2, built on the current Re
 
 - Large seven-segment LCD-style time display (DS-Digital font)
 - Date display
-- Bluetooth connection indicator with optional disconnect vibration
+- Bluetooth connection indicator beside the battery readout, with optional disconnect vibration
 - Battery level indicator (with option to hide)
 - Optional seconds display
 - Optional hourly vibration
@@ -141,7 +141,8 @@ The watchface uses the actual Time 2 coordinate system directly:
 - **Geometry**: `src/c/_globals.h` defines native 200×228 rectangles and points. There is no legacy-platform dispatch or runtime scale factor.
 - **Typography**: `src/c/fonts.c` loads the Emery-specific DS-Digital and Lucidia sizes selected for the native composition.
 - **Vector art**: `src/c/vector.c` stores native Emery points. GPaths are created without mutating or scaling shared arrays.
-- **Health**: the Time 2 health row can show steps or sleep plus heart rate from `HealthMetricHeartRateBPM`.
+- **Health**: steps (or sleep) sit on the top strip in the panel's left column, with heart rate on the row below it — the two never share a line, so a long step count can't reach the heart-rate readout. Values come from `HealthMetricStepCount`/`HealthMetricSleepSeconds` and `HealthMetricHeartRateBPM`.
+- **Top strip**: the right-hand cluster is laid out right-to-left from the panel's inner edge — optional bluetooth badge, battery percentage, battery icon — and the column of text to its left is bounded by whatever the cluster occupies (`battery_top_reserve()`), so nothing is placed from a number measured against the screen edge.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the day's high/low from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. Bottom-left shows the high, bottom-right the low; °C/°F is a settings option, converted phone-side so unit flips are instant.
 - Everything else, including color sets, blink, power saving, and hourly vibration, remains part of the Emery face.
 
