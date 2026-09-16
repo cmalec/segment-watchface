@@ -184,6 +184,15 @@
       <div class="wrbox" id="s-d3"></div>
     </div></div>
     <div class="note"><b>Clock format</b> — comes from the watch’s own time setting, not from this page. The face follows it and shows no AM/PM marker.</div>
+    <div class="row"><div><div class="t">Date format</div><div class="d">Shape of the date on the clock’s second row</div></div>
+      <div class="ctl"><select id="date_format">
+        <option value="0">DD/MM/YY</option>
+        <option value="1">MM/DD/YY</option>
+        <option value="2">YY-MM-DD</option>
+        <option value="3">WED-25</option>
+        <option value="4">JAN-WED-22</option>
+      </select></div>
+    </div>
     <div class="row"><div><div class="t">Health</div><div class="d">Steps and heart rate</div></div><div class="ctl"><button class="sw" data-k="health" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Seconds</div><div class="d">A seconds row under the clock — costs battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>
@@ -249,6 +258,7 @@ var DEFAULTS = {
   health: 1, blink: 1, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
   branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
+  date_format: 1,
   powersave: 0, ps_start: 47, ps_end: 15,
   switchset: 0, switch_start: 47, switch_end: 15,
   temp_unit: 0,
@@ -375,13 +385,27 @@ function flash(msg) {
 }
 
 /* ---- clock in preview ---- */
+// Mirrors format_date() in src/c/helpers.c: same shapes, same order.
+var WDAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function pad2(n) { return (n<10?'0':'')+n; }
+function fmtDate(d) {
+  var dd = pad2(d.getDate()), mm = pad2(d.getMonth()+1), yy = pad2(d.getFullYear()%100);
+  switch (parseInt(settings.date_format, 10)) {
+    case 0: return dd+'/'+mm+'/'+yy;
+    case 2: return yy+'-'+mm+'-'+dd;
+    case 3: return WDAYS[d.getDay()]+'-'+dd;
+    case 4: return MONTHS[d.getMonth()]+'-'+WDAYS[d.getDay()]+'-'+dd;
+    default: return mm+'/'+dd+'/'+yy;
+  }
+}
+function renderDate() { document.getElementById('s-t1').textContent = fmtDate(new Date()); }
 function tick() {
   var d = new Date();
   var hh = (d.getHours()<10?'0':'')+d.getHours(), mm = (d.getMinutes()<10?'0':'')+d.getMinutes();
   document.getElementById('s-t4').textContent = hh+':'+mm;
   document.getElementById('s-t3').textContent = hh+':'+mm;
-  var days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  document.getElementById('s-t1').textContent = days[d.getDay()]+' '+d.getDate();
+  renderDate();
 }
 
 /* ---- hydrate / save ---- */
@@ -390,6 +414,10 @@ function hydrate() {
   document.querySelectorAll('.seg').forEach(paintSeg);
   show('#ps-times', settings.powersave === 1);
   fillTimes();
+  var df = document.getElementById('date_format');
+  df.value = String(settings.date_format);
+  if (df.value !== String(settings.date_format)) { df.value = DEFAULTS.date_format; }
+  df.onchange = function () { settings.date_format = parseInt(this.value, 10); renderDate(); };
   renderPreview();
 }
 document.getElementById('reset').addEventListener('click', function () {

@@ -88,6 +88,15 @@ void settings_process_tuple(Tuple *new_tuple) {
     // temps immediately.
     weather_share_unit();
   }
+  else if (key == DATE_FORMAT_KEY) {
+    uint8_t fmt = new_tuple->value->uint8;
+    if (fmt > DATE_FMT_MONTH_WEEKDAY_DD) {
+      // Unknown formats fall back to the default rather than rendering as
+      // whatever the low byte happened to be.
+      fmt = DATE_FMT_MMDDYY;
+    }
+    global_settings.DateFmt = fmt;
+  }
   else if (key == HOURLYVIBE_KEY) {
     global_settings.HourlyVibe = new_tuple->value->uint8;
   }
@@ -244,6 +253,9 @@ void settings_default_values() {
   global_settings.BluetoothShow = 0;
   global_settings.BatteryIconOnly = 0;
   global_settings.TempUnit = 0; // Celsius
+  // mm/dd/yy: what the face rendered before the format became a setting (it
+  // used the locale's %D, which is this on the locales the face ships to).
+  global_settings.DateFmt = DATE_FMT_MMDDYY;
   colors[c_bg1] = GColorWhite;
   colors[c_bg2] = GColorBlack;
   colors[c_bg3] = GColorWhite;
@@ -311,20 +323,44 @@ void timed_colorset(int8_t h, int8_t m){
   }
 }
 
+/*
+ * Adopt a persisted blob of n bytes (0 = nothing stored on the watch).
+ *
+ * Fields are only ever appended to the Settings struct (see settings.h), so an
+ * older blob's prefix still describes the same fields in the same order: copy
+ * that prefix and leave the appended tail at the defaults that
+ * settings_default_values() has already installed. Growing the struct used to
+ * discard the whole blob instead, which reset every user's face on update.
+ *
+ * A blob from a *newer* layout is the one case where the bytes cannot be
+ * interpreted, so it is ignored and the defaults stand.
+ */
+void settings_adopt_blob(const void *blob, int n) {
+  const Settings *stored = blob;
+  if (n <= 0) {
+    return;
+  }
+  if ((size_t)n > sizeof(Settings)) {
+    n = sizeof(Settings);
+  }
+  if (stored->version == SETTINGS_VERSION) {
+    memcpy(&global_settings, blob, sizeof(Settings));
+  }
+  else if (stored->version < SETTINGS_VERSION) {
+    memcpy(&global_settings, blob, (size_t)n);
+    global_settings.version = SETTINGS_VERSION;
+  }
+}
+
 void settings_init() {
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "settings_init()");
 
   settings_default_values();
-  // Versioned load: only trust a blob whose header matches the current
-  // struct version; otherwise keep defaults (avoids reading a stale/short
-  // blob after the struct grows). Older fields are re-merged below.
   if(persist_exists(SETTINGS_KEY)) {
     Settings stored;
     int n = persist_read_data(SETTINGS_KEY, &stored, sizeof(stored));
-    if (n >= (int)sizeof(stored) && stored.version == SETTINGS_VERSION) {
-      global_settings = stored;
-    }
+    settings_adopt_blob(&stored, n);
   }
   #ifdef PBL_COLOR
     if(persist_exists(COLORSET1_KEY)) {

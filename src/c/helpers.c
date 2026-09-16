@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "helpers.h"
+#include "settings.h"
 
 void duration_to_time(int duration_s, int *hours, int *minutes) {
   *hours = duration_s / 3600;
@@ -45,3 +46,47 @@ GColor color_helper(GColor color, uint8_t inverted) {
   }
   return color;
 }
+
+/*
+ * Date text for the second row, in the format the user picked.
+ *
+ * Weekday and month names are spelled out here rather than taken from
+ * strftime's locale: the font's character set is ASCII (any locale whose
+ * abbreviations carry accents or non-Latin script would render blanks) and the
+ * rest of the face's chrome is English anyway. The numeric parts use tm fields
+ * directly so the format does not depend on the system locale either.
+ *
+ * Widths: the longest form ("SEP-WED-25") is 10 glyphs, 80px in Lucida 14,
+ * inside the 150px date box.
+ */
+static const char *const WEEKDAY_NAMES[7] = {
+  "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"
+};
+static const char *const MONTH_NAMES[12] = {
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+};
+
+void format_date(DateFormat fmt, struct tm *t, char *out, size_t out_len) {
+  int day = t->tm_mday, month = t->tm_mon + 1, year = t->tm_year % 100;
+  switch (fmt) {
+    case DATE_FMT_DDMMYY:
+      snprintf(out, out_len, "%02d/%02d/%02d", day, month, year);
+      break;
+    case DATE_FMT_YYMMDD:
+      snprintf(out, out_len, "%02d-%02d-%02d", year, month, day);
+      break;
+    case DATE_FMT_WEEKDAY_DD:
+      snprintf(out, out_len, "%s-%02d", WEEKDAY_NAMES[t->tm_wday], day);
+      break;
+    case DATE_FMT_MONTH_WEEKDAY_DD:
+      snprintf(out, out_len, "%s-%s-%02d", MONTH_NAMES[t->tm_mon],
+               WEEKDAY_NAMES[t->tm_wday], day);
+      break;
+    case DATE_FMT_MMDDYY:
+    default:
+      snprintf(out, out_len, "%02d/%02d/%02d", month, day, year);
+      break;
+  }
+}
+

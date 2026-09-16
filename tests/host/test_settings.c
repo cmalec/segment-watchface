@@ -85,6 +85,82 @@ static void test_powersave_disabled(void) {
   ASSERT_TRUE(!setting_is_power_save(23, 0), "disabled -> never in window");
 }
 
+/* The layout as it was before DateFmt was appended: an older blob's prefix. */
+static struct __attribute__((__packed__)) OldSettings {
+  uint8_t version, Health, Blink, Invert, BluetoothVibe, HourlyVibe,
+          BrandingMask, BatteryHide, Seconds, PowerSave, PS_Start, PS_End,
+          SwitchSet, SwitchStart, SwitchEnd, BluetoothShow, BatteryIconOnly,
+          TempUnit;
+} old_blob;
+
+static void test_date_format_tuple(void) {
+  union {
+    uint8_t uint8; int8_t int8; uint16_t uint16; int32_t int32; const char *cstring;
+  } value;
+  Tuple tuple = { .key = MESSAGE_KEY_date_format, .value = &value };
+
+  settings_default_values();
+  value.uint8 = DATE_FMT_WEEKDAY_DD;
+  settings_process_tuple(&tuple);
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_WEEKDAY_DD, "valid format accepted");
+  value.uint8 = DATE_FMT_MONTH_WEEKDAY_DD;
+  settings_process_tuple(&tuple);
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MONTH_WEEKDAY_DD, "last format accepted");
+  value.uint8 = 200;
+  settings_process_tuple(&tuple);
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MMDDYY, "unknown format falls back to the default");
+}
+
+static void test_blob_migration_from_older_layout(void) {
+  memset(&old_blob, 0, sizeof(old_blob));
+  old_blob.version = SETTINGS_VERSION - 1;
+  old_blob.Health = 0;          // user turned health off
+  old_blob.Seconds = 1;         // ...and seconds on
+  old_blob.BatteryIconOnly = 1;
+  old_blob.TempUnit = 1;
+  old_blob.PS_Start = 30;
+
+  settings_default_values();
+  settings_adopt_blob(&old_blob, sizeof(old_blob));
+
+  ASSERT_EQ(global_settings.Health, 0, "older blob: health kept");
+  ASSERT_EQ(global_settings.Seconds, 1, "older blob: seconds kept");
+  ASSERT_EQ(global_settings.BatteryIconOnly, 1, "older blob: battery mode kept");
+  ASSERT_EQ(global_settings.TempUnit, 1, "older blob: temp unit kept");
+  ASSERT_EQ(global_settings.PS_Start, 30, "older blob: power-save window kept");
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MMDDYY, "appended field keeps its default");
+  ASSERT_EQ(global_settings.version, SETTINGS_VERSION, "blob adopted as current");
+}
+
+static void test_blob_migration_ignores_newer_layout(void) {
+  uint8_t future[8];
+  memset(future, 0, sizeof(future));
+  future[0] = SETTINGS_VERSION + 1;
+
+  settings_default_values();
+  global_settings.Seconds = 1;               // current state to protect
+  settings_adopt_blob(future, sizeof(future));
+
+  ASSERT_EQ(global_settings.Seconds, 1, "newer blob: current state untouched");
+  ASSERT_EQ(global_settings.version, SETTINGS_VERSION, "newer blob: version untouched");
+}
+
+static void test_blob_migration_of_current_and_empty_blobs(void) {
+  Settings current;
+  settings_default_values();
+  current = global_settings;
+  current.Seconds = 1;
+  current.DateFmt = DATE_FMT_WEEKDAY_DD;
+  settings_default_values();
+  settings_adopt_blob(&current, sizeof(current));
+  ASSERT_EQ(global_settings.Seconds, 1, "current blob: seconds restored");
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_WEEKDAY_DD, "current blob: date format restored");
+
+  settings_default_values();
+  settings_adopt_blob(&current, 0);          // nothing stored
+  ASSERT_EQ(global_settings.Seconds, 0, "empty blob: defaults stand");
+}
+
 int main(void) {
   settings_default_values();  // establish a known baseline
   RUN(test_set2_nonwrapping);
@@ -93,5 +169,9 @@ int main(void) {
   RUN(test_powersave_nonwrapping);
   RUN(test_powersave_wrapping);
   RUN(test_powersave_disabled);
+  RUN(test_date_format_tuple);
+  RUN(test_blob_migration_from_older_layout);
+  RUN(test_blob_migration_ignores_newer_layout);
+  RUN(test_blob_migration_of_current_and_empty_blobs);
   TEST_SUMMARY();
 }

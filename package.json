@@ -43,7 +43,8 @@
       "pbatt_level",
       "setcolors",
       "set1colors",
-      "set2colors"
+      "set2colors",
+      "date_format"
     ],
     "resources": {
       "media": [

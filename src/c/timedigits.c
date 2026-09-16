@@ -238,11 +238,9 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 
   if (units_changed & DAY_UNIT) {
-    // Localized date via the system locale: %D is the locale's date
-    // representation (e.g. "09/07/26" US, "07.09.26" de). setlocale(LC_ALL)
-    // is called in main.c. 22px font box is sized for the short numeric form.
     static char full_date_text[24];
-    strftime(full_date_text, sizeof(full_date_text), "%D", tick_time);
+    format_date((DateFormat)global_settings.DateFmt, tick_time,
+                 full_date_text, sizeof(full_date_text));
     text_layer_set_text(t_layer[t_date], full_date_text);
   }
 

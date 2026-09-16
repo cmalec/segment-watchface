@@ -7,7 +7,7 @@ A seven-segment digital watchface for the Pebble Time 2, built on the current Re
 ## Features
 
 - Large seven-segment LCD-style time display (DS-Digital font)
-- Date display
+- Date display in five formats (DD/MM/YY, MM/DD/YY, YY-MM-DD, WED-25, JAN-WED-22)
 - Bluetooth connection indicator beside the battery readout, with optional disconnect vibration
 - Battery level indicator (with option to hide)
 - Optional seconds display
@@ -106,7 +106,7 @@ Configurable from the Pebble mobile app (tap the gear on the watchface card in t
 
 **https://cmalec.github.io/segment-watchface/server/index.10.html**
 
-It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
+It configures: health, seconds, date format, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
 ## Project layout
 
@@ -144,6 +144,7 @@ The watchface uses the actual Time 2 coordinate system directly:
 - **Clock**: the same 99px seven-segment face in both modes, spanning the panel's inner width; enabling seconds does not shrink it. The seconds pair takes its own row underneath, centred on the panel, in the space the clock vacates by moving up.
 - **Health**: steps (or sleep) sit on the top strip in the panel's left column, with heart rate on the row below it — the two never share a line, so a long step count can't reach the heart-rate readout. Values come from `HealthMetricStepCount`/`HealthMetricSleepSeconds` and `HealthMetricHeartRateBPM`.
 - **Top strip**: the right-hand cluster is laid out right-to-left from the panel's inner edge — optional bluetooth badge, battery percentage, battery icon — and the column of text to its left is bounded by whatever the cluster occupies (`battery_top_reserve()`), so nothing is placed from a number measured against the screen edge.
+- **Date**: five shapes — numeric (`DD/MM/YY`, `MM/DD/YY`, `YY-MM-DD`) and name-bearing (`WED-25`, `SEP-WED-25`). `format_date()` builds them from `tm` fields with English abbreviations spelled out in the source: the Lucida character set is ASCII, so a locale whose abbreviations carry accents would render blanks, and the rest of the chrome is English.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the day's high/low from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. Bottom-left shows the high, bottom-right the low; °C/°F is a settings option, converted phone-side so unit flips are instant.
 - Everything else, including the colour sets the watch stores, blink, power saving, and hourly vibration, remains part of the Emery face.
 

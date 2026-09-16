@@ -2,9 +2,20 @@
 #include <pebble.h>
 
 #define SETTINGS_KEY 1336
-#define SETTINGS_VERSION 3   // bump when the Settings struct layout changes
+#define SETTINGS_VERSION 4   // bump when the Settings struct layout changes
 #define COLORSET1_KEY 1341
 #define COLORSET2_KEY 1342
+
+// Date formats offered by the settings page. The enum value is the wire value,
+// so the page's option order and this list must stay in step.
+typedef enum DateFormat {
+  DATE_FMT_DDMMYY = 0,            // 25/09/26
+  DATE_FMT_MMDDYY = 1,            // 09/25/26 (default: what the face showed before
+                                  //   the format became a setting, on a US locale)
+  DATE_FMT_YYMMDD = 2,            // 26-09-25
+  DATE_FMT_WEEKDAY_DD = 3,        // WED-25
+  DATE_FMT_MONTH_WEEKDAY_DD = 4   // SEP-WED-25
+} DateFormat;
 
 #define SETTINGS_CALLBACKS_COUNT 6
 #define COLORS_NUM 25
@@ -47,6 +58,7 @@ typedef struct Settings {
   uint8_t BluetoothShow;
   uint8_t BatteryIconOnly; // 0 = icon + percent, 1 = percent only (no icon, no phone bar)
   uint8_t TempUnit;        // 0 = Celsius, 1 = Fahrenheit
+  uint8_t DateFmt;         // DateFormat
 } __attribute__((__packed__)) Settings;
 
 extern Settings global_settings;
@@ -76,12 +88,21 @@ typedef void (*SettingsChangeCallback)();
 #define WTEMP_HI_KEY       MESSAGE_KEY_wtemp_hi
 #define WTEMP_LO_KEY       MESSAGE_KEY_wtemp_lo
 #define PBATT_LEVEL_KEY    MESSAGE_KEY_pbatt_level
+#define DATE_FORMAT_KEY    MESSAGE_KEY_date_format
 
 // Color-set payloads ride the messageKey values too (legacy hardcoded keys
 // 200/202 predated the SDK-generated 10000+ range and matched nothing).
 #define SET_KEY  MESSAGE_KEY_setcolors
 #define SET2_KEY MESSAGE_KEY_set2colors
 
+
+// Inbound AppMessage handler (one tuple at a time). Exposed so the host tests
+// can drive the wire contract without an app message loop.
+void settings_process_tuple(Tuple *new_tuple);
+
+// Take up a persisted blob (settings_init's job on the watch; the host tests
+// call it directly to cover layout migrations).
+void settings_adopt_blob(const void *blob, int n);
 
 enum {
   BLINK_OFF = 0,
