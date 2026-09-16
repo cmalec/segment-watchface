@@ -139,8 +139,9 @@ Warnings (`-Wsign-compare`, `-Wunused-variable`, `-Wformat-truncation` in health
 The watchface uses the actual Time 2 coordinate system directly:
 
 - **Geometry**: `src/c/_globals.h` defines native 200×228 rectangles and points. There is no legacy-platform dispatch or runtime scale factor.
-- **Typography**: `src/c/fonts.c` loads the Emery-specific DS-Digital and Lucidia sizes selected for the native composition.
+- **Typography**: `src/c/fonts.c` loads the Emery-specific DS-Digital sizes (99px clock, 26px seconds) and Lucidia 14 for everything else. Nothing is swapped at runtime.
 - **Vector art**: `src/c/vector.c` stores native Emery points. GPaths are created without mutating or scaling shared arrays.
+- **Clock**: the same 99px seven-segment face in both modes, spanning the panel's inner width; enabling seconds does not shrink it. The seconds pair takes its own row underneath, centred on the panel, in the space the clock vacates by moving up.
 - **Health**: steps (or sleep) sit on the top strip in the panel's left column, with heart rate on the row below it — the two never share a line, so a long step count can't reach the heart-rate readout. Values come from `HealthMetricStepCount`/`HealthMetricSleepSeconds` and `HealthMetricHeartRateBPM`.
 - **Top strip**: the right-hand cluster is laid out right-to-left from the panel's inner edge — optional bluetooth badge, battery percentage, battery icon — and the column of text to its left is bounded by whatever the cluster occupies (`battery_top_reserve()`), so nothing is placed from a number measured against the screen edge.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the day's high/low from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. Bottom-left shows the high, bottom-right the low; °C/°F is a settings option, converted phone-side so unit flips are instant.

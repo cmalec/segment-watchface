@@ -57,14 +57,7 @@
         {
           "characterRegex": "[:0-9]",
           "file": "fonts/DS-Digital-Bold.ttf",
-          "name": "FONT_DIGITALE_78",
-          "type": "font",
-          "targetPlatforms": ["emery"]
-        },
-        {
-          "characterRegex": "[:0-9]",
-          "file": "fonts/DS-Digital-Bold.ttf",
-          "name": "FONT_DIGITALE_31",
+          "name": "FONT_DIGITALE_26",
           "type": "font",
           "targetPlatforms": ["emery"]
         },

@@ -33,6 +33,7 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define PANEL_INNER_LEFT 6
 #define PANEL_INNER_TOP 53
 #define PANEL_INNER_RIGHT 194   // exclusive: 193 is the last lit column
+#define PANEL_INNER_BOTTOM 183  // exclusive: 182 is the last lit row
 
 // TOP STRIP
 // The top strip holds the health column on the left and one right-anchored
@@ -108,38 +109,38 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define TIMEDIGITS_WIDTH 50
 #define TIMEDIGITS_HEIGHT 115
 
-// Seconds mode: big minute/hour digits use the 78px font, with the small
-// seconds pair placed below and right-aligned inside the display.
+// Seconds mode: the clock keeps the 99px font, the normal digit boxes and the
+// normal full-width layout — it only moves up — and the seconds pair gets its
+// own row underneath, centred on the panel.
 //
-// DS-Digital metrics (TTF-measured): both sized glyphs bottom-anchor to the
-// font ascent — 78px font: ink bottom = frame_top + 80; 31px font: ink
-// bottom = frame_top + 32 (line boxes 95/38, cap offsets 14/12).
-// TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP = 127 makes the small seconds' ink
-// bottom 127+32 = 159 = the big digits' 79+80, so both rows sit on the same
-// baseline. The previous 131 dropped the seconds 4px below the big digits.
+// The old design shrank the clock to the 78px font and shifted the readout
+// 4px left so the pair could sit beside it. That put the hour-tens digit's box
+// over the panel outline, where its background-coloured shadow layer showed
+// through as a ghost digit straddling the border, and the pair itself was left
+// flush on the right edge.
 //
-// Horizontal: the 78px glyph advance is 40px, so adjacent minute digits
-// must start >= 40px apart or their ink overlaps (a narrow tens '1' then
-// sat inside the ones digit). DIGIT4 = DIGIT3 + 40.
-//
-// The whole readout sits 4px left of where it used to: the small seconds'
-// box used to end 5px past the panel's inner edge, which put their ink flush
-// on the outline (the rightmost column lit at the panel border). At -4 the
-// box ends exactly on PANEL_INNER_RIGHT and the ink keeps the same 4px of air
-// the top-strip cluster keeps.
-#define TIMEDIGITS_SECONDS_DIGIT1 0
-#define TIMEDIGITS_SECONDS_DIGIT2 35
-#define TIMEDIGITS_SECONDS_DIGIT3 82
-#define TIMEDIGITS_SECONDS_DIGIT4 122
-#define TIMEDIGITS_SECONDS_DIGIT5 162
-#define TIMEDIGITS_SECONDS_DIGIT6 177
-#define TIMEDIGITS_SECONDS_SEPARATOR 46
-#define TIMEDIGITS_SECONDS_OFFSET_TOP 79
-#define TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP 127
-#define TIMEDIGITS_SECONDS_WIDTH 40
-#define TIMEDIGITS_SECONDS_SMALL_WIDTH 17
-#define TIMEDIGITS_SECONDS_HEIGHT 95
-#define TIMEDIGITS_SECONDS_SMALL_HEIGHT 38
+// Measured ink offsets (emulator, frame_top -> ink):
+//   99px digits: +36 .. +98      26px seconds: +9 .. +25
+// so the pair's row is derived from the clock's ink bottom rather than tuned
+// by hand. The clock's ink runs 95..157 (was 115..177) and the pair's 161..177,
+// leaving 4 rows clear above the panel's inner bottom edge.
+#define TIMEDIGITS_DIGIT_INK_TOP 36
+#define TIMEDIGITS_DIGIT_INK_BOTTOM 98
+#define TIMEDIGITS_SECONDS_PAIR_INK_TOP 9
+#define TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM 25
+
+#define TIMEDIGITS_SECONDS_OFFSET_TOP 59
+
+// Pair: two 14px boxes 13px apart (they overlap by a pixel, as the old
+// side-by-side pair did), spanning 86..113 so their ink centres on the panel.
+#define TIMEDIGITS_SECONDS_PAIR_GAP 3  // air between the clock's ink and theirs
+#define TIMEDIGITS_SECONDS_PAIR_X 86
+#define TIMEDIGITS_SECONDS_PAIR_STEP 13
+#define TIMEDIGITS_SECONDS_PAIR_Y \
+  (TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM + 1 \
+   + TIMEDIGITS_SECONDS_PAIR_GAP - TIMEDIGITS_SECONDS_PAIR_INK_TOP)
+#define TIMEDIGITS_SECONDS_SMALL_WIDTH 14
+#define TIMEDIGITS_SECONDS_SMALL_HEIGHT 32
 
 // DECORATIONS
 #define DECORATIONS_LINE_TOP_START GPoint(0, 26)

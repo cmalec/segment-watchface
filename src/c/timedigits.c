@@ -39,13 +39,16 @@ digit_data_t digit_data[]={
   {TIMEDIGITS_DIGIT4,   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_big },
   {0,                   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_sec },
   {0,                   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_sec },
-  {TIMEDIGITS_SECONDS_DIGIT1,   TIMEDIGITS_SECONDS_OFFSET_TOP,       TIMEDIGITS_SECONDS_WIDTH,       TIMEDIGITS_SECONDS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_SECONDS_DIGIT2,   TIMEDIGITS_SECONDS_OFFSET_TOP,       TIMEDIGITS_SECONDS_WIDTH,       TIMEDIGITS_SECONDS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_SECONDS_SEPARATOR,TIMEDIGITS_SECONDS_OFFSET_TOP,       TIMEDIGITS_SECONDS_WIDTH,       TIMEDIGITS_SECONDS_HEIGHT, ":", c_t4, f_big },
-  {TIMEDIGITS_SECONDS_DIGIT3,   TIMEDIGITS_SECONDS_OFFSET_TOP,       TIMEDIGITS_SECONDS_WIDTH,       TIMEDIGITS_SECONDS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_SECONDS_DIGIT4,   TIMEDIGITS_SECONDS_OFFSET_TOP,       TIMEDIGITS_SECONDS_WIDTH,       TIMEDIGITS_SECONDS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_SECONDS_DIGIT5,   TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP, TIMEDIGITS_SECONDS_SMALL_WIDTH, TIMEDIGITS_SECONDS_SMALL_HEIGHT, "8", c_t4, f_sec },
-  {TIMEDIGITS_SECONDS_DIGIT6,   TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP, TIMEDIGITS_SECONDS_SMALL_WIDTH, TIMEDIGITS_SECONDS_SMALL_HEIGHT, "8", c_t4, f_sec },
+  // Seconds mode: same digits, raised; the pair then has its own row below.
+  {TIMEDIGITS_DIGIT1,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
+  {TIMEDIGITS_DIGIT2,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
+  {TIMEDIGITS_SEPARATOR,TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, ":", c_t4, f_big },
+  {TIMEDIGITS_DIGIT3,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
+  {TIMEDIGITS_DIGIT4,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
+  {TIMEDIGITS_SECONDS_PAIR_X, TIMEDIGITS_SECONDS_PAIR_Y,
+   TIMEDIGITS_SECONDS_SMALL_WIDTH, TIMEDIGITS_SECONDS_SMALL_HEIGHT, "8", c_t4, f_sec },
+  {TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP, TIMEDIGITS_SECONDS_PAIR_Y,
+   TIMEDIGITS_SECONDS_SMALL_WIDTH, TIMEDIGITS_SECONDS_SMALL_HEIGHT, "8", c_t4, f_sec },
 };
 
 static uint8_t active_digits; //number of active digits (5 regular, 7 including seconds)
@@ -170,7 +173,10 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     else {
       strftime(time_text, sizeof(time_text), "%I%M", tick_time);
       layer_set_hidden(text_layer_get_layer(t_layer[t_dig1]), (time_text[0] == '0'));
-      //layer_set_hidden(text_layer_get_layer(t_layer[t_shadow_dig1]), (time_text[0] == '0'));
+      // The shadow layer is the same box as the digit: leaving it visible
+      // shows a background-coloured ghost wherever the box runs past the
+      // panel's fill.
+      layer_set_hidden(text_layer_get_layer(t_layer[t_shadow_dig1]), (time_text[0] == '0'));
     }
     static char digit3[] = "0";
     static char digit4[] = "0";

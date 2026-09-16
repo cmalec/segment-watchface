@@ -5,11 +5,10 @@
 #include "test_util.h"
 #include "../../src/c/_globals.h"
 
-/* DS-Digital metrics (measured with PIL; documented in _globals.h):
- *   78px font: cap_offset (ink top below frame top) = 14, line box = 95
- *   31px font: cap_offset = 12, line box = 38
- *   99px font: cap_offset = 36 (ink top = TIMEDIGITS_OFFSET_TOP + 36)
- * A frame SHORTER than the line box clips the glyph. */
+/* DS-Digital ink offsets below a frame's top edge, measured in the emulator
+ * (and encoded as constants in _globals.h):
+ *   99px digits: ink 36 .. 98      26px seconds: ink 9 .. 25
+ * A frame shorter than the ink clips it. */
 
 static void test_top_strip_clears_the_panel_corner(void) {
   // The strip's icon column starts at the panel's left edge, where the
@@ -63,50 +62,61 @@ static void test_steps_text_fits_beside_the_cluster(void) {
   ASSERT_TRUE(worst_case >= 7 * 8, "seven-glyph step count fits beside the badge");
 }
 
-static void test_big_digit_frame_fits_font(void) {
-  // height must be >= the 78px line box on emery, >= 56px box on rect
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_HEIGHT >= 95 || TIMEDIGITS_SECONDS_HEIGHT >= 56,
-              "seconds digit frame tall enough for its font line box");
+static void test_digit_frames_cover_their_ink(void) {
+  // A frame shorter than the glyph's ink clips it. The offset from a frame's
+  // top to its ink bottom is measured, not derived from the line box: the 99px
+  // font renders in a frame shorter than its line box because its ink starts
+  // 36px down.
+  ASSERT_TRUE(TIMEDIGITS_HEIGHT >= TIMEDIGITS_DIGIT_INK_BOTTOM + 1,
+              "clock digit frame covers the digit ink");
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_SMALL_HEIGHT >= TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM + 1,
+              "seconds pair frame covers the pair ink");
 }
 
-static void test_seconds_digits_within_screen(void) {
-  // right edges must not exceed the display width
+static void test_clock_ink_clears_the_panel_outline(void) {
+  // Both clock modes share these boxes. The glyph ink, not the box, is what
+  // must stay off the outline: the 99px digits carry a side bearing, and their
+  // background-coloured shadow layer is drawn at the same box, so any ink that
+  // runs past the panel's fill shows up as a ghost digit over the border.
+  int bearing = 5;  // measured: box left 4 -> ink starts at 9
+  ASSERT_TRUE(TIMEDIGITS_DIGIT1 + bearing >= PANEL_INNER_LEFT,
+              "left-most digit ink starts inside the panel fill");
+  ASSERT_TRUE(TIMEDIGITS_DIGIT4 + TIMEDIGITS_WIDTH - bearing <= PANEL_INNER_RIGHT - 1,
+              "right-most digit ink ends inside the panel fill");
   int w = PBL_DISPLAY_WIDTH;
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT4 + TIMEDIGITS_SECONDS_WIDTH <= w, "digit4 fits width");
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= w, "digit6 fits width");
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT1 >= 0, "digit1 on-screen");
+  ASSERT_TRUE(TIMEDIGITS_DIGIT1 >= 0 && TIMEDIGITS_DIGIT4 + TIMEDIGITS_WIDTH <= w,
+              "clock boxes stay on screen");
 }
 
-static void test_seconds_ink_clears_the_panel_outline(void) {
-  // The small seconds' box must end at (not past) the panel's inner edge:
-  // their glyph is centred in the box, so a box ending on PANEL_INNER_RIGHT
-  // leaves their ink the standard edge gap before the outline.
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= PANEL_INNER_RIGHT,
-              "seconds box ends inside the panel outline");
+static void test_seconds_mode_raises_the_clock_for_the_pair_row(void) {
+  // The clock keeps its geometry and only moves up; the pair then occupies the
+  // rows the clock vacated. Both must fit between the date row's ink and the
+  // panel's inner bottom edge with air either side.
+  int date_ink_bottom = TIMEDIGITS_DATE.origin.y + 15;  // slashes descend last
+  int clock_ink_top = TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_TOP;
+  int clock_ink_bottom = TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM;
+  int pair_ink_top = TIMEDIGITS_SECONDS_PAIR_Y + TIMEDIGITS_SECONDS_PAIR_INK_TOP;
+  int pair_ink_bottom = TIMEDIGITS_SECONDS_PAIR_Y + TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM;
+
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_OFFSET_TOP < TIMEDIGITS_OFFSET_TOP,
+              "seconds mode raises the clock");
+  ASSERT_TRUE(clock_ink_top >= date_ink_bottom + 2, "clock ink clears the date row");
+  ASSERT_TRUE(pair_ink_top >= clock_ink_bottom + 4, "pair ink clears the clock ink");
+  ASSERT_TRUE(pair_ink_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "pair ink clears the panel edge");
 }
 
-static void test_seconds_separator_between_digit_pairs(void) {
-  // separator sits between digit2 and digit3 horizontally
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_SEPARATOR >= TIMEDIGITS_SECONDS_DIGIT2, "sep right of d2");
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_SEPARATOR <= TIMEDIGITS_SECONDS_DIGIT3, "sep left of d3");
-}
-
-static void test_small_seconds_below_big_digits(void) {
-  // small seconds caps start below the big-digit caps (top ordering)
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP >= TIMEDIGITS_SECONDS_OFFSET_TOP,
-              "small seconds below big digits");
-}
-
-static void test_small_seconds_dont_overlap_digit4(void) {
-  // d5 starts at/after d4's right edge (no horizontal overlap of glyph boxes)
-  int d4_right = TIMEDIGITS_SECONDS_DIGIT4 + TIMEDIGITS_SECONDS_WIDTH;
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT5 >= d4_right - 2, "d5 clear of d4 (allow 2px)");
-}
-
-static void test_normal_and_seconds_heights_differ(void) {
-  // sanity: the seconds layout uses the smaller font's line box
-  // (a frame equal to the normal-mode height would reintroduce the bug)
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_HEIGHT != TIMEDIGITS_HEIGHT, "seconds frame uses small layout");
+static void test_seconds_pair_is_centred_and_inside_the_panel(void) {
+  int pair_right = TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP
+                   + TIMEDIGITS_SECONDS_SMALL_WIDTH;
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_PAIR_X >= PANEL_INNER_LEFT, "pair starts inside the panel");
+  ASSERT_TRUE(pair_right <= PANEL_INNER_RIGHT, "pair ends inside the panel");
+  int pair_centre = TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP / 2
+                    + TIMEDIGITS_SECONDS_SMALL_WIDTH / 2;
+  int panel_centre = (PANEL_INNER_LEFT + PANEL_INNER_RIGHT - 1) / 2;
+  ASSERT_TRUE(pair_centre - panel_centre <= 1 && panel_centre - pair_centre <= 1,
+              "pair is centred on the panel");
+  ASSERT_TRUE(TIMEDIGITS_SECONDS_PAIR_STEP >= TIMEDIGITS_SECONDS_SMALL_WIDTH - 1,
+              "pair boxes touch without a gap");
 }
 
 static void test_native_screen_bounds(void) {
@@ -123,37 +133,23 @@ static void test_native_screen_bounds(void) {
               "clock starts below metadata row");
 }
 
-static void test_small_seconds_bottom_aligned_with_big_digits(void) {
-  // Both sizes bottom-anchor to their font ascent: 78px ink bottom is at
-  // frame_top + 80, 31px at frame_top + 32 (TTF-measured). The tops must
-  // differ by 48 so both rows share one baseline — otherwise the seconds
-  // sink below the big digits (regression: 131 left them 4px low).
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_SMALL_OFFSET_TOP + 32 == TIMEDIGITS_SECONDS_OFFSET_TOP + 80,
-              "small seconds share the big digits' baseline");
-}
-
 static void test_minute_digits_dont_overlap(void) {
-  // 78px glyph advance is 40px (TTF-measured); the minute tens and ones
-  // boxes must start >= 40px apart or their ink overlaps — visible as a
-  // narrow '1' sitting inside the ones digit (regression: DIGIT4 was 115,
-  // only 29px after DIGIT3).
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT4 - TIMEDIGITS_SECONDS_DIGIT3 >= 40,
-              "minute tens/ones start >= 40px apart (78px advance)");
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_DIGIT6 + TIMEDIGITS_SECONDS_SMALL_WIDTH <= 200,
-              "small seconds end inside the right screen edge");
+  // The 99px font's glyph advance is 50px; the boxes may overlap that only
+  // where a narrow '1' sits, so the two minute digits must still start well
+  // clear of each other (regression: the boxes were 29px apart once, putting
+  // the ones digit inside the tens digit's ink).
+  ASSERT_TRUE(TIMEDIGITS_DIGIT4 - TIMEDIGITS_DIGIT3 >= 0, "minute digits ordered");
+  ASSERT_TRUE(TIMEDIGITS_DIGIT4 - TIMEDIGITS_DIGIT3 >= 40,
+              "minute tens/ones start far enough apart");
 }
 
 int main(void) {
-  RUN(test_big_digit_frame_fits_font);
-  RUN(test_seconds_digits_within_screen);
-  RUN(test_seconds_separator_between_digit_pairs);
-  RUN(test_small_seconds_below_big_digits);
-  RUN(test_small_seconds_dont_overlap_digit4);
-  RUN(test_normal_and_seconds_heights_differ);
-  RUN(test_small_seconds_bottom_aligned_with_big_digits);
+  RUN(test_digit_frames_cover_their_ink);
   RUN(test_minute_digits_dont_overlap);
   RUN(test_native_screen_bounds);
-  RUN(test_seconds_ink_clears_the_panel_outline);
+  RUN(test_clock_ink_clears_the_panel_outline);
+  RUN(test_seconds_mode_raises_the_clock_for_the_pair_row);
+  RUN(test_seconds_pair_is_centred_and_inside_the_panel);
   RUN(test_top_strip_clears_the_panel_corner);
   RUN(test_top_strip_cluster_hugs_panel_edge);
   RUN(test_bluetooth_badge_clears_battery_percent);
