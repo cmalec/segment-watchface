@@ -167,21 +167,36 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
   if(units_changed & MINUTE_UNIT) {
 
-    if(clock_is_24h_style()) {
+    bool is_24h = clock_is_24h_style();
+    if (is_24h) {
       strftime(time_text, sizeof(time_text), "%H%M", tick_time);
     }
     else {
       strftime(time_text, sizeof(time_text), "%I%M", tick_time);
-      layer_set_hidden(text_layer_get_layer(t_layer[t_dig1]), (time_text[0] == '0'));
-      // The shadow layer is the same box as the digit: leaving it visible
-      // shows a background-coloured ghost wherever the box runs past the
-      // panel's fill.
-      layer_set_hidden(text_layer_get_layer(t_layer[t_shadow_dig1]), (time_text[0] == '0'));
     }
+    // Only the 12-hour face drops the leading zero. Setting the visibility
+    // from the format on every tick matters: switching 12h -> 24h used to
+    // leave the digit hidden, because only the 12-hour branch touched it.
+    // The shadow layer is the same box as the digit, so it follows the digit:
+    // left visible it shows a background-coloured ghost wherever the box runs
+    // past the panel's fill.
+    bool hide_hour_tens = !is_24h && time_text[0] == '0';
+    layer_set_hidden(text_layer_get_layer(t_layer[t_dig1]), hide_hour_tens);
+    layer_set_hidden(text_layer_get_layer(t_layer[t_shadow_dig1]), hide_hour_tens);
+    // All four digits are written here, not on the hour: the format is decided
+    // in this branch, so this is the only place that can keep the hour digits
+    // in step with it (on the hour alone, a 12h -> 24h switch left the previous
+    // format's hour on screen until the next hour ticked over).
+    static char digit1[] = "0";
+    static char digit2[] = "0";
     static char digit3[] = "0";
     static char digit4[] = "0";
+    digit1[0] = time_text[0];
+    digit2[0] = time_text[1];
     digit3[0] = time_text[2];
     digit4[0] = time_text[3];
+    text_layer_set_text(t_layer[t_dig1], digit1);
+    text_layer_set_text(t_layer[t_dig2], digit2);
     text_layer_set_text(t_layer[t_dig3], digit3);
     text_layer_set_text(t_layer[t_dig4], digit4);
 
@@ -215,15 +230,9 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
       //vibe!
       vibes_short_pulse();
     }
-    //ToDo: check night settings for color set 2 or regular set
-    // use settings_load_colorSet2 for night set
-    //
-    static char digit1[] = "0";
-    static char digit2[] = "0";
-    digit1[0] = time_text[0];
-    digit2[0] = time_text[1];
-    text_layer_set_text(t_layer[t_dig1], digit1);
-    text_layer_set_text(t_layer[t_dig2], digit2);
+    //The clock digits are written on every minute tick (see MINUTE_UNIT): the
+    //12/24-hour format can change between hours, and only that branch knows
+    //which format the digits were laid out for.
   } //HOUR_UNIT
 
 
