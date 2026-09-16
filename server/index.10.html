@@ -86,23 +86,6 @@
   .inrow label { color: var(--text4); font-size: 12px; }
   .hidden { display: none !important; }
 
-  /* theme editor */
-  .presets { display: flex; gap: 8px; padding: 10px 14px; align-items: center; }
-  .presets select { flex: 1; }
-  .presets .seg { flex-shrink: 0; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; padding: 4px 14px 12px; }
-  .crow { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-  .crow input[type="color"] {
-    width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--surface); padding: 2px; cursor: pointer; flex-shrink: 0;
-  }
-  .crow span { font-size: 12px; color: var(--text3); }
-  .gtitle {
-    font-size: 10px; font-weight: 590; text-transform: uppercase; letter-spacing: 0.6px;
-    color: var(--text4); padding-top: 8px; grid-column: span 1;
-  }
-  .gtitle.first { grid-column: 1 / -1; padding-top: 0; }
-
   /* preview */
   .prevwrap { display: flex; justify-content: center; padding: 12px 14px 4px; }
   .sim {
@@ -173,8 +156,31 @@
 
   <section>
     <h2>Display</h2>
+    <div class="prevwrap"><div class="sim" id="sim">
+      <div class="logo" id="s-d9">pebble</div>
+      <div class="ln lnt" id="s-d1"></div>
+      <div class="ln lnb" id="s-d1b"></div>
+      <div class="btnlbl bl-light" id="s-d7">‹ LIGHT</div>
+      <div class="btnlbl bl-prev" id="s-d7b">PREV ›</div>
+      <div class="btnlbl bl-next" id="s-d7c">NEXT ›</div>
+      <div class="panel">
+        <div class="p1" id="s-bg1"></div>
+        <div class="p2" id="s-bg2"></div>
+        <div class="p3" id="s-bg3"></div>
+      </div>
+      <div class="shadow" id="s-t3">88:88</div>
+      <div class="time" id="s-t4">23:45</div>
+      <div class="date" id="s-t1">WED 22</div>
+      <div class="pct" id="s-bi1p">80%</div>
+      <div class="batt" id="s-bi1b"><div class="lvl" id="s-bi1l"></div></div>
+      <div class="steps" id="s-steps">4,077</div>
+      <div class="bpm" id="s-t2">72</div>
+      <div class="temp-hi" id="s-thi">37°</div>
+      <div class="temp-lo" id="s-tlo">23°</div>
+      <div class="wrbox" id="s-d3"></div>
+    </div></div>
     <div class="row"><div><div class="t">Health</div><div class="d">Steps and heart rate</div></div><div class="ctl"><button class="sw" data-k="health" data-on="1"></button></div></div>
-    <div class="row"><div><div class="t">Seconds</div><div class="d">Show seconds — smaller clock, more battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Seconds</div><div class="d">A seconds row under the clock — costs battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Hide branding</div><div class="d">No “pebble” logo at the top</div></div><div class="ctl"><button class="sw" data-k="branding_mask" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Battery readout</div><div class="d">Percent only — hides the icon and phone bar</div></div><div class="ctl"><button class="sw" data-k="battery_icon_only" data-on="1"></button></div></div>
@@ -211,45 +217,6 @@
     </div>
   </section>
 
-  <section>
-    <h2>Colors</h2>
-    <div class="row"><div><div class="t">Switch color set</div><div class="d">Swap palette 1 ↔ 2 by time or watch tap</div></div>
-      <div class="ctl"><div class="seg" data-k="switchset"><button data-v="0">Off</button><button data-v="1">Time</button><button data-v="2">Tap</button></div></div>
-    </div>
-    <div class="inrow hidden" id="ss-times">
-      <label>Start</label><select id="switch_start"></select>
-      <label>End</label><select id="switch_end"></select>
-    </div>
-    <div class="presets">
-      <select id="presets"><option value="">Preset theme…</option></select>
-      <div class="seg" data-k="__edit"><button data-v="0">Set 1</button><button data-v="1">Set 2</button></div>
-    </div>
-    <div class="prevwrap"><div class="sim" id="sim">
-      <div class="logo" id="s-d9">pebble</div>
-      <div class="ln lnt" id="s-d1"></div>
-      <div class="ln lnb" id="s-d1b"></div>
-      <div class="btnlbl bl-light" id="s-d7">‹ LIGHT</div>
-      <div class="btnlbl bl-prev" id="s-d7b">PREV ›</div>
-      <div class="btnlbl bl-next" id="s-d7c">NEXT ›</div>
-      <div class="panel">
-        <div class="p1" id="s-bg1"></div>
-        <div class="p2" id="s-bg2"></div>
-        <div class="p3" id="s-bg3"></div>
-      </div>
-      <div class="shadow" id="s-t3">88:88</div>
-      <div class="time" id="s-t4">23:45</div>
-      <div class="date" id="s-t1">WED 22</div>
-      <div class="pct" id="s-bi1p">80%</div>
-      <div class="batt" id="s-bi1b"><div class="lvl" id="s-bi1l"></div></div>
-      <div class="steps" id="s-steps">4,077</div>
-      <div class="bpm" id="s-t2">72</div>
-      <div class="temp-hi" id="s-thi">37°</div>
-      <div class="temp-lo" id="s-tlo">23°</div>
-      <div class="wrbox" id="s-d3"></div>
-    </div></div>
-    <div class="grid" id="cgrid"></div>
-  </section>
-
 </main>
 
 <div class="savebar"><div class="wrap">
@@ -267,25 +234,12 @@
 /* ---- wire contract (validated against settings.c + GColor.js) ---- */
 var ORDER = ['bg1','bg2','bg3','bg4','bi1','bi2','bi3','bi4','bl1','bl2','bl3','bl4',
              'd1','d2','d3','d4','d5','d6','d7','d8','d9','t1','t2','t3','t4'];
-var LABELS = {
-  bg1:'Panel outer', bg2:'Panel inner', bg3:'Panel fill', bg4:'Background',
-  bi1:'Battery', bi2:'Batt warning', bi3:'Batt critical', bi4:'Batt charging',
-  bl1:'BT circle on', bl2:'BT icon on', bl3:'BT circle off', bl4:'BT icon off',
-  d1:'Lines', d2:'Line bottom', d3:'Box border', d4:'Box fill', d5:'WR letters',
-  d6:'Temps', d7:'Button labels', d8:'Button arrows', d9:'Logo text',
-  t1:'Date', t2:'Health readouts', t3:'Time shadow', t4:'Time'
-};
-var GROUPS = [
-  ['Background', ['bg4','d9']],
-  ['Panel', ['bg1','bg2','bg3']],
-  ['Text', ['t4','t3','t1','t2','d6']],
-  ['Chrome', ['d1','d2','d3','d4','d5','d7','d8','d9']],
-  ['Battery', ['bi1','bi2','bi3','bi4']],
-  ['Bluetooth', ['bl1','bl2','bl3','bl4']]
-];
-// Matches settings_default_values() in src/c/settings.c (GColor8 per slot,
-// ORDER above): white/black panel, orange/red batt states, blue BT badge.
-var DEFAULT_COLORS = 'FFC0FFC0C0C0C0C0FF45D3D3D3AAB0AAFFC0FFFFFFFFFFC0C0FFC0';
+// Mirrors settings_default_values() in src/c/settings.c: white panel, black ink,
+// orange/red battery states, blue/light-gray bluetooth badge. One GColor8 byte
+// per slot, in ORDER above. (The previous string was two slots too long, which
+// shifted every slot past the bluetooth badge — the date, step count and heart
+// rate were painted white on a white panel, i.e. invisible.)
+var DEFAULT_COLORS = 'FFC0FFC0C0F4F0F0C2EAF0FFFFFFFFC0FFFFFFFFFFC0C0FFC0';
 var DEFAULTS = {
   health: 1, blink: 1, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
@@ -304,22 +258,12 @@ function byteToCss(b) {
     var s = (x*85).toString(16); return s.length === 1 ? '0'+s : s;
   }).join('');
 }
-function cssToByte(css) {
-  css = css.replace('#','');
-  var r = Math.min(3, Math.round(parseInt(css.substr(0,2),16)/85));
-  var g = Math.min(3, Math.round(parseInt(css.substr(2,2),16)/85));
-  var b = Math.min(3, Math.round(parseInt(css.substr(4,2),16)/85));
-  return (0xC0 | (r<<4) | (g<<2) | b).toString(16).toUpperCase();
-}
 function parseColors(str, target) {
   ORDER.forEach(function(k,i){ target[k] = byteToCss((str||'').substr(i*2,2)); });
 }
-function serializeColors(src) {
-  return ORDER.map(function(k){ return cssToByte(src[k]); }).join('');
-}
 
 /* ---- state ---- */
-var settings = {}, colors1 = {}, colors2 = {}, editSet = 0;
+var settings = {}, palette = {};
 
 function qparam(name, def) {
   var q = location.search.substring(1).split('&');
@@ -335,8 +279,8 @@ function load() {
   }
   if (!ok) settings = JSON.parse(JSON.stringify(DEFAULTS));
   Object.keys(DEFAULTS).forEach(function(k){ if (settings[k]===undefined) settings[k]=DEFAULTS[k]; });
-  parseColors(settings.setcolors, colors1);
-  parseColors(settings.set2colors, colors2);
+  // Palette is fixed now (no editor): show what the watch is actually using.
+  parseColors(settings.setcolors || DEFAULT_COLORS, palette);
 }
 
 /* ---- toggles ---- */
@@ -358,7 +302,7 @@ document.querySelectorAll('.sw').forEach(function (el) {
 /* ---- segments ---- */
 function paintSeg(seg) {
   var key = seg.dataset.k;
-  var val = key === '__edit' ? editSet : settings[key];
+  var val = settings[key];
   seg.querySelectorAll('button').forEach(function (b) {
     b.classList.toggle('on', b.dataset.v === String(val));
   });
@@ -368,10 +312,8 @@ document.querySelectorAll('.seg').forEach(function (seg) {
   seg.addEventListener('click', function (e) {
     var btn = e.target.closest('button'); if (!btn) return;
     var key = seg.dataset.k, val = parseInt(btn.dataset.v, 10);
-    if (key === '__edit') { editSet = val; renderColors(); paintSeg(seg); return; }
     settings[key] = val;
     paintSeg(seg);
-    if (key === 'switchset') show('#ss-times', val === 1);
   });
 });
 
@@ -379,7 +321,7 @@ function show(sel, yes) { document.querySelector(sel).classList.toggle('hidden',
 
 /* ---- time selects: value = half-hour index 0..47 (matches settings.c) ---- */
 function fillTimes() {
-  ['#ps_start','#ps_end','#switch_start','#switch_end'].forEach(function (id, idx) {
+  ['#ps_start','#ps_end'].forEach(function (id) {
     var sel = document.querySelector(id);
     if (!sel.options.length) {
       for (var i = 0; i < 48; i++) {
@@ -397,7 +339,7 @@ function fillTimes() {
 /* ---- preview ---- */
 function setS(id, prop, val) { var el = document.getElementById(id); if (el) el.style[prop] = val; }
 function renderPreview() {
-  var c = editSet === 0 ? colors1 : colors2;
+  var c = palette;
   setS('sim', 'background', c.bg4);
   setS('s-bg1','background',c.bg1); setS('s-bg2','background',c.bg2); setS('s-bg3','background',c.bg3);
   setS('s-t4','color',c.t4); setS('s-t3','color',c.t3);
@@ -418,60 +360,6 @@ function renderPreview() {
   document.getElementById('s-thi').textContent = '37°';
   document.getElementById('s-tlo').textContent = '23°';
 }
-
-/* ---- color grid ---- */
-function buildGrid() {
-  var grid = document.getElementById('cgrid');
-  GROUPS.forEach(function (g, gi) {
-    var t = document.createElement('div');
-    t.className = 'gtitle' + (gi === 0 ? ' first' : '');
-    t.textContent = g[0];
-    grid.appendChild(t);
-    g[1].forEach(function (key) {
-      var row = document.createElement('div'); row.className = 'crow';
-      var input = document.createElement('input'); input.type = 'color'; input.dataset.key = key;
-      input.addEventListener('input', function () {
-        (editSet === 0 ? colors1 : colors2)[key] = this.value;
-        renderPreview();
-      });
-      var span = document.createElement('span'); span.textContent = LABELS[key];
-      row.appendChild(input); row.appendChild(span);
-      grid.appendChild(row);
-    });
-  });
-}
-function renderColors() {
-  var src = editSet === 0 ? colors1 : colors2;
-  document.querySelectorAll('#cgrid input[type=color]').forEach(function (input) {
-    input.value = src[input.dataset.key];
-  });
-  renderPreview();
-}
-
-/* ---- presets ---- */
-function loadPresets() {
-  var file = 'themes.json';
-  fetch(file).then(function(r){ return r.json(); }).then(function(data) {
-    var sel = document.getElementById('presets');
-    data.forEach(function (entry) {
-      var name = entry.theme && entry.theme[0] && entry.theme[0].name;
-      if (name) sel.appendChild(new Option(name, JSON.stringify(entry.theme[0])));
-    });
-  }).catch(function(){});
-}
-document.getElementById('presets').addEventListener('change', function () {
-  if (!this.value) return;
-  var theme = JSON.parse(this.value);
-  var src = editSet === 0 ? colors1 : colors2;
-  Object.keys(theme).forEach(function (k) {
-    var key = k.replace(/color$/, '');
-    if (ORDER.indexOf(key) !== -1 && typeof theme[k] === 'string') {
-      src[key] = byteToCss(cssToByte(theme[k]));
-    }
-  });
-  renderColors();
-  flash('preset applied');
-});
 
 /* ---- status ---- */
 var ft;
@@ -496,27 +384,22 @@ function hydrate() {
   document.querySelectorAll('.sw').forEach(paintSw);
   document.querySelectorAll('.seg').forEach(paintSeg);
   show('#ps-times', settings.powersave === 1);
-  show('#ss-times', settings.switchset === 1);
   fillTimes();
-  renderColors();
+  renderPreview();
 }
 document.getElementById('reset').addEventListener('click', function () {
   settings = JSON.parse(JSON.stringify(DEFAULTS));
-  parseColors(DEFAULT_COLORS, colors1); parseColors(DEFAULT_COLORS, colors2);
+  parseColors(DEFAULT_COLORS, palette);
   hydrate(); flash('defaults');
 });
 document.getElementById('save').addEventListener('click', function () {
-  settings.setcolors = serializeColors(colors1);
-  settings.set2colors = serializeColors(colors2);
   localStorage.setItem('settings_v2', JSON.stringify(settings));
   document.location = qparam('return_to', 'pebblejs://close#') + encodeURIComponent(JSON.stringify(settings));
 });
 
 /* ---- init ---- */
 load();
-buildGrid();
 hydrate();
-loadPresets();
 tick();
 setInterval(tick, 10000);
 })();

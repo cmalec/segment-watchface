@@ -15,7 +15,6 @@ A seven-segment digital watchface for the Pebble Time 2, built on the current Re
 - **Day high/low temperature readouts** (bottom corners, from Open-Meteo via the phone's location)
 - Power-saving mode (no seconds, blink, vibes, BT badge or battery readout between configurable hours)
 - Health step count display + heart rate on Time 2
-- Color customization
 - Web-based settings page
 
 > **Origins:** Segment started as a modernization of [91 Dub 4.0](https://github.com/orviwan/91-Dub-v4.0) by Orviwan — the layout, fonts, and spirit of the original carried over. All credit for the original design belongs to Orviwan.
@@ -107,7 +106,7 @@ Configurable from the Pebble mobile app (tap the gear on the watchface card in t
 
 **https://cmalec.github.io/segment-watchface/server/index.10.html**
 
-It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, two color sets (switchable by time or tap), preset themes, and a live preview. The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
+It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
 ## Project layout
 
@@ -121,7 +120,8 @@ It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hou
 │   ├── fonts/            # DS-Digital + Lucida Console TTFs
 │   └── images/           # Branding, menu icon PNGs
 ├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot diffing)
-└── server/               # The settings web page (index.10.html + theme presets)
+└── server/               # The settings web page (index.10.html; themes.json is the
+                          #   preset data the colour editor used, kept for later)
 ```
 
 ## Troubleshooting builds
@@ -145,7 +145,7 @@ The watchface uses the actual Time 2 coordinate system directly:
 - **Health**: steps (or sleep) sit on the top strip in the panel's left column, with heart rate on the row below it — the two never share a line, so a long step count can't reach the heart-rate readout. Values come from `HealthMetricStepCount`/`HealthMetricSleepSeconds` and `HealthMetricHeartRateBPM`.
 - **Top strip**: the right-hand cluster is laid out right-to-left from the panel's inner edge — optional bluetooth badge, battery percentage, battery icon — and the column of text to its left is bounded by whatever the cluster occupies (`battery_top_reserve()`), so nothing is placed from a number measured against the screen edge.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the day's high/low from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. Bottom-left shows the high, bottom-right the low; °C/°F is a settings option, converted phone-side so unit flips are instant.
-- Everything else, including color sets, blink, power saving, and hourly vibration, remains part of the Emery face.
+- Everything else, including the colour sets the watch stores, blink, power saving, and hourly vibration, remains part of the Emery face.
 
 ## Modernization notes
 
