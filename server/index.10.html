@@ -86,6 +86,10 @@
   .inrow label { color: var(--text4); font-size: 12px; }
   .hidden { display: none !important; }
 
+  /* informational line for a setting this page does not own */
+  .note { padding: 9px 14px; border-top: 1px solid var(--border-sub); color: var(--text4); font-size: 12px; line-height: 1.45; }
+  .note b { color: var(--text3); font-weight: 500; }
+
   /* preview */
   .prevwrap { display: flex; justify-content: center; padding: 12px 14px 4px; }
   .sim {
@@ -179,6 +183,7 @@
       <div class="temp-lo" id="s-tlo">23°</div>
       <div class="wrbox" id="s-d3"></div>
     </div></div>
+    <div class="note"><b>Clock format</b> — comes from the watch’s own time setting, not from this page. The face follows it and shows no AM/PM marker.</div>
     <div class="row"><div><div class="t">Health</div><div class="d">Steps and heart rate</div></div><div class="ctl"><button class="sw" data-k="health" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Seconds</div><div class="d">A seconds row under the clock — costs battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>

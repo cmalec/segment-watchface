@@ -106,7 +106,7 @@ Configurable from the Pebble mobile app (tap the gear on the watchface card in t
 
 **https://cmalec.github.io/segment-watchface/server/index.10.html**
 
-It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
+It configures: health, seconds, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
 ## Project layout
 
