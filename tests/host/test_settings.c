@@ -4,7 +4,11 @@
 #include "test_util.h"
 
 /* ---- stubs for settings.c's external dependencies ---- */
-void decorations_set_temps(int8_t hi, int8_t lo) { (void)hi; (void)lo; }
+int8_t seen_now = INT8_MIN, seen_hi = INT8_MIN, seen_lo = INT8_MIN;
+uint8_t seen_cond = 0;
+void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
+  seen_now = now; seen_hi = hi; seen_lo = lo; seen_cond = cond;
+}
 void battery_set_phone_percent(uint8_t pct) { (void)pct; }
 void weather_request_cancel(void) {}
 void weather_share_unit(void) {}
@@ -93,22 +97,79 @@ static struct __attribute__((__packed__)) OldSettings {
           TempUnit;
 } old_blob;
 
-static void test_date_format_tuple(void) {
-  union {
-    uint8_t uint8; int8_t int8; uint16_t uint16; int32_t int32; const char *cstring;
-  } value;
-  Tuple tuple = { .key = MESSAGE_KEY_date_format, .value = &value };
+/* Drive one tuple through settings_process_tuple, as the app message loop does.
+ * Tuple carries a pointer to the value union; the mock mirrors the SDK's shape
+ * closely enough that a void* assignment keeps the compiler quiet. */
+static union {
+  uint8_t uint8; int8_t int8; uint16_t uint16; int32_t int32; const char *cstring;
+} wire_value;
 
+static void send_uint(uint32_t key, uint8_t v) {
+  wire_value.uint8 = v;
+  Tuple tuple = { .key = key, .value = (void *)&wire_value };
+  settings_process_tuple(&tuple);
+}
+
+static void send_cstring(uint32_t key, const char *text) {
+  wire_value.cstring = text;
+  Tuple tuple = { .key = key, .value = (void *)&wire_value };
+  settings_process_tuple(&tuple);
+}
+
+static void test_date_format_tuple(void) {
   settings_default_values();
-  value.uint8 = DATE_FMT_WEEKDAY_DD;
-  settings_process_tuple(&tuple);
+  send_uint(MESSAGE_KEY_date_format, DATE_FMT_WEEKDAY_DD);
   ASSERT_EQ(global_settings.DateFmt, DATE_FMT_WEEKDAY_DD, "valid format accepted");
-  value.uint8 = DATE_FMT_MONTH_WEEKDAY_DD;
-  settings_process_tuple(&tuple);
+  send_uint(MESSAGE_KEY_date_format, DATE_FMT_MONTH_WEEKDAY_DD);
   ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MONTH_WEEKDAY_DD, "last format accepted");
-  value.uint8 = 200;
-  settings_process_tuple(&tuple);
+  send_uint(MESSAGE_KEY_date_format, 200);
   ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MMDDYY, "unknown format falls back to the default");
+}
+
+static void test_button_label_wire_contract(void) {
+  settings_default_values();
+  ASSERT_STR(global_settings.LabelBack, "LIGHT", "stock back label");
+
+  send_cstring(MESSAGE_KEY_label_light, "MENU");
+  ASSERT_STR(global_settings.LabelBack, "MENU", "label replaced");
+
+  send_cstring(MESSAGE_KEY_label_light, "LONGER THAN EIGHT");
+  ASSERT_STR(global_settings.LabelBack, "LONGER T", "label cut at the cap");
+
+  send_cstring(MESSAGE_KEY_label_light, "a b#c\x80" "d");
+  ASSERT_STR(global_settings.LabelBack, "a bcd", "unprintable glyphs dropped");
+
+  send_cstring(MESSAGE_KEY_label_light, "");
+  ASSERT_STR(global_settings.LabelBack, "", "empty label allowed (label hides)");
+
+  send_cstring(MESSAGE_KEY_label_prev, "UP");
+  ASSERT_STR(global_settings.LabelPrev, "UP", "prev label independent");
+  ASSERT_STR(global_settings.LabelBack, "", "other labels untouched");
+
+  send_cstring(MESSAGE_KEY_label_next, NULL);
+  ASSERT_STR(global_settings.LabelNext, "NEXT", "null payload leaves the label alone");
+}
+
+static void test_weather_wire_contract(void) {
+  seen_now = seen_hi = seen_lo = INT8_MIN;
+  seen_cond = 0;
+
+  send_uint(MESSAGE_KEY_wtemp_hi, (uint8_t)28);
+  ASSERT_EQ(seen_hi, 28, "high lands on the row");
+  ASSERT_EQ(seen_lo, INT8_MIN, "low still unknown");
+
+  send_uint(MESSAGE_KEY_wtemp_lo, (uint8_t)12);
+  ASSERT_EQ(seen_lo, 12, "low lands on the row");
+  ASSERT_EQ(seen_hi, 28, "high is remembered");
+
+  send_uint(MESSAGE_KEY_wtemp_now, (uint8_t)19);
+  ASSERT_EQ(seen_now, 19, "current lands on the row");
+  ASSERT_EQ(seen_hi, 28, "high survives a later key");
+  ASSERT_EQ(seen_lo, 12, "low survives a later key");
+
+  send_uint(MESSAGE_KEY_wcond, 61);
+  ASSERT_EQ(seen_cond, 61, "condition code lands on the row");
+  ASSERT_EQ(seen_now, 19, "temperature survives the condition");
 }
 
 static void test_blob_migration_from_older_layout(void) {
@@ -170,6 +231,8 @@ int main(void) {
   RUN(test_powersave_wrapping);
   RUN(test_powersave_disabled);
   RUN(test_date_format_tuple);
+  RUN(test_button_label_wire_contract);
+  RUN(test_weather_wire_contract);
   RUN(test_blob_migration_from_older_layout);
   RUN(test_blob_migration_ignores_newer_layout);
   RUN(test_blob_migration_of_current_and_empty_blobs);

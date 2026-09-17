@@ -105,7 +105,11 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define TIMEDIGITS_DIGIT3 103
 #define TIMEDIGITS_DIGIT4 146
 #define TIMEDIGITS_SEPARATOR 61
-#define TIMEDIGITS_OFFSET_TOP 79
+// The clock sits at the same height whether or not seconds are shown: its ink
+// runs 95..157, which clears the date row above and leaves the panel's bottom
+// row for the weather readout and the seconds. (It used to drop to 115..177
+// when seconds were off, which is the row the weather now occupies.)
+#define TIMEDIGITS_OFFSET_TOP 59
 #define TIMEDIGITS_WIDTH 50
 #define TIMEDIGITS_HEIGHT 115
 
@@ -121,26 +125,28 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 //
 // Measured ink offsets (emulator, frame_top -> ink):
 //   99px digits: +36 .. +98      26px seconds: +9 .. +25
-// so the pair's row is derived from the clock's ink bottom rather than tuned
-// by hand. The clock's ink runs 95..157 (was 115..177) and the pair's 161..177,
-// leaving 4 rows clear above the panel's inner bottom edge.
+// so the pair's row is derived from the clock's ink bottom rather than tuned by
+// hand: the clock's ink ends at 157 and the pair's runs 161..177, leaving rows
+// clear above the panel's inner bottom edge.
 #define TIMEDIGITS_DIGIT_INK_TOP 36
 #define TIMEDIGITS_DIGIT_INK_BOTTOM 98
 #define TIMEDIGITS_SECONDS_PAIR_INK_TOP 9
 #define TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM 25
 
-#define TIMEDIGITS_SECONDS_OFFSET_TOP 59
-
 // Pair: two 14px boxes 13px apart (they overlap by a pixel, as the old
-// side-by-side pair did), spanning 86..113 so their ink centres on the panel.
+// side-by-side pair did), right-aligned inside the panel with the same edge gap
+// the rest of the face keeps — the weather readout now owns the left of this
+// row, so the seconds moved off centre to make room for it.
 #define TIMEDIGITS_SECONDS_PAIR_GAP 3  // air between the clock's ink and theirs
-#define TIMEDIGITS_SECONDS_PAIR_X 86
 #define TIMEDIGITS_SECONDS_PAIR_STEP 13
-#define TIMEDIGITS_SECONDS_PAIR_Y \
-  (TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM + 1 \
-   + TIMEDIGITS_SECONDS_PAIR_GAP - TIMEDIGITS_SECONDS_PAIR_INK_TOP)
 #define TIMEDIGITS_SECONDS_SMALL_WIDTH 14
 #define TIMEDIGITS_SECONDS_SMALL_HEIGHT 32
+#define TIMEDIGITS_SECONDS_PAIR_X (PANEL_INNER_RIGHT - TOP_STRIP_EDGE_GAP \
+                                   - TIMEDIGITS_SECONDS_PAIR_STEP \
+                                   - TIMEDIGITS_SECONDS_SMALL_WIDTH)
+#define TIMEDIGITS_SECONDS_PAIR_Y \
+  (TIMEDIGITS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM + 1 \
+   + TIMEDIGITS_SECONDS_PAIR_GAP - TIMEDIGITS_SECONDS_PAIR_INK_TOP)
 
 // DECORATIONS
 #define DECORATIONS_LINE_TOP_START GPoint(0, 26)
@@ -148,17 +154,24 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define DECORATIONS_LINE_BOTTOM_START GPoint(0, 208)
 #define DECORATIONS_LINE_BOTTOM_END GPoint(SCREEN_WIDTH, 208)
 
-#define DECORATIONS_BUTTON_BACK_LABEL GRect(18, 29, 49, 14)
-#define DECORATIONS_BUTTON_NEXT_LABEL GRect(147, 190, 35, 14)
-#define DECORATIONS_BUTTON_PREV_LABEL GRect(147, 29, 35, 14)
+// Button labels carry user text (LABEL_MAX glyphs, 8px each in Lucida 14), so
+// the boxes are sized for the longest label the setting accepts rather than for
+// the stock wording. BACK grows right from its icon; PREV and NEXT grow left,
+// towards the panel edge, and are right-aligned so the text stays beside its
+// arrow whatever its length. None of them reach the panel or the button icons.
+#define DECORATIONS_BUTTON_BACK_LABEL GRect(18, 29, 64, 14)
+#define DECORATIONS_BUTTON_NEXT_LABEL GRect(118, 190, 64, 14)
+#define DECORATIONS_BUTTON_PREV_LABEL GRect(118, 29, 64, 14)
 #define DECORATIONS_BUTTON_BACK_ICON GRect(7, 33, 7, 8)
 #define DECORATIONS_BUTTON_NEXT_ICON GRect(185, 33, 7, 8)
 #define DECORATIONS_BUTTON_PREV_ICON GRect(185, 195, 7, 8)
 
 #define DECORATIONS_LOGO GRect(74, 3, 52, 15)
 
-// Weather readouts occupy the bottom strip and end exactly at the 228px
-// screen edge. The center outline remains decorative.
+// The centre outline stays decorative; the temperature readout moved inside the
+// panel onto the seconds' row: [icon] [now°(high°/low°)] on the left, seconds on
+// the right. The icon's bottom edge and the text's baseline sit on the seconds'
+// ink bottom, so the three read as one row.
 #define DECORATIONS_WR_OUTER GRect(71, 206, 58, 22)
-#define DECORATIONS_TEMP_HI GRect(0, 211, 64, 17)
-#define DECORATIONS_TEMP_LO GRect(136, 211, 64, 17)
+#define DECORATIONS_WEATHER_ICON GRect(8, 161, 16, 16)
+#define DECORATIONS_WEATHER_TEXT GRect(26, 164, 130, 18)

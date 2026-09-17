@@ -3,11 +3,13 @@
 #include "test_util.h"
 
 #include "../../src/c/settings.h"
+#include "../../src/c/helpers.h"
 
 /* declarations under test (from helpers.h) */
 void duration_to_time(int duration_s, int *hours, int *minutes);
 void format_commas(int n, char *out);
 void format_date(DateFormat fmt, struct tm *t, char *out, size_t out_len);
+WeatherCond weather_cond_from_wmo(uint8_t code);
 uint8_t hex_to_num(char h);
 
 /* 2026-09-25 was a Wednesday (tm_wday 3); 2027-01-03 a Sunday. */
@@ -72,10 +74,28 @@ static void test_hex_to_num(void) {
   ASSERT_EQ(hex_to_num(' '), 0, "space (invalid -> 0)");
 }
 
+static void test_weather_cond_mapping(void) {
+  ASSERT_EQ(weather_cond_from_wmo(0), WEATHER_COND_CLEAR, "code 0 clear");
+  ASSERT_EQ(weather_cond_from_wmo(1), WEATHER_COND_CLEAR, "code 1 mainly clear");
+  ASSERT_EQ(weather_cond_from_wmo(3), WEATHER_COND_CLOUD, "code 3 overcast");
+  ASSERT_EQ(weather_cond_from_wmo(45), WEATHER_COND_CLOUD, "code 45 fog");
+  ASSERT_EQ(weather_cond_from_wmo(48), WEATHER_COND_CLOUD, "code 48 rime fog");
+  ASSERT_EQ(weather_cond_from_wmo(51), WEATHER_COND_RAIN, "code 51 drizzle");
+  ASSERT_EQ(weather_cond_from_wmo(63), WEATHER_COND_RAIN, "code 63 rain");
+  ASSERT_EQ(weather_cond_from_wmo(80), WEATHER_COND_RAIN, "code 80 showers");
+  ASSERT_EQ(weather_cond_from_wmo(95), WEATHER_COND_RAIN, "code 95 thunderstorm");
+  ASSERT_EQ(weather_cond_from_wmo(71), WEATHER_COND_SNOW, "code 71 snow");
+  ASSERT_EQ(weather_cond_from_wmo(86), WEATHER_COND_SNOW, "code 86 snow showers");
+  // gaps in the code table draw nothing rather than a wrong icon
+  ASSERT_EQ(weather_cond_from_wmo(4), WEATHER_COND_NONE, "code 4 unknown");
+  ASSERT_EQ(weather_cond_from_wmo(200), WEATHER_COND_NONE, "code 200 unknown");
+}
+
 int main(void) {
   RUN(test_duration_to_time);
   RUN(test_format_commas);
   RUN(test_format_date);
+  RUN(test_weather_cond_mapping);
   RUN(test_hex_to_num);
   TEST_SUMMARY();
 }

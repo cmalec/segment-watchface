@@ -77,6 +77,11 @@
   .seg button:hover { color: var(--text2); }
   .seg button.on { background: var(--accent); color: #fff; }
 
+  input[type="text"] {
+    appearance: none; background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; font: inherit; font-size: 13px; width: 96px;
+  }
   select {
     appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%238a8f98' stroke-width='1.5'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 8px center;
     color: var(--text); border: 1px solid var(--border); border-radius: 6px;
@@ -122,8 +127,8 @@
   .sim .batt .lvl { position: absolute; left: 1px; top: 1px; bottom: 1px; width: 70%; }
   .sim .steps { top: 42px; left: 12px; font-size: 7px; font-weight: 600; }
   .sim .steps::before { content: '👣'; font-size: 6px; margin-right: 2px; }
-  .sim .temp-hi { bottom: 8px; left: 6px; font-size: 8px; font-weight: 700; }
-  .sim .temp-lo { bottom: 8px; right: 6px; font-size: 8px; font-weight: 700; }
+  .sim .wx { bottom: 30px; left: 13px; font-size: 7px; font-weight: 600; }
+  .sim .wxicon { bottom: 29px; left: 4px; font-size: 7px; }
   .sim .wrbox { bottom: 3px; left: 50%; transform: translateX(-50%); width: 28px; height: 11px; border: 1px solid; border-radius: 2px 2px 5px 5px; }
   .sim .btnlbl { font-size: 5px; font-weight: 600; letter-spacing: 0.3px; }
   .sim .bl-light { top: 21px; left: 6px; }
@@ -179,8 +184,8 @@
       <div class="batt" id="s-bi1b"><div class="lvl" id="s-bi1l"></div></div>
       <div class="steps" id="s-steps">4,077</div>
       <div class="bpm" id="s-t2">72</div>
-      <div class="temp-hi" id="s-thi">37°</div>
-      <div class="temp-lo" id="s-tlo">23°</div>
+      <div class="wxicon" id="s-wxi">☀</div>
+      <div class="wx" id="s-thi">19°(28°/12°)</div>
       <div class="wrbox" id="s-d3"></div>
     </div></div>
     <div class="note"><b>Clock format</b> — comes from the watch’s own time setting, not from this page. The face follows it and shows no AM/PM marker.</div>
@@ -225,6 +230,20 @@
   </section>
 
   <section>
+    <h2>Buttons</h2>
+    <div class="row"><div><div class="t">Light</div><div class="d">Label beside the back button’s arrow</div></div>
+      <div class="ctl"><input type="text" id="label_light" maxlength="8" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row"><div><div class="t">Previous</div><div class="d">Label below the top-right arrow</div></div>
+      <div class="ctl"><input type="text" id="label_prev" maxlength="8" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row"><div><div class="t">Next</div><div class="d">Label below the bottom-right arrow</div></div>
+      <div class="ctl"><input type="text" id="label_next" maxlength="8" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="note">Up to 8 characters; the face keeps the characters its font carries (letters, digits and <b>space - / ' ~ . , : %</b>). Leaving one empty hides that label.</div>
+  </section>
+
+  <section>
     <h2>Weather</h2>
     <div class="row"><div><div class="t">Units</div><div class="d">Temperature scale for the high/low readout</div></div>
       <div class="ctl"><div class="seg" data-k="temp_unit"><button data-v="0">°C</button><button data-v="1">°F</button></div></div>
@@ -259,6 +278,7 @@ var DEFAULTS = {
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
   branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
   date_format: 1,
+  label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT',
   powersave: 0, ps_start: 47, ps_end: 15,
   switchset: 0, switch_start: 47, switch_end: 15,
   temp_unit: 0,
@@ -311,6 +331,7 @@ document.querySelectorAll('.sw').forEach(function (el) {
     settings[el.dataset.k] = (settings[el.dataset.k] === onVal) ? offVal : onVal;
     paintSw(el);
     if (el.dataset.k === 'powersave') show('#ps-times', settings.powersave === 1);
+    renderPreview();  // health / battery / branding toggles change what it shows
   });
 });
 
@@ -329,6 +350,7 @@ document.querySelectorAll('.seg').forEach(function (seg) {
     var key = seg.dataset.k, val = parseInt(btn.dataset.v, 10);
     settings[key] = val;
     paintSeg(seg);
+    renderPreview();  // the weather example follows the unit
   });
 });
 
@@ -361,7 +383,7 @@ function renderPreview() {
   setS('s-t1','color',c.t1); setS('s-t2','color',c.t2);
   setS('s-bi1p','color',c.bi1); setS('s-bi1b','borderColor',c.bi1); setS('s-bi1l','background',c.bi1);
   setS('s-steps','color',c.t2);
-  setS('s-thi','color',c.d6); setS('s-tlo','color',c.d6);
+  setS('s-thi','color',c.t2); setS('s-wxi','color',c.t2);
   setS('s-d3','borderColor',c.d3); setS('s-d3','background',c.d4);
   setS('s-d1','background',c.d1); setS('s-d1b','background',c.d2);
   setS('s-d9','color',c.d9);
@@ -372,8 +394,11 @@ function renderPreview() {
   ['s-bi1p','s-bi1b'].forEach(function(id){ document.getElementById(id).style.display = settings.battery_hide ? 'none' : ''; });
   document.getElementById('s-bi1b').style.display = battVisible ? '' : 'none';
   ['s-steps','s-t2'].forEach(function(id){ document.getElementById(id).style.display = settings.health ? '' : 'none'; });
-  document.getElementById('s-thi').textContent = '37°';
-  document.getElementById('s-tlo').textContent = '23°';
+  // Weather row: the phone supplies the numbers and the condition, so the
+  // preview shows one example reading in the selected unit.
+  var fahrenheit = settings.temp_unit === 1;
+  document.getElementById('s-thi').textContent = fahrenheit
+      ? '66°(82°/54°)' : '19°(28°/12°)';
 }
 
 /* ---- status ---- */
@@ -400,6 +425,12 @@ function fmtDate(d) {
   }
 }
 function renderDate() { document.getElementById('s-t1').textContent = fmtDate(new Date()); }
+function renderLabels() {
+  document.getElementById('s-d7').textContent  = '\u2039 ' + (settings.label_light || '');
+  document.getElementById('s-d7b').textContent = (settings.label_prev || '') + ' \u203a';
+  document.getElementById('s-d7c').textContent = (settings.label_next || '') + ' \u203a';
+}
+
 function tick() {
   var d = new Date();
   var hh = (d.getHours()<10?'0':'')+d.getHours(), mm = (d.getMinutes()<10?'0':'')+d.getMinutes();
@@ -418,7 +449,13 @@ function hydrate() {
   df.value = String(settings.date_format);
   if (df.value !== String(settings.date_format)) { df.value = DEFAULTS.date_format; }
   df.onchange = function () { settings.date_format = parseInt(this.value, 10); renderDate(); };
+  ['label_light','label_prev','label_next'].forEach(function (key) {
+    var el = document.getElementById(key);
+    el.value = settings[key] || '';
+    el.oninput = function () { settings[key] = this.value; renderLabels(); };
+  });
   renderPreview();
+  renderLabels();
 }
 document.getElementById('reset').addEventListener('click', function () {
   settings = JSON.parse(JSON.stringify(DEFAULTS));

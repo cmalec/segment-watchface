@@ -44,7 +44,12 @@
       "setcolors",
       "set1colors",
       "set2colors",
-      "date_format"
+      "date_format",
+      "label_light",
+      "label_prev",
+      "label_next",
+      "wtemp_now",
+      "wcond"
     ],
     "resources": {
       "media": [

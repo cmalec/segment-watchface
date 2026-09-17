@@ -13,6 +13,7 @@ var weatherTimer = null;
 var lastWeather = null;
 var lastSentHi = null;
 var lastSentLo = null;
+var lastSentNow = null;
 var lastFetchAttemptAt = 0;
 var fetchInFlight = false;
 var settings = {}; // watch settings mirrored here; temp conversion needs temp_unit
@@ -221,6 +222,7 @@ function fetchWeatherFor(lat, lon) {
   fetchInFlight = true;
   var url = 'https://api.open-meteo.com/v1/forecast' +
             '?latitude=' + lat + '&longitude=' + lon +
+            '&current=temperature_2m,weather_code' +
             '&daily=temperature_2m_max,temperature_2m_min' +
             '&forecast_days=1&timezone=auto';
   var req = new XMLHttpRequest();
@@ -241,9 +243,16 @@ function fetchWeatherFor(lat, lon) {
         console.log('weather: unexpected response shape');
         return;
       }
+      // Current temperature and WMO condition code drive the face's weather
+      // row; they are optional - the high/low pair still displays without them.
+      var cur = resp.current || {};
+      var nowRaw = cur.temperature_2m;
+      var codeRaw = cur.weather_code;
       lastWeather = {
         hi: Math.round(hiRaw),
         lo: Math.round(loRaw),
+        now: (typeof nowRaw === 'number' && isFinite(nowRaw)) ? Math.round(nowRaw) : null,
+        code: (typeof codeRaw === 'number' && isFinite(codeRaw)) ? Math.round(codeRaw) : null,
         fetchedAt: Date.now()
       };
       localStorage.setItem('weather', JSON.stringify(lastWeather));
@@ -285,18 +294,29 @@ function sendWeatherToWatch(force) {
   var fahrenheit = settings.temp_unit === 1;
   var hi = fahrenheit ? Math.round(lastWeather.hi * 9 / 5 + 32) : lastWeather.hi;
   var lo = fahrenheit ? Math.round(lastWeather.lo * 9 / 5 + 32) : lastWeather.lo;
+  var now = (lastWeather.now === null || lastWeather.now === undefined)
+      ? null
+      : (fahrenheit ? Math.round(lastWeather.now * 9 / 5 + 32) : lastWeather.now);
   // Skip duplicate sends with identical values — EXCEPT when the watch
   // explicitly re-requested (force), which means it never got the last one.
-  if (!force && hi === lastSentHi && lo === lastSentLo) {
+  if (!force && hi === lastSentHi && lo === lastSentLo && now === lastSentNow) {
     console.log('weather: skipping duplicate send ' + hi + '/' + lo);
     return;
   }
+  var payload = { wtemp_hi: hi, wtemp_lo: lo };
+  if (now !== null) {
+    payload.wtemp_now = now;
+  }
+  if (typeof lastWeather.code === 'number') {
+    payload.wcond = lastWeather.code;
+  }
   Pebble.sendAppMessage(
-    { wtemp_hi: hi, wtemp_lo: lo },
+    payload,
     function() {
       console.log('weather: sent to watch ' + hi + '/' + lo + ' (' + (fahrenheit ? 'F' : 'C') + ')');
       lastSentHi = hi;
       lastSentLo = lo;
+      lastSentNow = now;
     },
     function(e) {
       console.log('weather: send failed ' + e.error.message);

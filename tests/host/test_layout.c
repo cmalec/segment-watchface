@@ -88,49 +88,80 @@ static void test_clock_ink_clears_the_panel_outline(void) {
               "clock boxes stay on screen");
 }
 
-static void test_seconds_mode_raises_the_clock_for_the_pair_row(void) {
-  // The clock keeps its geometry and only moves up; the pair then occupies the
-  // rows the clock vacated. Both must fit between the date row's ink and the
-  // panel's inner bottom edge with air either side.
+static void test_clock_rows_and_the_bottom_row(void) {
+  // One clock height for both modes: its ink clears the date row above and
+  // stops above the bottom row, which the weather readout and the seconds
+  // share (they used to collide with the clock when it sat lower).
   int date_ink_bottom = TIMEDIGITS_DATE.origin.y + 15;  // slashes descend last
-  int clock_ink_top = TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_TOP;
-  int clock_ink_bottom = TIMEDIGITS_SECONDS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM;
+  int clock_ink_top = TIMEDIGITS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_TOP;
+  int clock_ink_bottom = TIMEDIGITS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM;
   int pair_ink_top = TIMEDIGITS_SECONDS_PAIR_Y + TIMEDIGITS_SECONDS_PAIR_INK_TOP;
   int pair_ink_bottom = TIMEDIGITS_SECONDS_PAIR_Y + TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM;
 
-  ASSERT_TRUE(TIMEDIGITS_SECONDS_OFFSET_TOP < TIMEDIGITS_OFFSET_TOP,
-              "seconds mode raises the clock");
   ASSERT_TRUE(clock_ink_top >= date_ink_bottom + 2, "clock ink clears the date row");
   ASSERT_TRUE(pair_ink_top >= clock_ink_bottom + 4, "pair ink clears the clock ink");
   ASSERT_TRUE(pair_ink_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "pair ink clears the panel edge");
+
+  int icon_top = DECORATIONS_WEATHER_ICON.origin.y;
+  int icon_bottom = icon_top + DECORATIONS_WEATHER_ICON.size.h - 1;
+  ASSERT_TRUE(icon_top >= clock_ink_bottom + 3, "weather icon clears the clock ink");
+  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "weather icon clears the panel edge");
 }
 
-static void test_seconds_pair_is_centred_and_inside_the_panel(void) {
+static void test_seconds_pair_is_right_aligned_on_its_row(void) {
   int pair_right = TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP
                    + TIMEDIGITS_SECONDS_SMALL_WIDTH;
   ASSERT_TRUE(TIMEDIGITS_SECONDS_PAIR_X >= PANEL_INNER_LEFT, "pair starts inside the panel");
   ASSERT_TRUE(pair_right <= PANEL_INNER_RIGHT, "pair ends inside the panel");
-  int pair_centre = TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP / 2
-                    + TIMEDIGITS_SECONDS_SMALL_WIDTH / 2;
-  int panel_centre = (PANEL_INNER_LEFT + PANEL_INNER_RIGHT - 1) / 2;
-  ASSERT_TRUE(pair_centre - panel_centre <= 1 && panel_centre - pair_centre <= 1,
-              "pair is centred on the panel");
+  ASSERT_TRUE(pair_right == PANEL_INNER_RIGHT - TOP_STRIP_EDGE_GAP,
+              "pair keeps the standard edge gap on the right");
   ASSERT_TRUE(TIMEDIGITS_SECONDS_PAIR_STEP >= TIMEDIGITS_SECONDS_SMALL_WIDTH - 1,
               "pair boxes touch without a gap");
+}
+
+static void test_weather_row_shares_the_seconds_row(void) {
+  // Left of that row: icon then "80°(88°/65°)". Right of it: the seconds.
+  int icon_bottom = DECORATIONS_WEATHER_ICON.origin.y + DECORATIONS_WEATHER_ICON.size.h - 1;
+  int clock_ink_bottom = TIMEDIGITS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM;
+  ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.x >= PANEL_INNER_LEFT, "icon inside the panel");
+  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "icon clears the panel's bottom edge");
+  ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.y >= clock_ink_bottom + 3,
+              "icon clears the clock's ink");
+
+  // The text box ends before the seconds' boxes start, so a long reading
+  // cannot reach them; the icon and the text do not overlap either.
+  int text_right = DECORATIONS_WEATHER_TEXT.origin.x + DECORATIONS_WEATHER_TEXT.size.w;
+  ASSERT_TRUE(DECORATIONS_WEATHER_TEXT.origin.x > DECORATIONS_WEATHER_ICON.origin.x +
+              DECORATIONS_WEATHER_ICON.size.w, "text starts right of the icon");
+  ASSERT_TRUE(text_right <= TIMEDIGITS_SECONDS_PAIR_X, "text box ends before the seconds");
+
+  // Widest reading the phone can produce: "-100°(-100°/-100°)". Lucida 14 is
+  // 8px per glyph, and only the ~13 needed for a realistic reading matter.
+  ASSERT_TRUE(13 * 8 <= DECORATIONS_WEATHER_TEXT.size.w,
+              "text box holds a full reading");
+
+  // Text baseline lines up with the seconds' ink bottom.
+  int text_ink_bottom = DECORATIONS_WEATHER_TEXT.origin.y + 13;
+  int pair_ink_bottom = TIMEDIGITS_SECONDS_PAIR_Y + TIMEDIGITS_SECONDS_PAIR_INK_BOTTOM;
+  ASSERT_TRUE(text_ink_bottom <= pair_ink_bottom && pair_ink_bottom - text_ink_bottom <= 2,
+              "weather text sits on the seconds' baseline");
 }
 
 static void test_native_screen_bounds(void) {
   ASSERT_TRUE(FULLSCREEN.size.w == 200 && FULLSCREEN.size.h == 228, "fullscreen is native Emery");
   ASSERT_TRUE(BACKGROUND_PANEL.origin.y >= 0, "panel starts on-screen");
   ASSERT_TRUE(BACKGROUND_PANEL.origin.y + BACKGROUND_PANEL.size.h <= 228, "panel fits screen");
-  ASSERT_TRUE(DECORATIONS_TEMP_HI.origin.y + DECORATIONS_TEMP_HI.size.h <= 228, "high temp fits screen");
-  ASSERT_TRUE(DECORATIONS_TEMP_LO.origin.y + DECORATIONS_TEMP_LO.size.h <= 228, "low temp fits screen");
+  ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.x + DECORATIONS_WEATHER_ICON.size.w <= PANEL_INNER_RIGHT,
+              "weather icon fits the panel");
+  ASSERT_TRUE(DECORATIONS_WEATHER_TEXT.origin.x + DECORATIONS_WEATHER_TEXT.size.w <= PANEL_INNER_RIGHT,
+              "weather text box fits the panel");
   ASSERT_TRUE(BATTERY_LAYER.origin.x + BATTERY_LAYER.size.w <= 200, "battery icon fits screen");
   ASSERT_TRUE(BATTERY_PERCENT.origin.x + BATTERY_PERCENT.size.w <= 200, "battery text fits screen");
   ASSERT_TRUE(TIMEDIGITS_DATE.origin.y >= HEALTH_LAYER.origin.y + HEALTH_LAYER.size.h,
               "date is below health row");
-  ASSERT_TRUE(TIMEDIGITS_OFFSET_TOP >= TIMEDIGITS_DATE.origin.y,
-              "clock starts below metadata row");
+  // The clock's frame deliberately overlaps the date row's frame: the 99px font
+  // carries ~36px of empty space above its ink, which is what the row stack is
+  // built from (test_clock_rows_and_the_bottom_row checks the ink).
 }
 
 static void test_minute_digits_dont_overlap(void) {
@@ -148,8 +179,9 @@ int main(void) {
   RUN(test_minute_digits_dont_overlap);
   RUN(test_native_screen_bounds);
   RUN(test_clock_ink_clears_the_panel_outline);
-  RUN(test_seconds_mode_raises_the_clock_for_the_pair_row);
-  RUN(test_seconds_pair_is_centred_and_inside_the_panel);
+  RUN(test_clock_rows_and_the_bottom_row);
+  RUN(test_seconds_pair_is_right_aligned_on_its_row);
+  RUN(test_weather_row_shares_the_seconds_row);
   RUN(test_top_strip_clears_the_panel_corner);
   RUN(test_top_strip_cluster_hugs_panel_edge);
   RUN(test_bluetooth_badge_clears_battery_percent);

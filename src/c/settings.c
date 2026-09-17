@@ -7,7 +7,12 @@
 
 SettingsChangeCallback settings_callbacks[SETTINGS_CALLBACKS_COUNT] = {NULL};
 
+// Latest weather values from the phone, held until the row can draw them.
+// INT8_MIN = not known yet (a real temperature never is).
+static int8_t weather_pending_now = INT8_MIN;
 static int8_t weather_pending_hi = INT8_MIN;
+static int8_t weather_pending_lo = INT8_MIN;
+static uint8_t weather_pending_cond = WEATHER_COND_NONE;
 
 Settings global_settings;
 GColor colors[COLORS_NUM];
@@ -60,6 +65,34 @@ bool setting_is_power_save(int8_t h, int8_t m){
   }
 }
 
+/*
+ * Copy a user-supplied button label into the fixed-size field.
+ *
+ * Two constraints, both from the face: the label box holds LABEL_MAX glyphs of
+ * Lucida 14, and the font is baked from a fixed character set - anything
+ * outside it renders as a missing glyph. So the text is filtered to the
+ * characters the font actually carries and cut at the cap. An empty result is
+ * allowed: the label simply disappears.
+ */
+static void settings_copy_label(char *dst, const char *src) {
+  if (src == NULL) {
+    // A malformed message must not throw away the label already set.
+    return;
+  }
+  size_t n = 0;
+  for (; *src != '\0' && n < LABEL_MAX; src++) {
+    char c = *src;
+    bool printable = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
+                     (c >= 'a' && c <= 'z') || c == ' ' || c == '-' ||
+                     c == '/' || c == '\'' || c == '~' || c == '.' ||
+                     c == ',' || c == ':' || c == '%';
+    if (printable) {
+      dst[n++] = c;
+    }
+  }
+  dst[n] = '\0';
+}
+
 void settings_process_tuple(Tuple *new_tuple) {
   uint32_t key = new_tuple->key;
   // NOTE: message keys are extern variables in the modern SDK, not integer
@@ -97,6 +130,12 @@ void settings_process_tuple(Tuple *new_tuple) {
     }
     global_settings.DateFmt = fmt;
   }
+  else if (key == LABEL_BACK_KEY || key == LABEL_PREV_KEY || key == LABEL_NEXT_KEY) {
+    char *dst = (key == LABEL_BACK_KEY) ? global_settings.LabelBack
+              : (key == LABEL_PREV_KEY) ? global_settings.LabelPrev
+                                        : global_settings.LabelNext;
+    settings_copy_label(dst, new_tuple->value->cstring);
+  }
   else if (key == HOURLYVIBE_KEY) {
     global_settings.HourlyVibe = new_tuple->value->uint8;
   }
@@ -127,17 +166,30 @@ void settings_process_tuple(Tuple *new_tuple) {
   else if (key == SWITCH_END_KEY) {
     global_settings.SwitchEnd = new_tuple->value->uint8;
   }
-  else if (key == WTEMP_HI_KEY) {
-    // Day high/low temps arrive as signed Celsius ints from the phone.
-    // Both are sent together; apply as a pair when the low lands.
-    weather_pending_hi = (int8_t)new_tuple->value->int8;
-    APP_LOG(APP_LOG_LEVEL_INFO, "weather: got hi=%d", (int)weather_pending_hi);
+  else if (key == WTEMP_HI_KEY || key == WTEMP_LO_KEY || key == WTEMP_NOW_KEY) {
+    // Temperatures arrive as signed Celsius ints from the phone (already
+    // converted to the user's unit). Each key lands on the row as it arrives.
+    int8_t value = (int8_t)new_tuple->value->int8;
+    if (key == WTEMP_HI_KEY) {
+      weather_pending_hi = value;
+    }
+    else if (key == WTEMP_LO_KEY) {
+      weather_pending_lo = value;
+    }
+    else {
+      weather_pending_now = value;
+    }
+    APP_LOG(APP_LOG_LEVEL_INFO, "weather: got %d (now=%d hi=%d lo=%d)",
+            (int)value, (int)weather_pending_now, (int)weather_pending_hi, (int)weather_pending_lo);
+    decorations_set_weather(weather_pending_now, weather_pending_hi, weather_pending_lo,
+                            weather_pending_cond);
+    weather_request_cancel();  // data arrived; stop the retry loop
   }
-  else if (key == WTEMP_LO_KEY) {
-    decorations_set_temps(weather_pending_hi, (int8_t)new_tuple->value->int8);
-    APP_LOG(APP_LOG_LEVEL_INFO, "weather: got lo=%d (hi=%d)", (int)(int8_t)new_tuple->value->int8, (int)weather_pending_hi);
-    weather_pending_hi = INT8_MIN;
-    weather_request_cancel();  // temps arrived; stop the retry loop
+  else if (key == WCOND_KEY) {
+    weather_pending_cond = new_tuple->value->uint8;
+    APP_LOG(APP_LOG_LEVEL_INFO, "weather: got cond=%d", (int)weather_pending_cond);
+    decorations_set_weather(weather_pending_now, weather_pending_hi, weather_pending_lo,
+                            weather_pending_cond);
   }
   else if (key == PBATT_LEVEL_KEY) {
     // Phone battery percentage (0-100) from PebbleKit JS.
@@ -256,6 +308,10 @@ void settings_default_values() {
   // mm/dd/yy: what the face rendered before the format became a setting (it
   // used the locale's %D, which is this on the locales the face ships to).
   global_settings.DateFmt = DATE_FMT_MMDDYY;
+  // Stock button wording; the labels are the user's to replace.
+  snprintf(global_settings.LabelBack, sizeof(global_settings.LabelBack), "LIGHT");
+  snprintf(global_settings.LabelPrev, sizeof(global_settings.LabelPrev), "PREV");
+  snprintf(global_settings.LabelNext, sizeof(global_settings.LabelNext), "NEXT");
   colors[c_bg1] = GColorWhite;
   colors[c_bg2] = GColorBlack;
   colors[c_bg3] = GColorWhite;

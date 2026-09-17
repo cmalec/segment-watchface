@@ -37,14 +37,7 @@ digit_data_t digit_data[]={
   {TIMEDIGITS_SEPARATOR,TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, ":", c_t3, f_big },
   {TIMEDIGITS_DIGIT3,   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_big },
   {TIMEDIGITS_DIGIT4,   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_big },
-  {0,                   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_sec },
-  {0,                   TIMEDIGITS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t3, f_sec },
-  // Seconds mode: same digits, raised; the pair then has its own row below.
-  {TIMEDIGITS_DIGIT1,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_DIGIT2,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_SEPARATOR,TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, ":", c_t4, f_big },
-  {TIMEDIGITS_DIGIT3,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
-  {TIMEDIGITS_DIGIT4,   TIMEDIGITS_SECONDS_OFFSET_TOP, TIMEDIGITS_WIDTH, TIMEDIGITS_HEIGHT, "8", c_t4, f_big },
+  // Seconds mode only: the pair takes the row the clock leaves underneath it.
   {TIMEDIGITS_SECONDS_PAIR_X, TIMEDIGITS_SECONDS_PAIR_Y,
    TIMEDIGITS_SECONDS_SMALL_WIDTH, TIMEDIGITS_SECONDS_SMALL_HEIGHT, "8", c_t4, f_sec },
   {TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP, TIMEDIGITS_SECONDS_PAIR_Y,
@@ -52,7 +45,6 @@ digit_data_t digit_data[]={
 };
 
 static uint8_t active_digits; //number of active digits (5 regular, 7 including seconds)
-static uint8_t start=0; // where to read from digit list. from 7 to 13 is position for time including seconds
 
 bool _true = true;
 bool _false = false;
@@ -280,19 +272,16 @@ TextLayer *timedigits_init_big_digit(int d) {
 }
 
 void load_digits(){
-  start = 0;
-  active_digits = 5;
-  if ((global_settings.Seconds) && !powerSaveEngaged ) {
-    start = 7;
-    active_digits = 7;
-  }
+  // One set of digits now serves both modes: seconds mode simply adds the two
+  // pair digits, which live at the end of the table.
+  active_digits = (global_settings.Seconds && !powerSaveEngaged) ? 7 : 5;
   //Clock Shadow Digits
   for (int i=0; i< active_digits; i++) {
-    t_layer[t_shadow_dig1+i] = timedigits_init_big_digit(start + i);
+    t_layer[t_shadow_dig1+i] = timedigits_init_big_digit(i);
   }
   //Clock Digits
   for (int i=0; i< active_digits; i++) {
-    t_layer[t_dig1 + i] = timedigits_init_big_digit(start + i);
+    t_layer[t_dig1 + i] = timedigits_init_big_digit(i);
   }
 }
 void unload_digits(){

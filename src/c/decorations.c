@@ -9,13 +9,17 @@
 #include "window.h"
 
 static Layer *decorations_layer, *wr_outer_layer, *button_back_icon_layer, *button_next_icon_layer, *button_prev_icon_layer;
-static TextLayer *temp_hi_layer, *temp_lo_layer, *button_back_layer, *button_next_layer, *button_prev_layer;
+static TextLayer *weather_text_layer, *button_back_layer, *button_next_layer, *button_prev_layer;
+static Layer *weather_icon_layer;
 static BitmapLayer *logo_layer;
 static GBitmap *logo_image;
-static int8_t temp_hi = INT8_MIN, temp_lo = INT8_MIN;
-static int8_t last_displayed_hi = INT8_MIN, last_displayed_lo = INT8_MIN;
+static int8_t temp_now = INT8_MIN, temp_hi = INT8_MIN, temp_lo = INT8_MIN;
+static WeatherCond weather_cond = WEATHER_COND_NONE;
+static bool weather_painted = false;
 
-static char temp_hi_buf[8], temp_lo_buf[8];
+static char weather_buf[32];
+
+void weather_icon_layer_update_callback(Layer *my_layer, GContext* ctx);
 
 static GPath *arrow_left_path_ptr = NULL;
 static GPath *arrow_right_path_ptr = NULL;
@@ -33,16 +37,30 @@ d8  Button Icons
 d9  Branding Text
 */
 
+/*
+ * Push the user's button wording onto the three label layers. Empty labels are
+ * legitimate: the arrow icon stays and the text disappears.
+ */
+static void decorations_apply_labels(void) {
+  if (button_back_layer == NULL) {
+    return;
+  }
+  text_layer_set_text(button_back_layer, global_settings.LabelBack);
+  text_layer_set_text(button_prev_layer, global_settings.LabelPrev);
+  text_layer_set_text(button_next_layer, global_settings.LabelNext);
+}
+
 void decorations_settings_callback() {
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "decorations_settings_callback()");
 
-  text_layer_set_text_color(temp_hi_layer, color_helper(colors[c_d6], global_settings.Invert));
-  text_layer_set_text_color(temp_lo_layer, color_helper(colors[c_d6], global_settings.Invert));
+  text_layer_set_text_color(weather_text_layer, color_helper(colors[c_t2], global_settings.Invert));
+  layer_mark_dirty(weather_icon_layer);
 
   text_layer_set_text_color(button_back_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_next_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_prev_layer, color_helper(colors[c_d7], global_settings.Invert));
+  decorations_apply_labels();
 
   #ifdef PBL_COLOR
       GColor * xcolors = gbitmap_get_palette(logo_image);
@@ -140,45 +158,38 @@ void decorations_init() {
 
   // "CM" label removed per feedback — the WR box stays decorative for now.
 
-  // DAY HIGH TEMP (was "WATER")
-  temp_hi_layer = text_layer_create_detailed(DECORATIONS_TEMP_HI,
-                                GColorClear, color_helper(colors[c_d6], global_settings.Invert),
-                                GTextAlignmentRight, font_tiny);
-  layer_add_child(decorations_layer, text_layer_get_layer(temp_hi_layer));
+  // WEATHER: conditions icon then "now°(high°/low°)", on the seconds' row
+  // inside the panel. The corner readouts (was "WATER"/"RESIST") are gone: one
+  // row reads better than two corners, and being on the panel's white fill the
+  // readout takes an ink colour rather than the outside chrome's.
+  weather_icon_layer = layer_create(DECORATIONS_WEATHER_ICON);
+  layer_set_update_proc(weather_icon_layer, weather_icon_layer_update_callback);
+  layer_add_child(decorations_layer, weather_icon_layer);
 
-  // DAY LOW TEMP (was "RESIST")
-  temp_lo_layer = text_layer_create_detailed(DECORATIONS_TEMP_LO,
-                                GColorClear, color_helper(colors[c_d6], global_settings.Invert),
+  weather_text_layer = text_layer_create_detailed(DECORATIONS_WEATHER_TEXT,
+                                GColorClear, color_helper(colors[c_t2], global_settings.Invert),
                                 GTextAlignmentLeft, font_tiny);
-  layer_add_child(decorations_layer, text_layer_get_layer(temp_lo_layer));
+  layer_add_child(decorations_layer, text_layer_get_layer(weather_text_layer));
 
-  // Show "--" placeholders now that both layers exist (update_temp_layers
-  // was previously called before temp_lo_layer existed, so the placeholder
-  // never rendered and temps only appeared once data arrived).
-  decorations_update_temp_layers();
+  decorations_update_weather();
 
-  // BACK BUTTON LABEL
+  // BUTTON LABELS - text comes from the settings (capped and filtered there)
   button_back_layer = text_layer_create_detailed(DECORATIONS_BUTTON_BACK_LABEL, GColorClear
                                                  , color_helper(colors[c_d7], global_settings.Invert),
                                                  GTextAlignmentLeft, font_tiny);
-  text_layer_set_text(button_back_layer, "LIGHT");
   layer_add_child(decorations_layer, text_layer_get_layer(button_back_layer));
 
-
-  // NEXT BUTTON LABEL
   button_next_layer = text_layer_create_detailed(DECORATIONS_BUTTON_NEXT_LABEL, GColorClear
                                                  , color_helper(colors[c_d7], global_settings.Invert),
                                                  GTextAlignmentRight, font_tiny);
-  text_layer_set_text(button_next_layer, "NEXT");
   layer_add_child(decorations_layer, text_layer_get_layer(button_next_layer));
 
-
-  // PREV BUTTON LABEL
   button_prev_layer = text_layer_create_detailed(DECORATIONS_BUTTON_PREV_LABEL, GColorClear,
                                                   color_helper(colors[c_d7], global_settings.Invert),
                                                   GTextAlignmentRight, font_tiny);
-  text_layer_set_text(button_prev_layer, "PREV");
   layer_add_child(decorations_layer, text_layer_get_layer(button_prev_layer));
+
+  decorations_apply_labels();
 
   // BRANDING LABEL
   logo_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_LOGO_PEBBLE);
@@ -225,8 +236,8 @@ void decorations_deinit() {
   logo_image = NULL;
   bitmap_layer_destroy(logo_layer);
 
-  layer_remove_from_parent(text_layer_get_layer(temp_hi_layer));
-  layer_remove_from_parent(text_layer_get_layer(temp_lo_layer));
+  layer_remove_from_parent(text_layer_get_layer(weather_text_layer));
+  layer_remove_from_parent(weather_icon_layer);
   layer_remove_from_parent(text_layer_get_layer(button_back_layer));
   layer_remove_from_parent(text_layer_get_layer(button_next_layer));
   layer_remove_from_parent(text_layer_get_layer(button_prev_layer));
@@ -237,8 +248,8 @@ void decorations_deinit() {
   layer_remove_from_parent(wr_outer_layer);
   layer_remove_from_parent(decorations_layer);
 
-  text_layer_destroy(temp_hi_layer);
-  text_layer_destroy(temp_lo_layer);
+  text_layer_destroy(weather_text_layer);
+  layer_destroy(weather_icon_layer);
   text_layer_destroy(button_back_layer);
   text_layer_destroy(button_next_layer);
   text_layer_destroy(button_prev_layer);
@@ -259,40 +270,115 @@ void decorations_toggle(bool is_obstructed) {
 }
 
 /*
- * Weather readouts: day high (left, was WATER) and day low (right, was
- * RESIST). Values arrive from the phone as Celsius ints (negative values
- * supported); temps display as e.g. "24°" / "12°".
+ * Weather values, as the phone sends them: current temperature, the day's high
+ * and low, and a WMO condition code. INT8_MIN means "not known yet" for the
+ * temperatures; each arriving key updates the row.
  */
-void decorations_set_temps(int8_t hi, int8_t lo) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "decorations: set temps hi=%d lo=%d", (int)hi, (int)lo);
+void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "decorations: weather now=%d hi=%d lo=%d cond=%d",
+          (int)now, (int)hi, (int)lo, (int)cond);
+  temp_now = now;
   temp_hi = hi;
   temp_lo = lo;
-  decorations_update_temp_layers();
+  weather_cond = weather_cond_from_wmo(cond);
+  if (weather_icon_layer != NULL) {
+    layer_mark_dirty(weather_icon_layer);
+  }
+  decorations_update_weather();
 }
 
-void decorations_update_temp_layers() {
-  if (temp_hi_layer == NULL || temp_lo_layer == NULL) {
+/*
+ * One string on the seconds' row: "80°(88°/65°)" - current, then the high and
+ * low. Parts the phone has not sent are left out rather than shown as dashes,
+ * so half of an arriving message cannot read as real weather:
+ *   all three -> 80°(88°/65°)    now only -> 80°    high/low only -> (88°/65°)
+ *   nothing yet -> --
+ *
+ * The degree sign must be valid UTF-8 (0xC2 0xB0): a bare \xB0 is an invalid
+ * sequence and Pebble's text renderer drops the whole string.
+ */
+/*
+ * Condition glyph, 16x16, drawn from the same two colours as the readout: a
+ * sun, a cloud, the cloud with rain under it, or the cloud with snow under it.
+ * Primitives rather than GPaths: the shapes are circles and short strokes, and
+ * at this size that is the whole drawing.
+ */
+void weather_icon_layer_update_callback(Layer *my_layer, GContext* ctx) {
+  GColor color = color_helper(colors[c_t2], global_settings.Invert);
+  graphics_context_set_fill_color(ctx, color);
+  graphics_context_set_stroke_color(ctx, color);
+
+  switch (weather_cond) {
+    case WEATHER_COND_CLEAR:
+      graphics_fill_circle(ctx, GPoint(7, 7), 3);
+      graphics_draw_line(ctx, GPoint(7, 1), GPoint(7, 3));
+      graphics_draw_line(ctx, GPoint(7, 11), GPoint(7, 13));
+      graphics_draw_line(ctx, GPoint(1, 7), GPoint(3, 7));
+      graphics_draw_line(ctx, GPoint(11, 7), GPoint(13, 7));
+      graphics_draw_line(ctx, GPoint(3, 3), GPoint(4, 4));
+      graphics_draw_line(ctx, GPoint(10, 10), GPoint(11, 11));
+      graphics_draw_line(ctx, GPoint(11, 3), GPoint(10, 4));
+      graphics_draw_line(ctx, GPoint(4, 10), GPoint(3, 11));
+      break;
+
+    case WEATHER_COND_CLOUD:
+      graphics_fill_circle(ctx, GPoint(4, 8), 3);
+      graphics_fill_circle(ctx, GPoint(8, 6), 4);
+      graphics_fill_circle(ctx, GPoint(12, 8), 3);
+      graphics_fill_rect(ctx, GRect(4, 6, 9, 5), 0, GCornerNone);
+      break;
+
+    case WEATHER_COND_RAIN:
+      graphics_fill_circle(ctx, GPoint(4, 6), 3);
+      graphics_fill_circle(ctx, GPoint(8, 4), 4);
+      graphics_fill_circle(ctx, GPoint(12, 6), 3);
+      graphics_fill_rect(ctx, GRect(4, 4, 9, 5), 0, GCornerNone);
+      graphics_draw_line(ctx, GPoint(5, 11), GPoint(4, 14));
+      graphics_draw_line(ctx, GPoint(9, 11), GPoint(8, 14));
+      graphics_draw_line(ctx, GPoint(13, 11), GPoint(12, 14));
+      break;
+
+    case WEATHER_COND_SNOW:
+      graphics_fill_circle(ctx, GPoint(4, 6), 3);
+      graphics_fill_circle(ctx, GPoint(8, 4), 4);
+      graphics_fill_circle(ctx, GPoint(12, 6), 3);
+      graphics_fill_rect(ctx, GRect(4, 4, 9, 5), 0, GCornerNone);
+      graphics_fill_circle(ctx, GPoint(5, 12), 1);
+      graphics_fill_circle(ctx, GPoint(8, 14), 1);
+      graphics_fill_circle(ctx, GPoint(11, 12), 1);
+      break;
+
+    case WEATHER_COND_NONE:
+    default:
+      break;  // no data yet: leave the space empty
+  }
+}
+
+void decorations_update_weather() {
+  if (weather_text_layer == NULL) {
     return;
   }
 
-  if (temp_hi != INT8_MIN) {
-    // NOTE: degree sign must be valid UTF-8 (0xC2 0xB0). A bare \xB0 is an
-    // invalid sequence and Pebble's text renderer drops the WHOLE string.
-    snprintf(temp_hi_buf, sizeof(temp_hi_buf), "%d\xC2\xB0", temp_hi);
-    text_layer_set_text(temp_hi_layer, temp_hi_buf);
-    last_displayed_hi = temp_hi;
+  bool have_now = temp_now != INT8_MIN;
+  bool have_hl = temp_hi != INT8_MIN && temp_lo != INT8_MIN;
+
+  if (have_now && have_hl) {
+    snprintf(weather_buf, sizeof(weather_buf), "%d\xC2\xB0(%d\xC2\xB0/%d\xC2\xB0)",
+             temp_now, temp_hi, temp_lo);
   }
-  else if (last_displayed_hi == INT8_MIN) {
-    // No weather data yet: show a dash rather than stale placeholder text
-    text_layer_set_text(temp_hi_layer, "--");
+  else if (have_now) {
+    snprintf(weather_buf, sizeof(weather_buf), "%d\xC2\xB0", temp_now);
+  }
+  else if (have_hl) {
+    snprintf(weather_buf, sizeof(weather_buf), "(%d\xC2\xB0/%d\xC2\xB0)", temp_hi, temp_lo);
+  }
+  else if (!weather_painted) {
+    snprintf(weather_buf, sizeof(weather_buf), "--");
+  }
+  else {
+    return;  // nothing to change; leave the last reading up
   }
 
-  if (temp_lo != INT8_MIN) {
-    snprintf(temp_lo_buf, sizeof(temp_lo_buf), "%d\xC2\xB0", temp_lo);
-    text_layer_set_text(temp_lo_layer, temp_lo_buf);
-    last_displayed_lo = temp_lo;
-  }
-  else if (last_displayed_lo == INT8_MIN) {
-    text_layer_set_text(temp_lo_layer, "--");
-  }
+  text_layer_set_text(weather_text_layer, weather_buf);
+  weather_painted = true;
 }

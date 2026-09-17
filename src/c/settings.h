@@ -17,6 +17,10 @@ typedef enum DateFormat {
   DATE_FMT_MONTH_WEEKDAY_DD = 4   // SEP-WED-25
 } DateFormat;
 
+// Longest button label the layout accepts: the label boxes hold this many
+// glyphs of Lucida 14 (see DECORATIONS_BUTTON_*_LABEL).
+#define LABEL_MAX 8
+
 #define SETTINGS_CALLBACKS_COUNT 6
 #define COLORS_NUM 25
 
@@ -59,6 +63,9 @@ typedef struct Settings {
   uint8_t BatteryIconOnly; // 0 = icon + percent, 1 = percent only (no icon, no phone bar)
   uint8_t TempUnit;        // 0 = Celsius, 1 = Fahrenheit
   uint8_t DateFmt;         // DateFormat
+  char LabelBack[LABEL_MAX + 1];  // user text beside the back/light button
+  char LabelPrev[LABEL_MAX + 1];
+  char LabelNext[LABEL_MAX + 1];
 } __attribute__((__packed__)) Settings;
 
 extern Settings global_settings;
@@ -89,6 +96,11 @@ typedef void (*SettingsChangeCallback)();
 #define WTEMP_LO_KEY       MESSAGE_KEY_wtemp_lo
 #define PBATT_LEVEL_KEY    MESSAGE_KEY_pbatt_level
 #define DATE_FORMAT_KEY    MESSAGE_KEY_date_format
+#define LABEL_BACK_KEY     MESSAGE_KEY_label_light
+#define LABEL_PREV_KEY     MESSAGE_KEY_label_prev
+#define LABEL_NEXT_KEY     MESSAGE_KEY_label_next
+#define WTEMP_NOW_KEY      MESSAGE_KEY_wtemp_now
+#define WCOND_KEY          MESSAGE_KEY_wcond
 
 // Color-set payloads ride the messageKey values too (legacy hardcoded keys
 // 200/202 predated the SDK-generated 10000+ range and matched nothing).

@@ -90,3 +90,26 @@ void format_date(DateFormat fmt, struct tm *t, char *out, size_t out_len) {
   }
 }
 
+
+/*
+ * Open-Meteo hands out WMO weather codes; the face draws four conditions.
+ * Grouped the way the codes are defined: 0-1 clear, 2-3 and fog cloud, the
+ * drizzle/rain/shower ranges and thunderstorms rain, snow and snow showers
+ * snow. Anything unrecognised draws no icon rather than a wrong one.
+ */
+WeatherCond weather_cond_from_wmo(uint8_t code) {
+  if (code <= 1) {
+    return WEATHER_COND_CLEAR;
+  }
+  if ((code >= 2 && code <= 3) || code == 45 || code == 48) {
+    return WEATHER_COND_CLOUD;
+  }
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) ||
+      (code >= 95 && code <= 99)) {
+    return WEATHER_COND_RAIN;
+  }
+  if ((code >= 71 && code <= 77) || code == 85 || code == 86) {
+    return WEATHER_COND_SNOW;
+  }
+  return WEATHER_COND_NONE;
+}
