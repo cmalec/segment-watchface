@@ -1,0 +1,64 @@
+{
+  "name": "c-watchface",
+  "author": "Replace Me",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {
+    "@rebble/clay": "^1.0.8"
+  },
+  "pebble": {
+    "displayName": "C Watchface",
+    "uuid": "0F1D4A8E-3C57-4B62-9E9A-2D6B7F0C41A8",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint",
+      "gabbro"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "capabilities": [
+      "location",
+      "configurable"
+    ],
+    "messageKeys": [
+      "TEMPERATURE",
+      "CONDITIONS",
+      "REQUEST_WEATHER",
+      "BackgroundColor",
+      "TextColor",
+      "TemperatureUnit",
+      "ShowDate"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "font",
+          "name": "FONT_JERSEY_56",
+          "file": "fonts/Jersey10-Regular.ttf",
+          "compatibility": "2.7"
+        },
+        {
+          "type": "font",
+          "name": "FONT_JERSEY_24",
+          "file": "fonts/Jersey10-Regular.ttf",
+          "compatibility": "2.7"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_BT_ICON",
+          "file": "images/bt-icon.png"
+        }
+      ]
+    }
+  }
+}

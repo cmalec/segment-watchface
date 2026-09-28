@@ -1,0 +1,42 @@
+{
+  "name": "vector-animations",
+  "author": "Replace Me",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Vector Animations",
+    "uuid": "5B2E7C41-9A38-4D6F-8C05-7E1F3B9A2D64",
+    "sdkVersion": "3",
+    "enableMultiJS": false,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint",
+      "gabbro"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "resources": {
+      "media": [
+        {
+          "type": "raw",
+          "name": "PDC_SUN",
+          "file": "pdcs/sun.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "PDC_SPINNER",
+          "file": "pdcs/spinner.pdc"
+        }
+      ]
+    }
+  }
+}

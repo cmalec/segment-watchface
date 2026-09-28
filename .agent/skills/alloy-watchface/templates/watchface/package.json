@@ -1,0 +1,41 @@
+{
+  "name": "alloy-watchface",
+  "author": "Replace Me",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {
+    "@moddable/pebbleproxy": "^0.1.5",
+    "@rebble/clay": "^1.0.8"
+  },
+  "pebble": {
+    "displayName": "Alloy Watchface",
+    "uuid": "F7F5BE50-6E33-4C6B-807F-6AEA2421D7D4",
+    "projectType": "moddable",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "emery",
+      "gabbro"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "capabilities": [
+      "location",
+      "configurable"
+    ],
+    "messageKeys": [
+      "BackgroundColor",
+      "TextColor",
+      "TemperatureUnit",
+      "ShowDate",
+      "HourFormat"
+    ],
+    "resources": {
+      "media": []
+    }
+  }
+}

@@ -133,7 +133,7 @@ Valid system font sizes (from the Pebble system font set):
 
 For anything else, use a custom TTF (next section).
 
-Bitmaps/vectors: `new Poco.PebbleBitmap(resourceId)` + `render.drawBitmap(bmp, x, y)`; PDC vector via `new Poco.PebbleDrawCommandImage(resourceId)` + `render.drawDCI(pdc, x, y)` with `pdc.clone()/rotate(rad, px, py)/scale(f)`; animated sequences via `Poco.PebbleDrawCommandSequence`.
+Bitmaps/vectors: `new Poco.PebbleBitmap(resourceId)` + `render.drawBitmap(bmp, x, y)`; PDC vector via `new Poco.PebbleDrawCommandImage(resourceId)` + `render.drawDCI(pdc, x, y)` with `pdc.clone()/rotate(rad, px, py)/scale(f)`; animated sequences via `Poco.PebbleDrawCommandSequence`. For generating PDC assets and the exact Poco draw-command API (including its numeric-resource-id caveat), use the `vector-animations` skill.
 
 Frame pattern: every redraw = `begin()` → fill full-screen background → draw → `end()`.
 

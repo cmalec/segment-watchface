@@ -359,7 +359,7 @@ For watchapps (`"watchface": false`), see [reference/watchapp-guide.md](referenc
 
 ### Alloy Implementation (instead of C)
 
-For Alloy projects, see [reference/alloy-guide.md](reference/alloy-guide.md) — read it fully before writing files. Files:
+For Alloy projects, see [reference/alloy-guide.md](reference/alloy-guide.md) — read it fully before writing files. **For the full tutorial-derived walkthrough, a verified end-state project to copy, and the SDK pitfalls around sensors/proxied HTTP, read the `alloy-watchface` skill** (`alloy-watchface/templates/watchface/` is a complete emery+gabbro watchface: custom font, battery, BT, weather, Quick View, Clay settings). Files:
 
 ```
 project/
@@ -761,7 +761,15 @@ Complete working tutorial examples are in `tutorials/c-watchface-tutorial/`:
 
 These are sourced from [coredevices/c-watchface-tutorial](https://github.com/coredevices/c-watchface-tutorial).
 
+**For C watchface work, read the dedicated `c-watchface` skill** — full 6-part walkthrough (`reference/01-*` … `reference/06-*`), a complete verified end-state project (`templates/watchface/`: Jersey font, battery bar, BT icon, PebbleKit JS weather, Quick View, Clay settings) built for all seven platforms, plus the emulator commands and pitfalls found while verifying it.
+
+Runnable sources for every part also live upstream in that repo (`part1/` … `part6/`); the old `tutorials/c-watchface-tutorial/` paths referenced elsewhere in this skill do not exist in-repo.
+
 The Alloy equivalent is [coredevices/alloy-watchface-tutorial](https://github.com/coredevices/alloy-watchface-tutorial) (part1 basic Poco face → part2 custom fonts → part3 battery/BT → part4 weather via watch-side fetch → part5 Quick View → part6 Clay settings + localStorage). Its part1 is captured verbatim in `templates/alloy-*`.
+
+**For any Alloy/JS watchface work, read the dedicated `alloy-watchface` skill** — it carries the full 6-part walkthrough (`reference/01-*` … `reference/06-*`), a complete verified end-state project (`templates/watchface/`, built and run on the emery emulator), and the SDK pitfalls found while verifying it (Location's single-instance lock, the proxied-HTTP VM abort, Quick View layout rules, emulator test commands).
+
+**For vector assets and frame animation (PDC), read the `vector-animations` skill** — it covers the advanced tutorial: PDC image/sequence format, `scripts/make_pdc.py` (dependency-free generator) and a Python 3 port of `svg2pdc.py` (the upstream tool is Python 2 and will not run), `gdraw_command_image_*`/`gdraw_command_sequence_*` usage, frame timers with battery-safe bursts, runtime point/colour manipulation, and a verified template rendering on emery, gabbro and aplite.
 
 ---
 
