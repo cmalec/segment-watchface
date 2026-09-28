@@ -32,10 +32,20 @@ static GPath *heart_path_ptr = NULL;
 static HealthValue s_sleep, s_steps;
 static HealthValue s_bpm;
 
+/*
+ * Which readout row 1 shows: sleep until the day's steps pass HEALTH_STEP_MIN,
+ * or always steps when the user turned the sleep readout off (they don't wear
+ * the watch to sleep, so last night's total — or a bare "0M" after midnight —
+ * is noise). The icon layer and the text both ask this, so they cannot disagree.
+ */
+static bool health_shows_sleep(void) {
+  return global_settings.SleepReadout && s_steps < HEALTH_STEP_MIN;
+}
+
 void health_icon_layer_update_callback(Layer *my_layer, GContext* ctx) {
   graphics_context_set_stroke_color(ctx, color_helper(colors[c_t2], global_settings.Invert));
   graphics_context_set_fill_color(ctx, color_helper(colors[c_t2], global_settings.Invert));
-  if(s_steps < HEALTH_STEP_MIN) {
+  if(health_shows_sleep()) {
     //zzz
     gpath_draw_outline_open(ctx, zee1_path_ptr);
     gpath_draw_outline_open(ctx, zee2_path_ptr);
@@ -63,7 +73,7 @@ void health_settings_callback() {
 
 void health_update() {
   static char str[20], str2[20];
-  if(s_steps < HEALTH_STEP_MIN) {
+  if(health_shows_sleep()) {
     //zzz
     int hours = 0, minutes = 0;
     duration_to_time(s_sleep, &hours, &minutes);

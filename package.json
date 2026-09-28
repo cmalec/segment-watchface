@@ -30,6 +30,7 @@
       "battery_icon_only",
       "temp_unit",
       "seconds",
+      "sleep_readout",
       "powersave",
       "ps_start",
       "ps_end",

@@ -148,6 +148,9 @@ void settings_process_tuple(Tuple *new_tuple) {
   else if (key == SECONDS_KEY) {
     global_settings.Seconds = new_tuple->value->uint8;
   }
+  else if (key == SLEEP_READOUT_KEY) {
+    global_settings.SleepReadout = new_tuple->value->uint8;
+  }
   else if (key == POWERSAVE_KEY) {
     global_settings.PowerSave = new_tuple->value->uint8;
   }
@@ -294,6 +297,10 @@ void settings_default_values() {
   global_settings.BrandingMask = 0;
   global_settings.BatteryHide = 0;
   global_settings.Seconds = 0;
+  // Sleep readout on: row 1 shows last night's sleep until the day's steps pass
+  // HEALTH_STEP_MIN. Turning it off (for people who don't wear the watch to
+  // sleep) makes row 1 show steps all day.
+  global_settings.SleepReadout = 1;
   global_settings.PowerSave = 0;
   global_settings.PS_Start = 47;   //23:00
   global_settings.PS_End = 15;     //07:00

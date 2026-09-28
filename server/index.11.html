@@ -199,6 +199,7 @@
       </select></div>
     </div>
     <div class="row"><div><div class="t">Health</div><div class="d">Steps and heart rate</div></div><div class="ctl"><button class="sw" data-k="health" data-on="1"></button></div></div>
+    <div class="row"><div><div class="t">Sleep readout</div><div class="d">Shows last night's sleep instead of steps until the day reaches 400 steps. Off: the row always shows steps (with Health on) — for people who don't wear the watch to sleep.</div></div><div class="ctl"><button class="sw" data-k="sleep_readout" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Seconds</div><div class="d">A seconds row under the clock — costs battery</div></div><div class="ctl"><button class="sw" data-k="seconds" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Invert</div><div class="d">Inverted color scheme</div></div><div class="ctl"><button class="sw" data-k="invert" data-on="1"></button></div></div>
     <div class="row"><div><div class="t">Hide branding</div><div class="d">No “pebble” logo at the top</div></div><div class="ctl"><button class="sw" data-k="branding_mask" data-on="1"></button></div></div>
@@ -276,7 +277,7 @@ var DEFAULT_COLORS = 'FFC0FFC0C0F4F0F0C2EAF0FFFFFFFFC0FFFFFFFFFFC0C0FFC0';
 var DEFAULTS = {
   health: 1, blink: 1, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
-  branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0,
+  branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0, sleep_readout: 1,
   date_format: 1,
   label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT',
   powersave: 0, ps_start: 47, ps_end: 15,

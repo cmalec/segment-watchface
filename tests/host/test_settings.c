@@ -150,6 +150,17 @@ static void test_button_label_wire_contract(void) {
   ASSERT_STR(global_settings.LabelNext, "NEXT", "null payload leaves the label alone");
 }
 
+static void test_sleep_readout_wire_contract(void) {
+  settings_default_values();
+  ASSERT_EQ(global_settings.SleepReadout, 1, "sleep readout on by default");
+
+  send_uint(MESSAGE_KEY_sleep_readout, 0);
+  ASSERT_EQ(global_settings.SleepReadout, 0, "turning it off lands");
+
+  send_uint(MESSAGE_KEY_sleep_readout, 1);
+  ASSERT_EQ(global_settings.SleepReadout, 1, "turning it back on lands");
+}
+
 static void test_weather_wire_contract(void) {
   seen_now = seen_hi = seen_lo = INT8_MIN;
   seen_cond = 0;
@@ -190,6 +201,9 @@ static void test_blob_migration_from_older_layout(void) {
   ASSERT_EQ(global_settings.TempUnit, 1, "older blob: temp unit kept");
   ASSERT_EQ(global_settings.PS_Start, 30, "older blob: power-save window kept");
   ASSERT_EQ(global_settings.DateFmt, DATE_FMT_MMDDYY, "appended field keeps its default");
+  // A save from before the setting existed must not turn the sleep readout off:
+  // the missing byte leaves the default in place.
+  ASSERT_EQ(global_settings.SleepReadout, 1, "older blob: sleep readout default stands");
   ASSERT_EQ(global_settings.version, SETTINGS_VERSION, "blob adopted as current");
 }
 
@@ -233,6 +247,7 @@ int main(void) {
   RUN(test_date_format_tuple);
   RUN(test_button_label_wire_contract);
   RUN(test_weather_wire_contract);
+  RUN(test_sleep_readout_wire_contract);
   RUN(test_blob_migration_from_older_layout);
   RUN(test_blob_migration_ignores_newer_layout);
   RUN(test_blob_migration_of_current_and_empty_blobs);

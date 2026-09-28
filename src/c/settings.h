@@ -66,6 +66,9 @@ typedef struct Settings {
   char LabelBack[LABEL_MAX + 1];  // user text beside the back/light button
   char LabelPrev[LABEL_MAX + 1];
   char LabelNext[LABEL_MAX + 1];
+  // 0 = row 1 always shows steps. For people who don't wear the watch to
+  // sleep, where last night's total (or a bare "0M" after midnight) is noise.
+  uint8_t SleepReadout;
 } __attribute__((__packed__)) Settings;
 
 extern Settings global_settings;
@@ -84,6 +87,7 @@ typedef void (*SettingsChangeCallback)();
 #define BRANDING_MASK_KEY  MESSAGE_KEY_branding_mask
 #define BATTERY_HIDE_KEY   MESSAGE_KEY_battery_hide
 #define SECONDS_KEY        MESSAGE_KEY_seconds
+#define SLEEP_READOUT_KEY  MESSAGE_KEY_sleep_readout
 #define POWERSAVE_KEY      MESSAGE_KEY_powersave
 #define PS_START_KEY       MESSAGE_KEY_ps_start
 #define PS_END_KEY         MESSAGE_KEY_ps_end

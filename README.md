@@ -15,7 +15,7 @@ A seven-segment digital watchface for the Pebble Time 2, built on the current Re
 - Optional hourly vibration
 - **Weather row**: current temperature with the day's high/low as `19°(28°/12°)`, plus an icon for the WMO condition (clear, partly cloudy, cloudy, fog, drizzle, rain, showers, sleet, snow, thunderstorm — clear and partly cloudy swap to a moon after dark), from Open-Meteo via the phone's location
 - Power-saving mode (no seconds, blink, vibes, BT badge or battery readout between configurable hours)
-- Health step count display + heart rate on Time 2
+- Health step count display + heart rate on Time 2 (the row shows last night's sleep until the day reaches 400 steps; a setting turns that off so it always shows steps)
 - Web-based settings page
 
 > **Origins:** Segment started as a modernization of [91 Dub 4.0](https://github.com/orviwan/91-Dub-v4.0) by Orviwan.
@@ -112,9 +112,9 @@ On the watch: press **Up/Down** from the watchface to open the launcher → **Wa
 
 Configurable from the Pebble mobile app (tap the gear on the watchface card in the app). The settings page is hosted on GitHub Pages:
 
-**https://cmalec.github.io/segment-watchface/server/index.10.html**
+**https://cmalec.github.io/segment-watchface/server/index.11.html**
 
-It configures: health, seconds, date format, button labels, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
+It configures: health, the sleep readout, seconds, date format, button labels, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
 ## Project layout
 
@@ -131,7 +131,9 @@ It configures: health, seconds, date format, button labels, blinking colon, inve
 │                         #   diffing) and verify_weather_glyphs.py (icon glyphs)
 ├── .agent/skills/        # Agent skills: the vendored pebble-watchface set plus
 │                         #   weather-icons (this repo's weather-row font)
-└── server/               # The settings web page (index.10.html; themes.json is the
+└── server/               # The settings web page (index.11.html; the version in the
+                          #   name busts the phone browser's cache — bump it on edits;
+                          #   themes.json is the
                           #   preset data the colour editor used, kept for later)
 ```
 
