@@ -9,8 +9,7 @@
 #include "window.h"
 
 static Layer *decorations_layer, *wr_outer_layer, *button_back_icon_layer, *button_next_icon_layer, *button_prev_icon_layer;
-static TextLayer *weather_text_layer, *button_back_layer, *button_next_layer, *button_prev_layer;
-static Layer *weather_icon_layer;
+static TextLayer *weather_text_layer, *weather_icon_layer, *button_back_layer, *button_next_layer, *button_prev_layer;
 static BitmapLayer *logo_layer;
 static GBitmap *logo_image;
 static int8_t temp_now = INT8_MIN, temp_hi = INT8_MIN, temp_lo = INT8_MIN;
@@ -19,7 +18,8 @@ static bool weather_painted = false;
 
 static char weather_buf[32];
 
-void weather_icon_layer_update_callback(Layer *my_layer, GContext* ctx);
+static void weather_icon_apply(void);
+
 
 static GPath *arrow_left_path_ptr = NULL;
 static GPath *arrow_right_path_ptr = NULL;
@@ -55,7 +55,7 @@ void decorations_settings_callback() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "decorations_settings_callback()");
 
   text_layer_set_text_color(weather_text_layer, color_helper(colors[c_t2], global_settings.Invert));
-  layer_mark_dirty(weather_icon_layer);
+  weather_icon_apply();
 
   text_layer_set_text_color(button_back_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_next_layer, color_helper(colors[c_d7], global_settings.Invert));
@@ -161,10 +161,12 @@ void decorations_init() {
   // WEATHER: conditions icon then "now°(high°/low°)", on the seconds' row
   // inside the panel. The corner readouts (was "WATER"/"RESIST") are gone: one
   // row reads better than two corners, and being on the panel's white fill the
-  // readout takes an ink colour rather than the outside chrome's.
-  weather_icon_layer = layer_create(DECORATIONS_WEATHER_ICON);
-  layer_set_update_proc(weather_icon_layer, weather_icon_layer_update_callback);
-  layer_add_child(decorations_layer, weather_icon_layer);
+  // readout takes an ink colour rather than the outside chrome's. The icon is a
+  // glyph of the icon font, so it is a text layer like the readout beside it.
+  weather_icon_layer = text_layer_create_detailed(DECORATIONS_WEATHER_ICON,
+                                GColorClear, color_helper(colors[c_t2], global_settings.Invert),
+                                GTextAlignmentLeft, font_weather);
+  layer_add_child(decorations_layer, text_layer_get_layer(weather_icon_layer));
 
   weather_text_layer = text_layer_create_detailed(DECORATIONS_WEATHER_TEXT,
                                 GColorClear, color_helper(colors[c_t2], global_settings.Invert),
@@ -172,6 +174,7 @@ void decorations_init() {
   layer_add_child(decorations_layer, text_layer_get_layer(weather_text_layer));
 
   decorations_update_weather();
+  weather_icon_apply();
 
   // BUTTON LABELS - text comes from the settings (capped and filtered there)
   button_back_layer = text_layer_create_detailed(DECORATIONS_BUTTON_BACK_LABEL, GColorClear
@@ -237,7 +240,7 @@ void decorations_deinit() {
   bitmap_layer_destroy(logo_layer);
 
   layer_remove_from_parent(text_layer_get_layer(weather_text_layer));
-  layer_remove_from_parent(weather_icon_layer);
+  layer_remove_from_parent(text_layer_get_layer(weather_icon_layer));
   layer_remove_from_parent(text_layer_get_layer(button_back_layer));
   layer_remove_from_parent(text_layer_get_layer(button_next_layer));
   layer_remove_from_parent(text_layer_get_layer(button_prev_layer));
@@ -249,7 +252,7 @@ void decorations_deinit() {
   layer_remove_from_parent(decorations_layer);
 
   text_layer_destroy(weather_text_layer);
-  layer_destroy(weather_icon_layer);
+  text_layer_destroy(weather_icon_layer);
   text_layer_destroy(button_back_layer);
   text_layer_destroy(button_next_layer);
   text_layer_destroy(button_prev_layer);
@@ -281,10 +284,74 @@ void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
   temp_hi = hi;
   temp_lo = lo;
   weather_cond = weather_cond_from_wmo(cond);
-  if (weather_icon_layer != NULL) {
-    layer_mark_dirty(weather_icon_layer);
-  }
+  weather_icon_apply();
   decorations_update_weather();
+}
+
+/*
+ * Condition icon: a glyph of the weather-icons font (resources/fonts/
+ * weather-icons.ttf, SIL OFL 1.1 — see README). Two forms per condition, the
+ * day one and the night one: the set draws sun and moon variants of clear and
+ * partly cloudy, and a cloud-with-precipitation form for the rest, which is the
+ * same drawing day or night. The glyphs are drawn with the readout's ink colour
+ * and carry no background, so the icon follows the colour sets and Invert like
+ * the text beside it.
+ *
+ * The layer must be wide enough for the widest glyph's advance (24px for
+ * dec_weather_icon): a text layer whose content overflows its frame is drawn as
+ * an ellipsis, which is silent — a too-narrow box turned the fog and drizzle
+ * icons into "...". See DECORATIONS_WEATHER_ICON.
+ */
+static const char *const weather_glyphs[WEATHER_COND_COUNT][2] = {
+  //                                              day           night
+  [WEATHER_COND_NONE]           = { NULL,         NULL },
+  [WEATHER_COND_CLEAR]          = { "\xEF\x80\x8D", "\xEF\x80\xAE" }, // day-sunny / night-clear
+  [WEATHER_COND_PARTLY_CLOUDY]  = { "\xEF\x80\x82", "\xEF\x82\x86" }, // day-cloudy / night-alt-cloudy
+  [WEATHER_COND_CLOUDY]         = { "\xEF\x80\x93", "\xEF\x80\x93" }, // cloudy
+  [WEATHER_COND_FOG]            = { "\xEF\x80\x94", "\xEF\x80\x94" }, // fog
+  [WEATHER_COND_DRIZZLE]        = { "\xEF\x80\x9C", "\xEF\x80\x9C" }, // sprinkle
+  [WEATHER_COND_RAIN]           = { "\xEF\x80\x99", "\xEF\x80\x99" }, // rain
+  [WEATHER_COND_SHOWERS]        = { "\xEF\x80\x9A", "\xEF\x80\x9A" }, // showers
+  [WEATHER_COND_SLEET]          = { "\xEF\x82\xB5", "\xEF\x82\xB5" }, // sleet
+  [WEATHER_COND_SNOW]           = { "\xEF\x80\x9B", "\xEF\x80\x9B" }, // snow
+  [WEATHER_COND_THUNDERSTORM]   = { "\xEF\x80\x9E", "\xEF\x80\x9E" }, // thunderstorm
+};
+
+// Day/night picks the sun or moon forms. There is no sunrise data on the watch,
+// so the split is a fixed pair of hours.
+#define WEATHER_NIGHT_START 19
+#define WEATHER_NIGHT_END 7
+
+static bool weather_is_night(void) {
+  time_t now = time(NULL);
+  struct tm *tick_time = localtime(&now);
+  return tick_time->tm_hour >= WEATHER_NIGHT_START || tick_time->tm_hour < WEATHER_NIGHT_END;
+}
+
+// Which form of the glyph is on the layer (day or night), so the minute tick
+// can tell when the day/night split has moved under it.
+static bool weather_icon_night;
+
+/*
+ * Put the current condition's glyph on the row, in the current ink colour.
+ * Called when the weather changes, when the palette changes, and when the
+ * day/night split is crossed; it owns the record of which form is up.
+ */
+static void weather_icon_apply(void) {
+  if (weather_icon_layer == NULL) {
+    return;
+  }
+  weather_icon_night = weather_is_night();
+  text_layer_set_text_color(weather_icon_layer, color_helper(colors[c_t2], global_settings.Invert));
+  text_layer_set_text(weather_icon_layer, weather_glyphs[weather_cond][weather_icon_night]);
+}
+
+// The clock's minute tick: only the day/night split can change what the icon
+// looks like while the weather stands still.
+void decorations_weather_icon_tick(void) {
+  if (weather_is_night() != weather_icon_night) {
+    weather_icon_apply();
+  }
 }
 
 /*
@@ -297,63 +364,6 @@ void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
  * The degree sign must be valid UTF-8 (0xC2 0xB0): a bare \xB0 is an invalid
  * sequence and Pebble's text renderer drops the whole string.
  */
-/*
- * Condition glyph, 16x16, drawn from the same two colours as the readout: a
- * sun, a cloud, the cloud with rain under it, or the cloud with snow under it.
- * Primitives rather than GPaths: the shapes are circles and short strokes, and
- * at this size that is the whole drawing.
- */
-void weather_icon_layer_update_callback(Layer *my_layer, GContext* ctx) {
-  GColor color = color_helper(colors[c_t2], global_settings.Invert);
-  graphics_context_set_fill_color(ctx, color);
-  graphics_context_set_stroke_color(ctx, color);
-
-  switch (weather_cond) {
-    case WEATHER_COND_CLEAR:
-      graphics_fill_circle(ctx, GPoint(7, 7), 3);
-      graphics_draw_line(ctx, GPoint(7, 1), GPoint(7, 3));
-      graphics_draw_line(ctx, GPoint(7, 11), GPoint(7, 13));
-      graphics_draw_line(ctx, GPoint(1, 7), GPoint(3, 7));
-      graphics_draw_line(ctx, GPoint(11, 7), GPoint(13, 7));
-      graphics_draw_line(ctx, GPoint(3, 3), GPoint(4, 4));
-      graphics_draw_line(ctx, GPoint(10, 10), GPoint(11, 11));
-      graphics_draw_line(ctx, GPoint(11, 3), GPoint(10, 4));
-      graphics_draw_line(ctx, GPoint(4, 10), GPoint(3, 11));
-      break;
-
-    case WEATHER_COND_CLOUD:
-      graphics_fill_circle(ctx, GPoint(4, 8), 3);
-      graphics_fill_circle(ctx, GPoint(8, 6), 4);
-      graphics_fill_circle(ctx, GPoint(12, 8), 3);
-      graphics_fill_rect(ctx, GRect(4, 6, 9, 5), 0, GCornerNone);
-      break;
-
-    case WEATHER_COND_RAIN:
-      graphics_fill_circle(ctx, GPoint(4, 6), 3);
-      graphics_fill_circle(ctx, GPoint(8, 4), 4);
-      graphics_fill_circle(ctx, GPoint(12, 6), 3);
-      graphics_fill_rect(ctx, GRect(4, 4, 9, 5), 0, GCornerNone);
-      graphics_draw_line(ctx, GPoint(5, 11), GPoint(4, 14));
-      graphics_draw_line(ctx, GPoint(9, 11), GPoint(8, 14));
-      graphics_draw_line(ctx, GPoint(13, 11), GPoint(12, 14));
-      break;
-
-    case WEATHER_COND_SNOW:
-      graphics_fill_circle(ctx, GPoint(4, 6), 3);
-      graphics_fill_circle(ctx, GPoint(8, 4), 4);
-      graphics_fill_circle(ctx, GPoint(12, 6), 3);
-      graphics_fill_rect(ctx, GRect(4, 4, 9, 5), 0, GCornerNone);
-      graphics_fill_circle(ctx, GPoint(5, 12), 1);
-      graphics_fill_circle(ctx, GPoint(8, 14), 1);
-      graphics_fill_circle(ctx, GPoint(11, 12), 1);
-      break;
-
-    case WEATHER_COND_NONE:
-    default:
-      break;  // no data yet: leave the space empty
-  }
-}
-
 void decorations_update_weather() {
   if (weather_text_layer == NULL) {
     return;

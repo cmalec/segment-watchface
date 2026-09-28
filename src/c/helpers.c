@@ -92,24 +92,46 @@ void format_date(DateFormat fmt, struct tm *t, char *out, size_t out_len) {
 
 
 /*
- * Open-Meteo hands out WMO weather codes; the face draws four conditions.
- * Grouped the way the codes are defined: 0-1 clear, 2-3 and fog cloud, the
- * drizzle/rain/shower ranges and thunderstorms rain, snow and snow showers
- * snow. Anything unrecognised draws no icon rather than a wrong one.
+ * Open-Meteo hands out WMO weather codes (table 4677); the face draws ten
+ * conditions, the ones the weather-icons glyph set tells apart. Grouped the way
+ * the codes are defined: clear, partly cloudy, overcast, fog, drizzle, freezing
+ * drizzle and freezing rain as sleet, rain, showers, snow (snow showers
+ * included) and thunderstorms. Anything unrecognised draws no icon rather than
+ * a wrong one.
  */
 WeatherCond weather_cond_from_wmo(uint8_t code) {
   if (code <= 1) {
     return WEATHER_COND_CLEAR;
   }
-  if ((code >= 2 && code <= 3) || code == 45 || code == 48) {
-    return WEATHER_COND_CLOUD;
+  if (code == 2) {
+    return WEATHER_COND_PARTLY_CLOUDY;
   }
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) ||
-      (code >= 95 && code <= 99)) {
+  if (code == 3) {
+    return WEATHER_COND_CLOUDY;
+  }
+  if (code == 45 || code == 48) {
+    return WEATHER_COND_FOG;
+  }
+  if (code >= 51 && code <= 55) {
+    return WEATHER_COND_DRIZZLE;
+  }
+  if (code == 56 || code == 57 || code == 66 || code == 67) {
+    return WEATHER_COND_SLEET;   // freezing drizzle / freezing rain
+  }
+  if (code >= 61 && code <= 65) {
     return WEATHER_COND_RAIN;
   }
-  if ((code >= 71 && code <= 77) || code == 85 || code == 86) {
+  if (code >= 71 && code <= 77) {
     return WEATHER_COND_SNOW;
+  }
+  if (code >= 80 && code <= 82) {
+    return WEATHER_COND_SHOWERS;
+  }
+  if (code == 85 || code == 86) {
+    return WEATHER_COND_SNOW;    // snow showers
+  }
+  if (code >= 95 && code <= 99) {
+    return WEATHER_COND_THUNDERSTORM;
   }
   return WEATHER_COND_NONE;
 }

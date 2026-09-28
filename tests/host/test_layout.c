@@ -104,8 +104,11 @@ static void test_clock_rows_and_the_bottom_row(void) {
 
   int icon_top = DECORATIONS_WEATHER_ICON.origin.y;
   int icon_bottom = icon_top + DECORATIONS_WEATHER_ICON.size.h - 1;
-  ASSERT_TRUE(icon_top >= clock_ink_bottom + 3, "weather icon clears the clock ink");
-  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "weather icon clears the panel edge");
+  // The weather icon is a glyph of the icon font, whose ink runs 1px above the
+  // font's 16px line box to its 21st row: the box holds that whole band, which
+  // costs 1px of the air above the clock and 1px of the air above the panel.
+  ASSERT_TRUE(icon_top >= clock_ink_bottom + 2, "weather icon clears the clock ink");
+  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 3, "weather icon clears the panel edge");
 }
 
 static void test_seconds_pair_is_right_aligned_on_its_row(void) {
@@ -124,8 +127,8 @@ static void test_weather_row_shares_the_seconds_row(void) {
   int icon_bottom = DECORATIONS_WEATHER_ICON.origin.y + DECORATIONS_WEATHER_ICON.size.h - 1;
   int clock_ink_bottom = TIMEDIGITS_OFFSET_TOP + TIMEDIGITS_DIGIT_INK_BOTTOM;
   ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.x >= PANEL_INNER_LEFT, "icon inside the panel");
-  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 1 - 3, "icon clears the panel's bottom edge");
-  ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.y >= clock_ink_bottom + 3,
+  ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 3, "icon clears the panel's bottom edge");
+  ASSERT_TRUE(DECORATIONS_WEATHER_ICON.origin.y >= clock_ink_bottom + 2,
               "icon clears the clock's ink");
 
   // The text box ends before the seconds' boxes start, so a long reading

@@ -77,15 +77,23 @@ static void test_hex_to_num(void) {
 static void test_weather_cond_mapping(void) {
   ASSERT_EQ(weather_cond_from_wmo(0), WEATHER_COND_CLEAR, "code 0 clear");
   ASSERT_EQ(weather_cond_from_wmo(1), WEATHER_COND_CLEAR, "code 1 mainly clear");
-  ASSERT_EQ(weather_cond_from_wmo(3), WEATHER_COND_CLOUD, "code 3 overcast");
-  ASSERT_EQ(weather_cond_from_wmo(45), WEATHER_COND_CLOUD, "code 45 fog");
-  ASSERT_EQ(weather_cond_from_wmo(48), WEATHER_COND_CLOUD, "code 48 rime fog");
-  ASSERT_EQ(weather_cond_from_wmo(51), WEATHER_COND_RAIN, "code 51 drizzle");
+  ASSERT_EQ(weather_cond_from_wmo(2), WEATHER_COND_PARTLY_CLOUDY, "code 2 partly cloudy");
+  ASSERT_EQ(weather_cond_from_wmo(3), WEATHER_COND_CLOUDY, "code 3 overcast");
+  ASSERT_EQ(weather_cond_from_wmo(45), WEATHER_COND_FOG, "code 45 fog");
+  ASSERT_EQ(weather_cond_from_wmo(48), WEATHER_COND_FOG, "code 48 rime fog");
+  ASSERT_EQ(weather_cond_from_wmo(51), WEATHER_COND_DRIZZLE, "code 51 drizzle");
+  ASSERT_EQ(weather_cond_from_wmo(55), WEATHER_COND_DRIZZLE, "code 55 dense drizzle");
+  ASSERT_EQ(weather_cond_from_wmo(56), WEATHER_COND_SLEET, "code 56 freezing drizzle");
   ASSERT_EQ(weather_cond_from_wmo(63), WEATHER_COND_RAIN, "code 63 rain");
-  ASSERT_EQ(weather_cond_from_wmo(80), WEATHER_COND_RAIN, "code 80 showers");
-  ASSERT_EQ(weather_cond_from_wmo(95), WEATHER_COND_RAIN, "code 95 thunderstorm");
+  ASSERT_EQ(weather_cond_from_wmo(65), WEATHER_COND_RAIN, "code 65 heavy rain");
+  ASSERT_EQ(weather_cond_from_wmo(67), WEATHER_COND_SLEET, "code 67 freezing rain");
   ASSERT_EQ(weather_cond_from_wmo(71), WEATHER_COND_SNOW, "code 71 snow");
-  ASSERT_EQ(weather_cond_from_wmo(86), WEATHER_COND_SNOW, "code 86 snow showers");
+  ASSERT_EQ(weather_cond_from_wmo(77), WEATHER_COND_SNOW, "code 77 snow grains");
+  ASSERT_EQ(weather_cond_from_wmo(80), WEATHER_COND_SHOWERS, "code 80 rain showers");
+  ASSERT_EQ(weather_cond_from_wmo(82), WEATHER_COND_SHOWERS, "code 82 violent showers");
+  ASSERT_EQ(weather_cond_from_wmo(85), WEATHER_COND_SNOW, "code 85 snow showers");
+  ASSERT_EQ(weather_cond_from_wmo(95), WEATHER_COND_THUNDERSTORM, "code 95 thunderstorm");
+  ASSERT_EQ(weather_cond_from_wmo(99), WEATHER_COND_THUNDERSTORM, "code 99 hail storm");
   // gaps in the code table draw nothing rather than a wrong icon
   ASSERT_EQ(weather_cond_from_wmo(4), WEATHER_COND_NONE, "code 4 unknown");
   ASSERT_EQ(weather_cond_from_wmo(200), WEATHER_COND_NONE, "code 200 unknown");

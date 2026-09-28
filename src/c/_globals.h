@@ -172,6 +172,16 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 // panel onto the seconds' row: [icon] [now°(high°/low°)] on the left, seconds on
 // the right. The icon's bottom edge and the text's baseline sit on the seconds'
 // ink bottom, so the three read as one row.
+//
+// The icon box holds a weather-font line: the glyphs' ink runs to the 21st row
+// of the font's 16px line box, so the box is 22 tall — clock-ink-bottom+2 to
+// PANEL_INNER_BOTTOM-3, which is what the row has room for. day-cloudy alone
+// reaches 1px above the line box; that one pixel (the tip of the sun's top ray)
+// is cut rather than spend the air the row keeps under the clock's ink. It is as wide as
+// the widest glyph's advance (24px) because a text layer truncates overflowing
+// content to an ellipsis, silently. It starts at the health column's x
+// (HEALTH_LEFT); the text starts past the icon box, and the narrowest glyphs
+// (moon, cloud) are left-aligned in it, so their ink starts at the column edge.
 #define DECORATIONS_WR_OUTER GRect(71, 206, 58, 22)
-#define DECORATIONS_WEATHER_ICON GRect(8, 161, 16, 16)
-#define DECORATIONS_WEATHER_TEXT GRect(26, 164, 130, 18)
+#define DECORATIONS_WEATHER_ICON GRect(10, 159, 24, 22)
+#define DECORATIONS_WEATHER_TEXT GRect(35, 164, 126, 18)

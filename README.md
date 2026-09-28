@@ -13,12 +13,12 @@ A seven-segment digital watchface for the Pebble Time 2, built on the current Re
 - Battery level indicator (with option to hide)
 - Optional seconds display
 - Optional hourly vibration
-- **Weather row**: current temperature with the day's high/low as `19°(28°/12°)`, plus a sun/cloud/rain/snow icon, from Open-Meteo via the phone's location
+- **Weather row**: current temperature with the day's high/low as `19°(28°/12°)`, plus an icon for the WMO condition (clear, partly cloudy, cloudy, fog, drizzle, rain, showers, sleet, snow, thunderstorm — clear and partly cloudy swap to a moon after dark), from Open-Meteo via the phone's location
 - Power-saving mode (no seconds, blink, vibes, BT badge or battery readout between configurable hours)
 - Health step count display + heart rate on Time 2
 - Web-based settings page
 
-> **Origins:** Segment started as a modernization of [91 Dub 4.0](https://github.com/orviwan/91-Dub-v4.0) by Orviwan — the layout, fonts, and spirit of the original carried over. All credit for the original design belongs to Orviwan.
+> **Origins:** Segment started as a modernization of [91 Dub 4.0](https://github.com/orviwan/91-Dub-v4.0) by Orviwan.
 
 ## Target hardware
 
@@ -62,9 +62,16 @@ This repo vendors the official **[pebble-watchface agent skill](https://github.c
 
 ```sh
 pebble install --emulator emery
+pebble emu-bt-connection --emulator emery --connected no   # optional: stop the phone's
+                                                           # weather from overwriting injections
+tools/verify_weather_glyphs.py                             # icon glyph ↔ rendered pixels
 ```
 
 The only supported emulator target is `emery`.
+`tools/verify_weather_glyphs.py` needs a build and an installed app: it parses the
+glyph table out of `src/c/decorations.c`, decodes the glyphs baked into the built
+font resource, drives one AppMessage per condition, screenshots each and compares
+the ink pixel-for-pixel.
 
 ## Installing on your watch
 
@@ -118,9 +125,12 @@ It configures: health, seconds, date format, button labels, blinking colon, inve
 │   ├── c/                # C source (main.c, window.c, timedigits.c, settings.c, ...)
 │   └── pkjs/index.js     # PebbleKit JS (phone side; weather fetch + settings webview)
 ├── resources/
-│   ├── fonts/            # DS-Digital + Lucida Console TTFs
+│   ├── fonts/            # DS-Digital + Lucida Console TTFs, weather-icons.ttf
 │   └── images/           # Branding, menu icon PNGs
-├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot diffing)
+├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot
+│                         #   diffing) and verify_weather_glyphs.py (icon glyphs)
+├── .agent/skills/        # Agent skills: the vendored pebble-watchface set plus
+│                         #   weather-icons (this repo's weather-row font)
 └── server/               # The settings web page (index.10.html; themes.json is the
                           #   preset data the colour editor used, kept for later)
 ```
@@ -132,6 +142,8 @@ It configures: health, seconds, date format, button labels, blinking colon, inve
 ```sh
 pebble build distclean && pebble build configure && pebble build
 ```
+
+**A font's glyphs don't change after editing its `characterRegex`** — same cache: the font resource is keyed on the file, not the definition, so the first build's glyph set sticks. Regenerate it with the same `distclean` sequence, and check what was baked by parsing the resource (`build/emery/resources/fonts/*.reso` is a pickled `ResourceObject`).
 
 Warnings (`-Wsign-compare`, `-Wunused-variable`, `-Wformat-truncation` in health.c/decorations.c/bluetooth.c) are inherited from the legacy codebase and non-fatal — they're on the list to clean up properly.
 
@@ -146,7 +158,7 @@ The watchface uses the actual Time 2 coordinate system directly:
 - **Health**: steps (or sleep) sit on the top strip in the panel's left column, with heart rate on the row below it — the two never share a line, so a long step count can't reach the heart-rate readout. Values come from `HealthMetricStepCount`/`HealthMetricSleepSeconds` and `HealthMetricHeartRateBPM`.
 - **Top strip**: the right-hand cluster is laid out right-to-left from the panel's inner edge — optional bluetooth badge, battery percentage, battery icon — and the column of text to its left is bounded by whatever the cluster occupies (`battery_top_reserve()`), so nothing is placed from a number measured against the screen edge.
 - **Date**: five shapes — numeric (`DD/MM/YY`, `MM/DD/YY`, `YY-MM-DD`) and name-bearing (`WED-25`, `SEP-WED-25`). `format_date()` builds them from `tm` fields with English abbreviations spelled out in the source: the Lucida character set is ASCII, so a locale whose abbreviations carry accents would render blanks, and the rest of the chrome is English.
-- **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the current temperature, the day's high/low and the WMO condition code from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. The watch maps the code to a sun, cloud, rain or snow glyph (`weather_cond_from_wmo()`) and renders `now°(high°/low°)` on the clock's bottom row, left of the seconds. °C/°F is a settings option, converted phone-side so unit flips are instant.
+- **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the current temperature, the day's high/low and the WMO condition code from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. The watch maps the code to one of ten conditions (`weather_cond_from_wmo()`) and renders `now°(high°/low°)` on the clock's bottom row, left of the seconds. The condition icon is a glyph of the [Weather Icons](https://erikflowers.github.io/weather-icons/) font (`resources/fonts/weather-icons.ttf`, SIL OFL 1.1): `package.json` bakes only the twelve codepoints the face draws (~1.6 KB of font resource), and the glyph is a text layer in the readout's ink colour, so it follows the colour sets and invert like the text beside it. Clear and partly cloudy have sun and moon forms; the face swaps them at 19:00/07:00 (there is no sunrise data on the watch). Two layout rules come from the font and are easy to break silently: the icon's frame must be at least as wide as the widest glyph's advance (a narrower text layer renders an ellipsis instead), and it must be tall enough for the glyphs' ink, which runs past the font's line box. °C/°F is a settings option, converted phone-side so unit flips are instant.
 - **Button labels**: `LIGHT`/`PREV`/`NEXT` are user text, capped at `LABEL_MAX` (8) glyphs and filtered to the characters the Lucida font carries — an empty label leaves just the arrow.
 - Everything else, including the colour sets the watch stores, blink, power saving, and hourly vibration, remains part of the Emery face.
 

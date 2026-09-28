@@ -12,3 +12,6 @@ void decorations_toggle(bool is_obstructed);
 // cond is the raw WMO code from the phone; the face maps it to an icon.
 void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond);
 void decorations_update_weather();
+// The icon's day (sun) and night (moon) forms are picked from the clock, so the
+// minute tick calls this to swap them when the split is crossed.
+void decorations_weather_icon_tick(void);

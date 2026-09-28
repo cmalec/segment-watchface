@@ -84,6 +84,12 @@
           "menuIcon": true,
           "name": "IMAGE_MENU_ICON",
           "type": "png"
+        },
+        {
+          "file": "fonts/weather-icons.ttf",
+          "name": "WX_ICON_16",
+          "type": "font",
+          "characterRegex": "[\uf00d\uf02e\uf002\uf086\uf013\uf014\uf01c\uf019\uf01a\uf0b5\uf01b\uf01e]"
         }
       ]
     }

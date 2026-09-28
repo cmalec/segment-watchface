@@ -8,6 +8,7 @@
 #include "fonts.h"
 #include "bluetooth.h"
 #include "battery.h"
+#include "decorations.h"
 #include "weather.h"
 
 enum {t_dig1, t_dig2, t_sep, t_dig3, t_dig4, t_dig5, t_dig6,
@@ -193,6 +194,7 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     text_layer_set_text(t_layer[t_dig4], digit4);
 
     timed_colorset(tick_time->tm_hour,tick_time->tm_min);
+    decorations_weather_icon_tick();
 
     if (global_settings.PowerSave==1) {
       bool isPowerSave=(setting_is_power_save(tick_time->tm_hour,tick_time->tm_min));
