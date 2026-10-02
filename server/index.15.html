@@ -296,6 +296,15 @@
     <div class="row"><div><div class="t">Previous</div><div class="d">Label below the top-right arrow</div></div>
       <div class="ctl"><input type="text" id="label_prev" maxlength="8" spellcheck="false" autocomplete="off"></div>
     </div>
+    <div class="row"><div><div class="t">Label font</div><div class="d">Typeface for the Chrono / V1 / Graph labels</div></div>
+      <div class="ctl"><select id="label_font">
+        <option value="0">Vollazee</option>
+        <option value="1">Gothic</option>
+        <option value="2">Bitham</option>
+        <option value="3">Roboto Condensed</option>
+        <option value="4">Leco (capitals)</option>
+      </select></div>
+    </div>
     <div class="row"><div><div class="t">Next</div><div class="d">Label below the bottom-right arrow</div></div>
       <div class="ctl"><input type="text" id="label_next" maxlength="8" spellcheck="false" autocomplete="off"></div>
     </div>
@@ -337,7 +346,7 @@ var DEFAULTS = {
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
   branding_mask: 0, battery_hide: 0, battery_icon_only: 0, seconds: 0, sleep_readout: 1,
   date_format: 1,
-  label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT',
+  label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT', label_font: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
   switchset: 0, switch_start: 47, switch_end: 15,
   temp_unit: 0,
@@ -512,6 +521,16 @@ function renderPreview() {
   ['s-bi1p','s-bi1b'].forEach(function(id){ document.getElementById(id).style.display = settings.battery_hide ? 'none' : ''; });
   document.getElementById('s-bi1b').style.display = battVisible ? '' : 'none';
   ['s-steps','s-t2'].forEach(function(id){ document.getElementById(id).style.display = settings.health ? '' : 'none'; });
+  // The section labels use the picked typeface. Pebble's system faces cannot be
+  // served here, so the preview stands in with the closest CSS family of a
+  // similar width; only Vollazee is the real thing.
+  var LABEL_FAMILIES = ['Vollazee', 'Gothic', 'serif', "'Roboto Condensed'", 'monospace'];
+  var fam = LABEL_FAMILIES[settings.label_font] || 'Vollazee';
+  document.querySelectorAll('.seclbl').forEach(function (el) {
+    el.style.fontFamily = fam + ", ui-monospace, monospace";
+    el.style.fontSize = (settings.label_font === 0 ? 11 : 13) + 'px';
+  });
+
   // Seconds take the right of the weather row, as on the face.
   document.getElementById('s-secs').style.display = settings.seconds ? '' : 'none';
   // Weather row: the phone supplies the numbers and the condition, so the
@@ -580,6 +599,11 @@ function hydrate() {
     el.value = settings[key] || '';
     el.oninput = function () { settings[key] = this.value; renderLabels(); };
   });
+  var lf = document.getElementById('label_font');
+  lf.value = String(settings.label_font);
+  if (lf.value !== String(settings.label_font)) { lf.value = '0'; }
+  lf.onchange = function () { settings.label_font = parseInt(this.value, 10); renderPreview(); };
+
   var themeSel = document.getElementById('theme');
   themeSel.onchange = function () {
     var colors = themeByName(this.value);

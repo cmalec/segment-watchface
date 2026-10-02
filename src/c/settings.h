@@ -69,6 +69,8 @@ typedef struct Settings {
   // 0 = row 1 always shows steps. For people who don't wear the watch to
   // sleep, where last night's total (or a bare "0M" after midnight) is noise.
   uint8_t SleepReadout;
+  // Typeface for the bottom strip's section labels; a LabelFont value.
+  uint8_t LabelFont;
 } __attribute__((__packed__)) Settings;
 
 extern Settings global_settings;
@@ -88,6 +90,18 @@ typedef void (*SettingsChangeCallback)();
 #define BATTERY_HIDE_KEY   MESSAGE_KEY_battery_hide
 #define SECONDS_KEY        MESSAGE_KEY_seconds
 #define SLEEP_READOUT_KEY  MESSAGE_KEY_sleep_readout
+#define LABEL_FONT_KEY     MESSAGE_KEY_label_font
+
+// Typeface for the three bottom section labels. The value is the wire value, so
+// the settings page's option order and this list must stay in step.
+typedef enum LabelFont {
+  LABEL_FONT_VOLLAZEE = 0,   // the bundled face the labels are cut for
+  LABEL_FONT_GOTHIC,
+  LABEL_FONT_BITHAM,
+  LABEL_FONT_ROBOTO_CONDENSED,
+  LABEL_FONT_LECO,
+  LABEL_FONT_COUNT
+} LabelFont;
 #define POWERSAVE_KEY      MESSAGE_KEY_powersave
 #define PS_START_KEY       MESSAGE_KEY_ps_start
 #define PS_END_KEY         MESSAGE_KEY_ps_end

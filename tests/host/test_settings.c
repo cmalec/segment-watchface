@@ -161,6 +161,17 @@ static void test_sleep_readout_wire_contract(void) {
   ASSERT_EQ(global_settings.SleepReadout, 1, "turning it back on lands");
 }
 
+static void test_label_font_wire_contract(void) {
+  settings_default_values();
+  ASSERT_EQ(global_settings.LabelFont, LABEL_FONT_VOLLAZEE, "labels default to the bundled face");
+
+  send_uint(MESSAGE_KEY_label_font, LABEL_FONT_ROBOTO_CONDENSED);
+  ASSERT_EQ(global_settings.LabelFont, LABEL_FONT_ROBOTO_CONDENSED, "a system face lands");
+
+  send_uint(MESSAGE_KEY_label_font, LABEL_FONT_COUNT + 7);
+  ASSERT_EQ(global_settings.LabelFont, LABEL_FONT_VOLLAZEE, "an unknown face falls back");
+}
+
 static void test_weather_wire_contract(void) {
   seen_now = seen_hi = seen_lo = INT8_MIN;
   seen_cond = 0;
@@ -248,6 +259,7 @@ int main(void) {
   RUN(test_button_label_wire_contract);
   RUN(test_weather_wire_contract);
   RUN(test_sleep_readout_wire_contract);
+  RUN(test_label_font_wire_contract);
   RUN(test_blob_migration_from_older_layout);
   RUN(test_blob_migration_ignores_newer_layout);
   RUN(test_blob_migration_of_current_and_empty_blobs);

@@ -52,12 +52,55 @@ static void decorations_apply_labels(void) {
   text_layer_set_text(button_next_layer, global_settings.LabelNext);
 }
 
+/*
+ * Typeface for the bottom section labels. Vollazee (bundled, cut for these ten
+ * glyphs) unless the user picked a system face; the system list offers one cut
+ * per family, each the smallest that carries letters and fits the 22px strip.
+ */
+// Offsets that put each face's ink in the same place in the strip; measured on
+// the emulator for every option. Vollazee and Gothic already sit right.
+static const int8_t label_font_dy[LABEL_FONT_COUNT] = {
+  [LABEL_FONT_VOLLAZEE] = 0,
+  [LABEL_FONT_GOTHIC] = 0,
+  [LABEL_FONT_BITHAM] = -1,
+  [LABEL_FONT_ROBOTO_CONDENSED] = -3,
+  [LABEL_FONT_LECO] = -2,
+};
+
+static GFont decoration_label_font(void) {
+  switch (global_settings.LabelFont) {
+    case LABEL_FONT_GOTHIC:           return fonts_get_system_font(FONT_KEY_GOTHIC_14);
+    case LABEL_FONT_BITHAM:           return fonts_get_system_font(FONT_KEY_BITHAM_18_LIGHT_SUBSET);
+    case LABEL_FONT_ROBOTO_CONDENSED: return fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21);
+    case LABEL_FONT_LECO:             return fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS);
+    case LABEL_FONT_VOLLAZEE:
+    default:                          return font_vollazee;
+  }
+}
+
 void decorations_settings_callback() {
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "decorations_settings_callback()");
 
   text_layer_set_text_color(weather_text_layer, color_helper(colors[c_t2], global_settings.Invert));
   weather_icon_apply();
+
+  // The label typeface can change; the boxes stay the section width and the
+  // text centres in them either way, so a bigger face simply fills more of it.
+  GFont label_font = decoration_label_font();
+  text_layer_set_font(chrono_layer, label_font);
+  text_layer_set_font(v1_layer, label_font);
+  text_layer_set_font(graph_layer, label_font);
+
+  // Nudge the boxes for the face in use (see label_font_dy).
+  int8_t dy = label_font_dy[global_settings.LabelFont];
+  GRect chrono = DECORATIONS_LABEL_CHRONO, v1 = DECORATIONS_LABEL_V1, graph = DECORATIONS_LABEL_GRAPH;
+  chrono.origin.y += dy;
+  v1.origin.y += dy;
+  graph.origin.y += dy;
+  layer_set_frame(text_layer_get_layer(chrono_layer), chrono);
+  layer_set_frame(text_layer_get_layer(v1_layer), v1);
+  layer_set_frame(text_layer_get_layer(graph_layer), graph);
 
   text_layer_set_text_color(chrono_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(v1_layer, color_helper(colors[c_d7], global_settings.Invert));

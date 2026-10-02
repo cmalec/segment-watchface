@@ -151,6 +151,13 @@ void settings_process_tuple(Tuple *new_tuple) {
   else if (key == SLEEP_READOUT_KEY) {
     global_settings.SleepReadout = new_tuple->value->uint8;
   }
+  else if (key == LABEL_FONT_KEY) {
+    uint8_t font = new_tuple->value->uint8;
+    if (font >= LABEL_FONT_COUNT) {
+      font = LABEL_FONT_VOLLAZEE;   // unknown choice: the face's own
+    }
+    global_settings.LabelFont = font;
+  }
   else if (key == POWERSAVE_KEY) {
     global_settings.PowerSave = new_tuple->value->uint8;
   }
@@ -301,6 +308,8 @@ void settings_default_values() {
   // HEALTH_STEP_MIN. Turning it off (for people who don't wear the watch to
   // sleep) makes row 1 show steps all day.
   global_settings.SleepReadout = 1;
+  // Vollazee by default: the face it was designed around.
+  global_settings.LabelFont = LABEL_FONT_VOLLAZEE;
   global_settings.PowerSave = 0;
   global_settings.PS_Start = 47;   //23:00
   global_settings.PS_End = 15;     //07:00
