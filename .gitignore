@@ -9,3 +9,6 @@ __pycache__
 .lock-waf*
 /.idea/
 tests/host/build/
+
+# emulator capture scratch (pebble-appstore skill)
+shots/

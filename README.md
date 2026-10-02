@@ -58,6 +58,12 @@ Output: `build/segment-watchface.pbw`
 This repo vendors the official **[pebble-watchface agent skill](https://github.com/coredevices/pebble-watchface-agent-skill)** from Core Devices under `.agent/skills/pebble-watchface/` (SKILL.md + API references + project templates + helper scripts for icons/previews/validation). AI coding agents (Claude Code, Hermes, etc.) can load it to follow the same build → QEMU → screenshot-verify workflow used to develop this watchface, including the QEMU hygiene rules (start `pebble logs` before install,
 `pebble kill && pebble wipe` on stale emulator state) and the visual verification checklist. Only the skill directory is vendored — no samples/tutorials from the upstream repo.
 
+Also in `.agent/skills/`: **`pebble-appstore`** (copied from the `pl8s` repo) — the
+release workflow for <https://dev-portal.rebble.io/>: the release build, the
+144x144 and 48x48 icons, per-platform screenshots at the appstore's sizes, the
+720x320 banner, the listing copy and the pre-flight checklist, with scripts for
+asset rendering, emulator capture and auditing an asset tree.
+
 ### Test on the emulator
 
 ```sh
@@ -130,8 +136,9 @@ It configures: the colour theme (the 91 Dub presets in `server/themes.json`), he
 │   └── images/           # Branding, menu icon PNGs
 ├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot
 │                         #   diffing) and verify_weather_glyphs.py (icon glyphs)
-├── .agent/skills/        # Agent skills: the vendored pebble-watchface set plus
-│                         #   weather-icons (this repo's weather-row font)
+├── .agent/skills/        # Agent skills: the vendored pebble-watchface set,
+│                         #   pebble-appstore (release workflow) and weather-icons
+│                         #   (this repo's weather-row font)
 └── server/               # The settings web page (index.15.html; the version in the
                           #   name busts the phone browser's cache — bump it on edits)
                           #   and themes.json, the 91 Dub colour presets the page's
