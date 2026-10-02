@@ -49,6 +49,14 @@ static void test_health_rows_stack_without_overlap(void) {
               "heart rate row clears the clock's ink");
   ASSERT_TRUE(HEALTH_BPM_TEXT.origin.y + HEALTH_BPM_TEXT.size.h <= HEALTH_BPM_ROW.size.h,
               "bpm text fits its row");
+  // Three digits must fit, and the box must still end clear of the longest
+  // date form's ink: "SEP-WED-25" is right-aligned in TIMEDIGITS_DATE, 10
+  // Lucida-14 glyphs = 80px, so its ink starts 80px left of the box's right
+  // edge.
+  ASSERT_TRUE(HEALTH_BPM_TEXT.size.w >= 3 * 8, "three bpm digits fit");
+  ASSERT_TRUE(HEALTH_BPM_TEXT.origin.x + HEALTH_BPM_TEXT.size.w <=
+              TIMEDIGITS_DATE.origin.x + TIMEDIGITS_DATE.size.w - 80,
+              "bpm text box clears the longest date");
 }
 
 static void test_steps_text_fits_beside_the_cluster(void) {

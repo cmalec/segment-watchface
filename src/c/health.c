@@ -72,7 +72,7 @@ void health_settings_callback() {
 }
 
 void health_update() {
-  static char str[20], str2[20];
+  static char str2[20];
   if(health_shows_sleep()) {
     //zzz
     int hours = 0, minutes = 0;
@@ -89,8 +89,7 @@ void health_update() {
     layer_set_hidden(health_foot2_layer, true);
   } else {
     //steps
-    format_commas(s_steps, str);
-    snprintf(str2, sizeof(str2), "%s", str);
+    format_commas(s_steps, str2);
 
     layer_set_hidden(health_zee_layer, true);
     layer_set_hidden(health_foot_layer, false);
@@ -99,8 +98,9 @@ void health_update() {
   text_layer_set_text(health_text_layer, str2);
 
   // Heart rate readout. 0 = no sensor reading yet; hide rather than display
-  // a meaningless zero. HEALTH_BPM_TEXT is sized for two digits (≤99 BPM).
-  if(s_bpm > 0 && s_bpm <= 99) {
+  // a meaningless zero. The sensor reads into the 200s under exertion, and
+  // HEALTH_BPM_TEXT holds three digits, so the readout stays up past 99.
+  if(s_bpm > 0 && s_bpm <= 250) {
     static char bpm_str[4];
     snprintf(bpm_str, sizeof(bpm_str), "%d", (int)s_bpm);
     text_layer_set_text(health_bpm_layer, bpm_str);
@@ -231,6 +231,13 @@ void health_deinit() {
 
   gpath_destroy(heel_path_ptr);
   heel_path_ptr = NULL;
+
+  gpath_destroy(zee1_path_ptr);
+  zee1_path_ptr = NULL;
+  gpath_destroy(zee2_path_ptr);
+  zee2_path_ptr = NULL;
+  gpath_destroy(zee3_path_ptr);
+  zee3_path_ptr = NULL;
 
   layer_destroy(health_foot_layer);
   layer_destroy(health_foot2_layer);

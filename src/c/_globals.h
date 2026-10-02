@@ -81,7 +81,10 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 #define HEALTH_TEXT_LAYER GRect(HEALTH_TEXT_X, 0, HEALTH_TEXT_W, 21)
 #define HEALTH_BPM_ROW GRect(HEALTH_LEFT, 77, PANEL_INNER_RIGHT - HEALTH_LEFT, 18)
 #define HEALTH_BPM_ICON GRect(4, 1, 14, 14)   // centred in row 1's icon column
-#define HEALTH_BPM_TEXT GRect(HEALTH_TEXT_X, 0, 20, 18)
+// Three digits (Lucida 14 is 8px per glyph): a working heart rate passes 99.
+// The longest date form ("SEP-WED-25", right-aligned in TIMEDIGITS_DATE) has
+// its ink start around x=112, so this box grows right without reaching it.
+#define HEALTH_BPM_TEXT GRect(HEALTH_TEXT_X, 0, 34, 18)
 #define HEALTH_STEP_MIN 400
 
 // BLUETOOTH (left-most cluster member when shown)
