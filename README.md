@@ -112,7 +112,7 @@ On the watch: press **Up/Down** from the watchface to open the launcher → **Wa
 
 Configurable from the Pebble mobile app (tap the gear on the watchface card in the app). The settings page is hosted on GitHub Pages:
 
-**https://cmalec.github.io/segment-watchface/server/index.12.html**
+**https://cmalec.github.io/segment-watchface/server/index.13.html**
 
 It configures: the colour theme (the 91 Dub presets in `server/themes.json`), health, the sleep readout, seconds, date format, button labels, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
@@ -131,7 +131,7 @@ It configures: the colour theme (the 91 Dub presets in `server/themes.json`), he
 │                         #   diffing) and verify_weather_glyphs.py (icon glyphs)
 ├── .agent/skills/        # Agent skills: the vendored pebble-watchface set plus
 │                         #   weather-icons (this repo's weather-row font)
-└── server/               # The settings web page (index.12.html; the version in the
+└── server/               # The settings web page (index.13.html; the version in the
                           #   name busts the phone browser's cache — bump it on edits)
                           #   and themes.json, the 91 Dub colour presets the page's
                           #   theme picker offers
