@@ -348,9 +348,8 @@ var DEFAULTS = {
   date_format: 1,
   label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT', label_font: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
-  switchset: 0, switch_start: 47, switch_end: 15,
   temp_unit: 0,
-  setcolors: DEFAULT_COLORS, set2colors: DEFAULT_COLORS
+  setcolors: DEFAULT_COLORS
 };
 
 /* GColor8 byte (2 hex chars) <-> css */
@@ -404,6 +403,9 @@ function load() {
   }
   if (!ok) settings = JSON.parse(JSON.stringify(DEFAULTS));
   Object.keys(DEFAULTS).forEach(function(k){ if (settings[k]===undefined) settings[k]=DEFAULTS[k]; });
+  // Drop keys the page (and the watch) no longer know: an old save or the
+  // watch's echoed blob can still carry the removed colour-set switch keys.
+  Object.keys(settings).forEach(function(k){ if (!(k in DEFAULTS)) delete settings[k]; });
   // Palette is fixed now (no editor): show what the watch is actually using.
   parseColors(settings.setcolors || DEFAULT_COLORS, palette);
 }

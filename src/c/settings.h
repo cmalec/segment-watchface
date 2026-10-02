@@ -2,9 +2,8 @@
 #include <pebble.h>
 
 #define SETTINGS_KEY 1336
-#define SETTINGS_VERSION 4   // bump when the Settings struct layout changes
+#define SETTINGS_VERSION 5   // bump when the Settings struct layout changes
 #define COLORSET1_KEY 1341
-#define COLORSET2_KEY 1342
 
 // Date formats offered by the settings page. The enum value is the wire value,
 // so the page's option order and this list must stay in step.
@@ -54,9 +53,10 @@ typedef struct Settings {
   uint8_t PowerSave;
   uint8_t PS_Start;
   uint8_t PS_End;
-  uint8_t SwitchSet; //0 inactive, 1-time, 2-tap
-  uint8_t SwitchStart;
-  uint8_t SwitchEnd;
+  // v5 removed the colour-set switch bytes that sat here (SwitchSet,
+  // SwitchStart, SwitchEnd): the settings page never exposed the feature and
+  // set 2 had no editor, so nothing could reach it. settings_adopt_blob()
+  // skips those bytes when it reads an older blob.
   // Appended fields only: persist reads the blob by size, so older saves
   // without these bytes still load (they just keep the defaults below).
   uint8_t BluetoothShow;
@@ -75,7 +75,6 @@ typedef struct Settings {
 
 extern Settings global_settings;
 extern GColor colors[COLORS_NUM];
-extern int8_t selectedSet;
 
 typedef void (*SettingsChangeCallback)();
 
@@ -105,9 +104,6 @@ typedef enum LabelFont {
 #define POWERSAVE_KEY      MESSAGE_KEY_powersave
 #define PS_START_KEY       MESSAGE_KEY_ps_start
 #define PS_END_KEY         MESSAGE_KEY_ps_end
-#define SWITCHSET_KEY      MESSAGE_KEY_switchset
-#define SWITCH_START_KEY   MESSAGE_KEY_switch_start
-#define SWITCH_END_KEY     MESSAGE_KEY_switch_end
 #define HEALTH_KEY         MESSAGE_KEY_health
 #define WTEMP_REQ_KEY      MESSAGE_KEY_wtemp_req
 #define WTEMP_HI_KEY       MESSAGE_KEY_wtemp_hi
@@ -120,10 +116,9 @@ typedef enum LabelFont {
 #define WTEMP_NOW_KEY      MESSAGE_KEY_wtemp_now
 #define WCOND_KEY          MESSAGE_KEY_wcond
 
-// Color-set payloads ride the messageKey values too (legacy hardcoded keys
-// 200/202 predated the SDK-generated 10000+ range and matched nothing).
+// The colour-set payload rides its messageKey value (a legacy hardcoded key
+// predated the SDK-generated 10000+ range and matched nothing).
 #define SET_KEY  MESSAGE_KEY_setcolors
-#define SET2_KEY MESSAGE_KEY_set2colors
 
 
 // Inbound AppMessage handler (one tuple at a time). Exposed so the host tests
@@ -145,9 +140,7 @@ extern bool appStarted;
 extern bool powerSaveEngaged;
 
 bool setting_is_power_save(int8_t h, int8_t m);
-bool setting_is_set2(int8_t h, int8_t m);
 void update_settings();
-void timed_colorset(int8_t h, int8_t m);
 void settings_register_callback(SettingsChangeCallback callback, SettingsCallback callbackIdentity);
 void settings_unregister_callback(SettingsCallback callbackIdentity);
 void settings_process_tuple(Tuple *new_tuple);
@@ -155,7 +148,6 @@ void settings_inbox(DictionaryIterator *iter, void *context);
 //Settings settings_get();
 void settings_default_values();
 void settings_load_colorSet1();
-void settings_load_colorSet2();
 void settings_save(void *data);
 void settings_init();
 void settings_deinit();

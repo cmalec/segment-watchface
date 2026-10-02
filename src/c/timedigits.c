@@ -193,7 +193,6 @@ void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     text_layer_set_text(t_layer[t_dig3], digit3);
     text_layer_set_text(t_layer[t_dig4], digit4);
 
-    timed_colorset(tick_time->tm_hour,tick_time->tm_min);
     decorations_weather_icon_tick();
 
     if (global_settings.PowerSave==1) {

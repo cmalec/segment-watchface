@@ -1,5 +1,6 @@
-/* Unit tests for src/c/settings.c range logic (set2 window, power-save window).
- * Host build. Pulls in the real settings.c and stubs its UI/weather deps. */
+/* Unit tests for src/c/settings.c range logic (power-save window) and the
+ * settings wire/persist contracts. Host build. Pulls in the real settings.c
+ * and stubs its UI/weather deps. */
 #include "pebble.h"
 #include "test_util.h"
 
@@ -12,8 +13,6 @@ void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
 void battery_set_phone_percent(uint8_t pct) { (void)pct; }
 void weather_request_cancel(void) {}
 void weather_share_unit(void) {}
-void accel_tap_service_subscribe(void *h) { (void)h; }
-void accel_tap_service_unsubscribe(void) {}
 AppTimer *app_timer_register(uint32_t ms, AppTimerCallback cb, void *data) { (void)ms; (void)cb; (void)data; return NULL; }
 bool app_timer_cancel(AppTimer *t) { (void)t; return true; }
 
@@ -21,50 +20,15 @@ bool app_timer_cancel(AppTimer *t) { (void)t; return true; }
 #include "../../src/c/settings.h"
 
 /* functions under test (settings.h) */
-bool setting_is_set2(int8_t h, int8_t m);
 bool setting_is_power_save(int8_t h, int8_t m);
 void settings_default_values(void);
 
 /* helpers to drive the schedule window. Window = [start,end) in half-hour
  * indices 0..47. Non-wrapping: start<end. Wrapping: start>end. */
-static void set2_window(int start, int end) {
-  global_settings.SwitchStart = start;
-  global_settings.SwitchEnd = end;
-}
 static void ps_window(int start, int end) {
   global_settings.PowerSave = 1;
   global_settings.PS_Start = start;
   global_settings.PS_End = end;
-}
-
-static void test_set2_nonwrapping(void) {
-  // window 06:00-12:00 -> half-hour slots [13,24) i.e. 06:00..11:59 (end slot exclusive)
-  set2_window(13, 24);
-  ASSERT_TRUE(!setting_is_set2(5, 0),  "05:00 -> slot 11, outside");
-  ASSERT_TRUE(!setting_is_set2(5, 59), "05:59 -> slot 12, outside");
-  ASSERT_TRUE( setting_is_set2(6, 0),  "06:00 -> slot 13, inside (start)");
-  ASSERT_TRUE(!setting_is_set2(11, 59),"11:59 -> slot 24 = end, outside");
-  ASSERT_TRUE(!setting_is_set2(12, 0), "12:00 -> slot 25, outside");
-}
-
-static void test_set2_wrapping_overnight(void) {
-  // window 23:00-07:00 -> indices 47..15 (wraps midnight)
-  set2_window(47, 15);
-  ASSERT_TRUE( setting_is_set2(23, 0),  "23:00 inside");
-  ASSERT_TRUE( setting_is_set2(23, 59), "23:59 inside");
-  ASSERT_TRUE( setting_is_set2(0, 0),   "00:00 inside (after midnight)");
-  ASSERT_TRUE( setting_is_set2(6, 59),  "06:59 inside");
-  ASSERT_TRUE(!setting_is_set2(7, 0),   "07:00 outside (end)");
-  ASSERT_TRUE(!setting_is_set2(12, 0),  "12:00 outside");
-}
-
-static void test_set2_half_hour_resolution(void) {
-  // minute >=30 bumps to the next slot: tested = h*2+1, +1 when m>=30
-  set2_window(13, 24);
-  ASSERT_TRUE(!setting_is_set2(5, 29), "05:29 -> slot 11, outside");
-  ASSERT_TRUE(!setting_is_set2(5, 30), "05:30 -> slot 12, outside");
-  ASSERT_TRUE( setting_is_set2(6, 30), "06:30 -> slot 14, inside");
-  ASSERT_TRUE(!setting_is_set2(11, 30),"11:30 -> slot 24 = end, outside");
 }
 
 static void test_powersave_nonwrapping(void) {
@@ -89,13 +53,25 @@ static void test_powersave_disabled(void) {
   ASSERT_TRUE(!setting_is_power_save(23, 0), "disabled -> never in window");
 }
 
-/* The layout as it was before DateFmt was appended: an older blob's prefix. */
-static struct __attribute__((__packed__)) OldSettings {
+/* The v3 layout, before DateFmt was appended: an older blob's prefix, with
+ * the colour-set switch bytes v5 removed still in the middle. */
+static struct __attribute__((__packed__)) V3Settings {
   uint8_t version, Health, Blink, Invert, BluetoothVibe, HourlyVibe,
           BrandingMask, BatteryHide, Seconds, PowerSave, PS_Start, PS_End,
           SwitchSet, SwitchStart, SwitchEnd, BluetoothShow, BatteryIconOnly,
           TempUnit;
-} old_blob;
+} v3_blob;
+
+/* The v4 layout: the current struct plus the removed switch bytes, and without
+ * LabelFont (appended after v4). */
+static struct __attribute__((__packed__)) V4Settings {
+  uint8_t version, Health, Blink, Invert, BluetoothVibe, HourlyVibe,
+          BrandingMask, BatteryHide, Seconds, PowerSave, PS_Start, PS_End,
+          SwitchSet, SwitchStart, SwitchEnd, BluetoothShow, BatteryIconOnly,
+          TempUnit, DateFmt;
+  char LabelBack[LABEL_MAX + 1], LabelPrev[LABEL_MAX + 1], LabelNext[LABEL_MAX + 1];
+  uint8_t SleepReadout;
+} v4_blob;
 
 /* Drive one tuple through settings_process_tuple, as the app message loop does.
  * Tuple carries a pointer to the value union; the mock mirrors the SDK's shape
@@ -195,16 +171,17 @@ static void test_weather_wire_contract(void) {
 }
 
 static void test_blob_migration_from_older_layout(void) {
-  memset(&old_blob, 0, sizeof(old_blob));
-  old_blob.version = SETTINGS_VERSION - 1;
-  old_blob.Health = 0;          // user turned health off
-  old_blob.Seconds = 1;         // ...and seconds on
-  old_blob.BatteryIconOnly = 1;
-  old_blob.TempUnit = 1;
-  old_blob.PS_Start = 30;
+  memset(&v3_blob, 0, sizeof(v3_blob));
+  v3_blob.version = 3;
+  v3_blob.Health = 0;          // user turned health off
+  v3_blob.Seconds = 1;         // ...and seconds on
+  v3_blob.SwitchSet = 99;      // removed bytes must not land anywhere
+  v3_blob.BatteryIconOnly = 1;
+  v3_blob.TempUnit = 1;
+  v3_blob.PS_Start = 30;
 
   settings_default_values();
-  settings_adopt_blob(&old_blob, sizeof(old_blob));
+  settings_adopt_blob(&v3_blob, sizeof(v3_blob));
 
   ASSERT_EQ(global_settings.Health, 0, "older blob: health kept");
   ASSERT_EQ(global_settings.Seconds, 1, "older blob: seconds kept");
@@ -216,6 +193,35 @@ static void test_blob_migration_from_older_layout(void) {
   // the missing byte leaves the default in place.
   ASSERT_EQ(global_settings.SleepReadout, 1, "older blob: sleep readout default stands");
   ASSERT_EQ(global_settings.version, SETTINGS_VERSION, "blob adopted as current");
+}
+
+static void test_blob_migration_skips_the_removed_switch_bytes(void) {
+  memset(&v4_blob, 0, sizeof(v4_blob));
+  v4_blob.version = 4;
+  v4_blob.SwitchSet = 99;      // values the v5 layout has no fields for
+  v4_blob.SwitchStart = 88;
+  v4_blob.SwitchEnd = 77;
+  v4_blob.Health = 0;
+  v4_blob.BluetoothShow = 1;   // sits right after the removed bytes
+  v4_blob.BatteryIconOnly = 1;
+  v4_blob.TempUnit = 1;
+  v4_blob.DateFmt = DATE_FMT_WEEKDAY_DD;
+  snprintf(v4_blob.LabelBack, sizeof(v4_blob.LabelBack), "MENU");
+  v4_blob.SleepReadout = 0;
+
+  settings_default_values();
+  settings_adopt_blob(&v4_blob, sizeof(v4_blob));
+
+  ASSERT_EQ(global_settings.Health, 0, "v4 blob: health kept");
+  ASSERT_EQ(global_settings.BluetoothShow, 1, "v4 blob: field after the hole kept");
+  ASSERT_EQ(global_settings.BatteryIconOnly, 1, "v4 blob: battery mode kept");
+  ASSERT_EQ(global_settings.TempUnit, 1, "v4 blob: temp unit kept");
+  ASSERT_EQ(global_settings.DateFmt, DATE_FMT_WEEKDAY_DD, "v4 blob: date format kept");
+  ASSERT_STR(global_settings.LabelBack, "MENU", "v4 blob: button label kept");
+  ASSERT_EQ(global_settings.SleepReadout, 0, "v4 blob: sleep readout kept");
+  ASSERT_EQ(global_settings.LabelFont, LABEL_FONT_VOLLAZEE,
+            "field appended after v4 keeps its default");
+  ASSERT_EQ(global_settings.version, SETTINGS_VERSION, "v4 blob adopted as current");
 }
 
 static void test_blob_migration_ignores_newer_layout(void) {
@@ -249,9 +255,6 @@ static void test_blob_migration_of_current_and_empty_blobs(void) {
 
 int main(void) {
   settings_default_values();  // establish a known baseline
-  RUN(test_set2_nonwrapping);
-  RUN(test_set2_wrapping_overnight);
-  RUN(test_set2_half_hour_resolution);
   RUN(test_powersave_nonwrapping);
   RUN(test_powersave_wrapping);
   RUN(test_powersave_disabled);
@@ -261,6 +264,7 @@ int main(void) {
   RUN(test_sleep_readout_wire_contract);
   RUN(test_label_font_wire_contract);
   RUN(test_blob_migration_from_older_layout);
+  RUN(test_blob_migration_skips_the_removed_switch_bytes);
   RUN(test_blob_migration_ignores_newer_layout);
   RUN(test_blob_migration_of_current_and_empty_blobs);
   TEST_SUMMARY();

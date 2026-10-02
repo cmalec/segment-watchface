@@ -124,17 +124,12 @@ typedef struct { uint8_t charge_percent; bool is_charging; bool is_plugged; } Ba
 #define MESSAGE_KEY_powersave 10011
 #define MESSAGE_KEY_ps_start 10012
 #define MESSAGE_KEY_ps_end 10013
-#define MESSAGE_KEY_switchset 10014
-#define MESSAGE_KEY_switch_start 10015
-#define MESSAGE_KEY_switch_end 10016
 #define MESSAGE_KEY_health 10017
 #define MESSAGE_KEY_wtemp_req 10018
 #define MESSAGE_KEY_wtemp_hi 10019
 #define MESSAGE_KEY_wtemp_lo 10020
 #define MESSAGE_KEY_pbatt_level 10021
 #define MESSAGE_KEY_setcolors 10022
-#define MESSAGE_KEY_set1colors 10023
-#define MESSAGE_KEY_set2colors 10024
 #define MESSAGE_KEY_date_format 10025
 #define MESSAGE_KEY_label_light 10026
 #define MESSAGE_KEY_label_font 10027
