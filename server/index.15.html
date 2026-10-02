@@ -521,7 +521,13 @@ function renderPreview() {
   setS('s-d3','borderColor',c.d3); setS('s-d3','background',c.d4);
   setS('s-d1','background',c.d1); setS('s-d1b','background',c.d2);
   setS('s-d9','color',c.d9);
-  ['s-d7','s-d7b','s-d7c','s-chrono','s-v1','s-graph'].forEach(function(id){ setS(id,'color',c.d7); });
+  ['s-d7','s-d7b','s-d7c','s-chrono','s-graph'].forEach(function(id){ setS(id,'color',c.d7); });
+  // The middle label sits on the WR box fill; mirror decorations.c's fallback
+  // so a theme that paints d7 the same as d4 shows its real result here.
+  var v1ink = c.d7;
+  if (v1ink === c.d4) { v1ink = c.d5; }
+  if (v1ink === c.d4) { v1ink = invertCss(c.d4); }
+  setS('s-v1','color',v1ink);
   // hide branding/battery/bluetooth when configured off
   document.getElementById('s-d9').style.display = settings.branding_mask ? 'none' : '';
   var battVisible = !settings.battery_hide && !settings.battery_icon_only;
