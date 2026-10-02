@@ -183,5 +183,15 @@ typedef enum {UP, DOWN, LEFT, RIGHT} direction_t;
 // (HEALTH_LEFT); the text starts past the icon box, and the narrowest glyphs
 // (moon, cloud) are left-aligned in it, so their ink starts at the column edge.
 #define DECORATIONS_WR_OUTER GRect(71, 206, 58, 22)
+
+// The strip under the bottom rule reads as three black sections, split by the WR
+// box: it holds the section labels in the Vollazee face, one per section. The
+// middle one sits inside the box, which is otherwise decorative. The boxes are
+// the full section width so the text can centre in them; label ink keeps clear of
+// the box outline by a pixel on each side.
+#define DECORATIONS_LABEL_CHRONO GRect(0, 208, 71, 20)
+#define DECORATIONS_LABEL_V1 GRect(DECORATIONS_WR_OUTER.origin.x, DECORATIONS_WR_OUTER.origin.y, \
+                                   DECORATIONS_WR_OUTER.size.w, DECORATIONS_WR_OUTER.size.h)
+#define DECORATIONS_LABEL_GRAPH GRect(129, 208, 71, 20)
 #define DECORATIONS_WEATHER_ICON GRect(10, 159, 24, 22)
 #define DECORATIONS_WEATHER_TEXT GRect(35, 164, 126, 18)

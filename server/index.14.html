@@ -107,6 +107,11 @@
   /* The face's clock font, so the preview's digits are the watch's digits. It
      falls back to the monospace stack if the file cannot be fetched. */
   @font-face {
+    font-family: 'Vollazee';
+    src: url('../resources/fonts/vollazee-font/Vollazee-2vx18.ttf') format('truetype');
+    font-display: swap;
+  }
+  @font-face {
     font-family: 'SegmentClock';
     src: url('../resources/fonts/DS-Digital-Bold.ttf') format('truetype');
     font-display: swap;
@@ -161,6 +166,15 @@
   .sim .wxicon { left: calc(10px * var(--s)); top: calc(159px * var(--s)); width: calc(24px * var(--s)); height: calc(22px * var(--s)); }  /* DECORATIONS_WEATHER_ICON */
   .sim .wxicon svg { position: static; width: 100%; height: 100%; }
   .sim .wx { left: calc(35px * var(--s)); top: calc(164px * var(--s)); font-size: 7px; font-weight: 600; }  /* DECORATIONS_WEATHER_TEXT */
+  /* the three section labels under the bottom rule (DECORATIONS_LABEL_*) */
+  .sim .seclbl {
+    top: calc(208px * var(--s));
+    font-family: 'Vollazee', ui-monospace, monospace;
+    font-size: 11px; text-align: center;
+  }
+  .sim .sl-chrono { left: 0; width: calc(71px * var(--s)); }
+  .sim .sl-v1 { left: calc(71px * var(--s)); width: calc(58px * var(--s)); }
+  .sim .sl-graph { left: calc(129px * var(--s)); width: calc(71px * var(--s)); }
   .sim .wrbox { left: calc(71px * var(--s)); top: calc(206px * var(--s)); width: calc(58px * var(--s)); height: calc(22px * var(--s)); border: 1px solid; border-radius: 2px 2px 5px 5px; }  /* DECORATIONS_WR_OUTER */
   .sim .btnlbl { font-size: 5px; font-weight: 600; letter-spacing: 0.3px; }
   .sim .bl-light { top: calc(29px * var(--s)); left: calc(18px * var(--s)); }      /* DECORATIONS_BUTTON_BACK_LABEL */
@@ -228,6 +242,9 @@
       <div class="wx" id="s-thi">19°(28°/12°)</div>
       <div class="secs" id="s-secs">42</div>
       <div class="wrbox" id="s-d3"></div>
+      <div class="seclbl sl-chrono" id="s-chrono">Chrono</div>
+      <div class="seclbl sl-v1" id="s-v1">V1</div>
+      <div class="seclbl sl-graph" id="s-graph">Graph</div>
     </div></div>
     <div class="note"><b>Clock format</b> — comes from the watch’s own time setting, not from this page. The face follows it and shows no AM/PM marker.</div>
     <div class="row"><div><div class="t">Date format</div><div class="d">Shape of the date on the clock’s second row</div></div>
@@ -488,7 +505,7 @@ function renderPreview() {
   setS('s-d3','borderColor',c.d3); setS('s-d3','background',c.d4);
   setS('s-d1','background',c.d1); setS('s-d1b','background',c.d2);
   setS('s-d9','color',c.d9);
-  ['s-d7','s-d7b','s-d7c'].forEach(function(id){ setS(id,'color',c.d7); });
+  ['s-d7','s-d7b','s-d7c','s-chrono','s-v1','s-graph'].forEach(function(id){ setS(id,'color',c.d7); });
   // hide branding/battery/bluetooth when configured off
   document.getElementById('s-d9').style.display = settings.branding_mask ? 'none' : '';
   var battVisible = !settings.battery_hide && !settings.battery_icon_only;

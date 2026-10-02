@@ -1,6 +1,6 @@
 var mConfig = {};
-var mConfigURL = "https://cmalec.github.io/segment-watchface/server/index.13.html";
-//var mConfigURL = "http://localhost:8080/index.13.html";
+var mConfigURL = "https://cmalec.github.io/segment-watchface/server/index.14.html";
+//var mConfigURL = "http://localhost:8080/index.14.html";
 
 // Weather: Open-Meteo, free, no API key. Day high/low for the phone's
 // location, refreshed hourly. Last values are cached in localStorage with a

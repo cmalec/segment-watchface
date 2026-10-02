@@ -87,6 +87,12 @@
           "type": "png"
         },
         {
+          "characterRegex": "[ChronoV1Graph]",
+          "file": "fonts/vollazee-font/Vollazee-2vx18.ttf",
+          "name": "FONT_VOLLAZEE_16",
+          "type": "font"
+        },
+        {
           "file": "fonts/weather-icons.ttf",
           "name": "WX_ICON_16",
           "type": "font",

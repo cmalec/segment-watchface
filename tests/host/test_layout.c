@@ -111,6 +111,26 @@ static void test_clock_rows_and_the_bottom_row(void) {
   ASSERT_TRUE(icon_bottom <= PANEL_INNER_BOTTOM - 3, "weather icon clears the panel edge");
 }
 
+static void test_bottom_section_labels(void) {
+  // The strip under the bottom rule reads as three black sections split by the WR
+  // box; each carries its own label. The boxes are the full section width so the
+  // text centres, and the middle one is the box itself.
+  GRect chrono = DECORATIONS_LABEL_CHRONO, v1 = DECORATIONS_LABEL_V1, graph = DECORATIONS_LABEL_GRAPH;
+  ASSERT_TRUE(chrono.origin.x == 0, "left label starts at the screen edge");
+  ASSERT_TRUE(chrono.origin.x + chrono.size.w == DECORATIONS_WR_OUTER.origin.x,
+              "left label ends where the WR box starts");
+  ASSERT_TRUE(graph.origin.x == DECORATIONS_WR_OUTER.origin.x + DECORATIONS_WR_OUTER.size.w,
+              "right label starts where the WR box ends");
+  ASSERT_TRUE(graph.origin.x + graph.size.w == SCREEN_WIDTH, "right label ends at the screen edge");
+  ASSERT_TRUE(v1.origin.x == DECORATIONS_WR_OUTER.origin.x && v1.origin.y == DECORATIONS_WR_OUTER.origin.y &&
+              v1.size.w == DECORATIONS_WR_OUTER.size.w && v1.size.h == DECORATIONS_WR_OUTER.size.h,
+              "middle label occupies the WR box");
+  ASSERT_TRUE(chrono.origin.y >= DECORATIONS_LINE_BOTTOM_START.y,
+              "labels start at or below the bottom rule");
+  ASSERT_TRUE(chrono.origin.y + chrono.size.h <= SCREEN_HEIGHT, "left label stays on screen");
+  ASSERT_TRUE(graph.origin.y + graph.size.h <= SCREEN_HEIGHT, "right label stays on screen");
+}
+
 static void test_seconds_pair_is_right_aligned_on_its_row(void) {
   int pair_right = TIMEDIGITS_SECONDS_PAIR_X + TIMEDIGITS_SECONDS_PAIR_STEP
                    + TIMEDIGITS_SECONDS_SMALL_WIDTH;
@@ -183,6 +203,7 @@ int main(void) {
   RUN(test_native_screen_bounds);
   RUN(test_clock_ink_clears_the_panel_outline);
   RUN(test_clock_rows_and_the_bottom_row);
+  RUN(test_bottom_section_labels);
   RUN(test_seconds_pair_is_right_aligned_on_its_row);
   RUN(test_weather_row_shares_the_seconds_row);
   RUN(test_top_strip_clears_the_panel_corner);

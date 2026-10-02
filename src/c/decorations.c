@@ -10,6 +10,8 @@
 
 static Layer *decorations_layer, *wr_outer_layer, *button_back_icon_layer, *button_next_icon_layer, *button_prev_icon_layer;
 static TextLayer *weather_text_layer, *weather_icon_layer, *button_back_layer, *button_next_layer, *button_prev_layer;
+// The bottom strip's three section labels, one per black section (see _globals.h).
+static TextLayer *chrono_layer, *v1_layer, *graph_layer;
 static BitmapLayer *logo_layer;
 static GBitmap *logo_image;
 static int8_t temp_now = INT8_MIN, temp_hi = INT8_MIN, temp_lo = INT8_MIN;
@@ -57,6 +59,9 @@ void decorations_settings_callback() {
   text_layer_set_text_color(weather_text_layer, color_helper(colors[c_t2], global_settings.Invert));
   weather_icon_apply();
 
+  text_layer_set_text_color(chrono_layer, color_helper(colors[c_d7], global_settings.Invert));
+  text_layer_set_text_color(v1_layer, color_helper(colors[c_d7], global_settings.Invert));
+  text_layer_set_text_color(graph_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_back_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_next_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_prev_layer, color_helper(colors[c_d7], global_settings.Invert));
@@ -156,7 +161,25 @@ void decorations_init() {
   layer_set_update_proc(wr_outer_layer, decorations_wr_outer_layer_update_callback);
   layer_add_child(decorations_layer, wr_outer_layer);
 
-  // "CM" label removed per feedback — the WR box stays decorative for now.
+  // "CM" label removed per feedback — the WR box stays decorative for now: what
+  // sits inside it now is the middle section's own label.
+  chrono_layer = text_layer_create_detailed(DECORATIONS_LABEL_CHRONO, GColorClear
+                                                 , color_helper(colors[c_d7], global_settings.Invert),
+                                                 GTextAlignmentCenter, font_vollazee);
+  text_layer_set_text(chrono_layer, "Chrono");
+  layer_add_child(decorations_layer, text_layer_get_layer(chrono_layer));
+
+  v1_layer = text_layer_create_detailed(DECORATIONS_LABEL_V1, GColorClear
+                                                 , color_helper(colors[c_d7], global_settings.Invert),
+                                                 GTextAlignmentCenter, font_vollazee);
+  text_layer_set_text(v1_layer, "V1");
+  layer_add_child(decorations_layer, text_layer_get_layer(v1_layer));
+
+  graph_layer = text_layer_create_detailed(DECORATIONS_LABEL_GRAPH, GColorClear
+                                                 , color_helper(colors[c_d7], global_settings.Invert),
+                                                 GTextAlignmentCenter, font_vollazee);
+  text_layer_set_text(graph_layer, "Graph");
+  layer_add_child(decorations_layer, text_layer_get_layer(graph_layer));
 
   // WEATHER: conditions icon then "now°(high°/low°)", on the seconds' row
   // inside the panel. The corner readouts (was "WATER"/"RESIST") are gone: one
@@ -240,6 +263,9 @@ void decorations_deinit() {
   bitmap_layer_destroy(logo_layer);
 
   layer_remove_from_parent(text_layer_get_layer(weather_text_layer));
+  layer_remove_from_parent(text_layer_get_layer(chrono_layer));
+  layer_remove_from_parent(text_layer_get_layer(v1_layer));
+  layer_remove_from_parent(text_layer_get_layer(graph_layer));
   layer_remove_from_parent(text_layer_get_layer(weather_icon_layer));
   layer_remove_from_parent(text_layer_get_layer(button_back_layer));
   layer_remove_from_parent(text_layer_get_layer(button_next_layer));
@@ -253,6 +279,9 @@ void decorations_deinit() {
 
   text_layer_destroy(weather_text_layer);
   text_layer_destroy(weather_icon_layer);
+  text_layer_destroy(chrono_layer);
+  text_layer_destroy(v1_layer);
+  text_layer_destroy(graph_layer);
   text_layer_destroy(button_back_layer);
   text_layer_destroy(button_next_layer);
   text_layer_destroy(button_prev_layer);

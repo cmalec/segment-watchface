@@ -112,7 +112,7 @@ On the watch: press **Up/Down** from the watchface to open the launcher → **Wa
 
 Configurable from the Pebble mobile app (tap the gear on the watchface card in the app). The settings page is hosted on GitHub Pages:
 
-**https://cmalec.github.io/segment-watchface/server/index.13.html**
+**https://cmalec.github.io/segment-watchface/server/index.14.html**
 
 It configures: the colour theme (the 91 Dub presets in `server/themes.json`), health, the sleep readout, seconds, date format, button labels, blinking colon, invert, bluetooth vibe/icon, hourly vibe, branding, battery display, power-save schedule, °C/°F, and shows a live preview of the face. The clock's 12/24-hour format is not a face setting — it comes from the watch's own time setting, which the face follows (and shows no AM/PM marker for); the page says so rather than offering a toggle. Palette/theme editing is not exposed yet (the watch keeps whatever colours it has). The page source lives in `server/` in this repo; GitHub Pages serves it straight from the repo root.
 
@@ -125,13 +125,14 @@ It configures: the colour theme (the 91 Dub presets in `server/themes.json`), he
 │   ├── c/                # C source (main.c, window.c, timedigits.c, settings.c, ...)
 │   └── pkjs/index.js     # PebbleKit JS (phone side; weather fetch + settings webview)
 ├── resources/
-│   ├── fonts/            # DS-Digital + Lucida Console TTFs, weather-icons.ttf
+│   ├── fonts/            # DS-Digital + Lucida Console TTFs, weather-icons.ttf,
+│   │                     #   vollazee-font/Vollazee-2vx18.ttf (bottom labels)
 │   └── images/           # Branding, menu icon PNGs
 ├── tools/                # Emulator screenshot debug helpers (ASCII dumps, shot
 │                         #   diffing) and verify_weather_glyphs.py (icon glyphs)
 ├── .agent/skills/        # Agent skills: the vendored pebble-watchface set plus
 │                         #   weather-icons (this repo's weather-row font)
-└── server/               # The settings web page (index.13.html; the version in the
+└── server/               # The settings web page (index.14.html; the version in the
                           #   name busts the phone browser's cache — bump it on edits)
                           #   and themes.json, the 91 Dub colour presets the page's
                           #   theme picker offers
@@ -162,6 +163,7 @@ The watchface uses the actual Time 2 coordinate system directly:
 - **Date**: five shapes — numeric (`DD/MM/YY`, `MM/DD/YY`, `YY-MM-DD`) and name-bearing (`WED-25`, `SEP-WED-25`). `format_date()` builds them from `tm` fields with English abbreviations spelled out in the source: the Lucida character set is ASCII, so a locale whose abbreviations carry accents would render blanks, and the rest of the chrome is English.
 - **Weather**: the phone-side JS (`src/pkjs/index.js`) fetches the current temperature, the day's high/low and the WMO condition code from [Open-Meteo](https://open-meteo.com) (free, no API key) using the phone's geolocation, with an IP-based fallback. The watch maps the code to one of ten conditions (`weather_cond_from_wmo()`) and renders `now°(high°/low°)` on the clock's bottom row, left of the seconds. The condition icon is a glyph of the [Weather Icons](https://erikflowers.github.io/weather-icons/) font (`resources/fonts/weather-icons.ttf`, SIL OFL 1.1): `package.json` bakes only the twelve codepoints the face draws (~1.6 KB of font resource), and the glyph is a text layer in the readout's ink colour, so it follows the colour sets and invert like the text beside it. Clear and partly cloudy have sun and moon forms; the face swaps them at 19:00/07:00 (there is no sunrise data on the watch). Two layout rules come from the font and are easy to break silently: the icon's frame must be at least as wide as the widest glyph's advance (a narrower text layer renders an ellipsis instead), and it must be tall enough for the glyphs' ink, which runs past the font's line box. °C/°F is a settings option, converted phone-side so unit flips are instant.
 - **Button labels**: `LIGHT`/`PREV`/`NEXT` are user text, capped at `LABEL_MAX` (8) glyphs and filtered to the characters the Lucida font carries — an empty label leaves just the arrow.
+- **Bottom strip**: below the bottom rule the face reads as three black sections split by the water-resistance box, each with its own label — `Chrono`, `V1` (inside the box) and `Graph` — drawn in the Vollazee face (`resources/fonts/vollazee-font/Vollazee-2vx18.ttf`, 16px, only those ten glyphs are baked). They carry the button-label ink (`c_d7`), so they follow the colour set and invert with the rest of the chrome.
 - Everything else, including the colour sets the watch stores, blink, power saving, and hourly vibration, remains part of the Emery face.
 
 ## Modernization notes
