@@ -51,7 +51,7 @@ function byteToHex(v) { return v.toString(16).toUpperCase().padStart(2, '0'); }
 function watchUnpack(hex) { return parseInt(hex, 16); }
 
 // default palette bytes from settings.c (white/black/orange/red/dukeblue)
-const defaults = { white: 0xFF, black: 0xC0, orange: 0xF4, red: 0xC3, dukeblue: 0xCA, lightgray: 0xEA };
+const defaults = { white: 0xFF, black: 0xC0, orange: 0xF8, red: 0xF0, dukeblue: 0xC2, lightgray: 0xEA };
 for (const [name, byte] of Object.entries(defaults)) {
   eq(watchUnpack(byteToHex(byte)), byte, `palette byte ${name} survives pack->hex->watch`);
 }

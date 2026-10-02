@@ -37,12 +37,17 @@ static void test_hex_pairs_parse_all_values(void) {
 }
 
 static void test_known_palette_bytes(void) {
-  // Defaults: white=0xFF, black=0xC0, orange=0xF4, red=0xC3 (GColor8)
+  // The SDK's GColor8 bytes for settings.c's defaults: white 0xFF, black
+  // 0xC0, orange 0xF8, red 0xF0, duke blue 0xC2.
   char hex[3];
   to_hex(0xFF, hex); ASSERT_EQ(unpack(hex), 0xFF, "white");
   to_hex(0xC0, hex); ASSERT_EQ(unpack(hex), 0xC0, "black");
-  to_hex(0xF4, hex); ASSERT_EQ(unpack(hex), 0xF4, "orange");
-  to_hex(0xC3, hex); ASSERT_EQ(unpack(hex), 0xC3, "red");
+  to_hex(0xF8, hex); ASSERT_EQ(unpack(hex), 0xF8, "orange");
+  to_hex(0xF0, hex); ASSERT_EQ(unpack(hex), 0xF0, "red");
+  to_hex(0xC2, hex); ASSERT_EQ(unpack(hex), 0xC2, "duke blue");
+  ASSERT_EQ(GColorOrange.argb, 0xF8, "mock orange matches the SDK");
+  ASSERT_EQ(GColorRed.argb, 0xF0, "mock red matches the SDK");
+  ASSERT_EQ(GColorDukeBlue.argb, 0xC2, "mock duke blue matches the SDK");
 }
 
 int main(void) {

@@ -29,9 +29,11 @@ typedef GColor8 GColor;
 #define GColorBlack   ((GColor){ .argb = 0b11000000 })
 #define GColorWhite   ((GColor){ .argb = 0b11111111 })
 #define GColorClear   ((GColor){ .argb = 0b00000000 })
-#define GColorOrange  ((GColor){ .argb = 0b11110100 })
-#define GColorRed     ((GColor){ .argb = 0b11000011 })
-#define GColorDukeBlue ((GColor){ .argb = 0b11001010 })
+/* Real SDK GColor8 bytes (the previous mock had Blue 0xC3 as "red",
+ * SunsetOrange 0xF4 as "orange" and 0xCA as "duke blue"). */
+#define GColorOrange  ((GColor){ .argb = 0b11111000 })
+#define GColorRed     ((GColor){ .argb = 0b11110000 })
+#define GColorDukeBlue ((GColor){ .argb = 0b11000010 })
 #define GColorLightGray ((GColor){ .argb = 0b11101010 })
 static inline bool gcolor_equal(GColor a, GColor b) { return a.argb == b.argb; }
 
