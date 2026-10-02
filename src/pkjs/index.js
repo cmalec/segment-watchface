@@ -97,6 +97,12 @@ function loadLocalData() {
 	if (mConfig === null || typeof mConfig !== 'object' || Array.isArray(mConfig)) {
 		mConfig = {};
 	}
+	// The unit lives in the saved config; seed the in-memory copy from it so a
+	// JS restart (phone reboot, app kill) does not send Celsius to a watch
+	// configured for Fahrenheit until the watch echoes its setting back.
+	if (typeof mConfig.temp_unit === 'number') {
+		settings.temp_unit = mConfig.temp_unit;
+	}
 }
 
 function saveLocalData(config) {
