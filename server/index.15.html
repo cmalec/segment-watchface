@@ -448,19 +448,24 @@ document.querySelectorAll('.seg').forEach(function (seg) {
 
 function show(sel, yes) { document.querySelector(sel).classList.toggle('hidden', !yes); }
 
-/* ---- time selects: value = half-hour index 0..47 (matches settings.c) ---- */
+/* ---- time selects: value = the watch's half-hour slot 1..48 (settings.c's
+   tested = h*2+1, +1 when m>=30), so slot v is the boundary at
+   floor((v-1)/2):((v-1)%2 ? 30 : 00). The window is [start, end). ---- */
 function fillTimes() {
   ['#ps_start','#ps_end'].forEach(function (id) {
     var sel = document.querySelector(id);
     if (!sel.options.length) {
-      for (var i = 0; i < 48; i++) {
-        var h = Math.floor(i/2), m = (i%2) ? '30' : '00';
-        sel.appendChild(new Option((h<10?'0':'')+h+':'+m, String(i)));
+      for (var v = 1; v <= 48; v++) {
+        var t = v - 1, h = Math.floor(t/2), m = (t%2) ? '30' : '00';
+        sel.appendChild(new Option((h<10?'0':'')+h+':'+m, String(v)));
       }
     }
     var key = id.slice(1);
+    // Saves written by the old page used 0-based labels; 0 meant 00:00, which
+    // is slot 1 on the watch's scale. Values 1..47 were already watch slots.
+    if (parseInt(settings[key], 10) === 0) { settings[key] = 1; }
     sel.value = String(settings[key]);
-    if (sel.value !== String(settings[key])) { sel.value = '0'; }
+    if (sel.value !== String(settings[key])) { sel.value = '1'; }
     sel.onchange = function () { settings[key] = parseInt(this.value, 10); };
   });
 }
