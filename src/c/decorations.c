@@ -103,7 +103,19 @@ void decorations_settings_callback() {
   layer_set_frame(text_layer_get_layer(graph_layer), graph);
 
   text_layer_set_text_color(chrono_layer, color_helper(colors[c_d7], global_settings.Invert));
-  text_layer_set_text_color(v1_layer, color_helper(colors[c_d7], global_settings.Invert));
+  // The middle label sits inside the WR box, whose fill is d4. Themes that
+  // paint the label ink the same as that fill (48 of the shipped presets)
+  // would draw it invisibly: fall back to d5, the slot the original face used
+  // for in-box letters, then to the inverse of the fill.
+  GColor v1_ink = color_helper(colors[c_d7], global_settings.Invert);
+  GColor v1_fill = color_helper(colors[c_d4], global_settings.Invert);
+  if (gcolor_equal(v1_ink, v1_fill)) {
+    v1_ink = color_helper(colors[c_d5], global_settings.Invert);
+    if (gcolor_equal(v1_ink, v1_fill)) {
+      v1_ink = color_helper(v1_fill, 1);
+    }
+  }
+  text_layer_set_text_color(v1_layer, v1_ink);
   text_layer_set_text_color(graph_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_back_layer, color_helper(colors[c_d7], global_settings.Invert));
   text_layer_set_text_color(button_next_layer, color_helper(colors[c_d7], global_settings.Invert));
