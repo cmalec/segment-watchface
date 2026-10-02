@@ -12,3 +12,6 @@ tests/host/build/
 
 # emulator capture scratch (pebble-appstore skill)
 shots/
+
+# release builds are kept (the portal reads them straight from the repo)
+!releases/*.pbw

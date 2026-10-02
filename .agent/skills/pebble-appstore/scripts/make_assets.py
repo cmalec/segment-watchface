@@ -20,6 +20,7 @@ import glob
 import os
 import subprocess
 import sys
+from xml.sax.saxutils import escape as xml_escape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from emulator import PLATFORMS  # noqa: E402
@@ -63,7 +64,8 @@ def icon_svg():
 '''
 
 
-def banner_svg(platform, screenshot, title, tagline, cues):
+def banner_svg(platform, screenshot, title, tagline, cues, note=None):
+    title, tagline = xml_escape(title), xml_escape(tagline)
     width, height = PLATFORMS[platform]
     scale = 250 / height
     sw, sh = width * scale, height * scale
@@ -92,11 +94,34 @@ def banner_svg(platform, screenshot, title, tagline, cues):
                   f'<clipPath id="screen"><rect x="{bx + BEZEL}" '
                   f'y="{by + BEZEL}" width="{sw}" height="{sh}" rx="28"/></clipPath>')
 
+    # Copy sits in x 52..366. The title's 74px is sized for a short name; the
+    # tagline wraps onto a second line when it would run into the device, and a
+    # note takes the chip row's place when the caller wants prose there instead.
+    tag_lines = [tagline]
+    if len(tagline) > 26:
+        words = tagline.split()
+        half = len(tagline) // 2
+        best, at = None, 0
+        for i in range(1, len(words)):
+            first = " ".join(words[:i])
+            if best is None or abs(len(first) - half) < best:
+                best, at = abs(len(first) - half), i
+        tag_lines = [" ".join(words[:at]), " ".join(words[at:])]
+    tag_svg = "".join(
+        f'<text x="54" y="{168 + i * 28}" font-family="Helvetica, Arial, sans-serif" '
+        f'font-size="24" fill="#aab2bd">{line}</text>'
+        for i, line in enumerate(tag_lines))
+    note_svg = ""
+    if note:
+        note_svg = (f'<text x="52" y="258" font-family="Helvetica, Arial, sans-serif" '
+                    f'font-size="17" fill="#aab2bd">{xml_escape(note)}</text>')
+
     # Chips are sized from their text (Helvetica at 15px is ~7.4px per
     # character) and kept inside the copy column, x 52..366.
     chips, x = [], 52
-    for cue in cues:
+    for cue in ([] if note else cues):
         w = 30 + len(cue) * 7.4
+        cue = xml_escape(cue)
         chips.append(f'<rect x="{x:.0f}" y="236" width="{w:.0f}" height="34" '
                      f'rx="17" fill="#ffffff14" stroke="#ffffff3d"/>'
                      f'<text x="{x + 15:.0f}" y="258" font-size="15" '
@@ -114,8 +139,8 @@ def banner_svg(platform, screenshot, title, tagline, cues):
   <rect width="{BANNER[0]}" height="{BANNER[1]}" fill="url(#bg)"/>
   <text x="52" y="122" font-family="Helvetica, Arial, sans-serif" font-size="74"
         font-weight="bold" fill="#ffffff">{title}</text>
-  <text x="54" y="168" font-family="Helvetica, Arial, sans-serif" font-size="24"
-        fill="#aab2bd">{tagline}</text>
+  {tag_svg}
+  {note_svg}
   {''.join(chips)}
   {shadow}
   {body}
@@ -143,7 +168,10 @@ def main():
     parser.add_argument("--out", default="appstore")
     parser.add_argument("--title", required=True)
     parser.add_argument("--tagline", required=True)
-    parser.add_argument("--cue", action="append", default=[])
+    parser.add_argument("--cue", action="append", default=[],
+                        help="chip in the footer row (ignored when --note is given)")
+    parser.add_argument("--note", default=None,
+                        help="line of prose for the footer row, instead of chips")
     parser.add_argument("--platforms", default=",".join(PLATFORMS))
     args = parser.parse_args()
 
@@ -155,7 +183,7 @@ def main():
         if shot is None:
             missing.append(platform)
             continue
-        render(banner_svg(platform, shot, args.title, args.tagline, args.cue),
+        render(banner_svg(platform, shot, args.title, args.tagline, args.cue, args.note),
                os.path.join(args.out, "banner", f"{platform}.png"), *BANNER)
     if missing:
         print(f"no screenshot for: {', '.join(missing)}", file=sys.stderr)

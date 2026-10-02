@@ -1,8 +1,11 @@
 {
   "name": "segment-watchface",
   "author": "cmalec",
-  "version": "0.0.1",
-  "keywords": ["pebble-app", "pebble-watchface"],
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app",
+    "pebble-watchface"
+  ],
   "private": true,
   "dependencies": {},
   "pebble": {
@@ -10,7 +13,9 @@
     "uuid": "c3c75c5a-f27b-4686-920f-0bd79ef71277",
     "sdkVersion": "3",
     "enableMultiJS": true,
-    "targetPlatforms": ["emery"],
+    "targetPlatforms": [
+      "emery"
+    ],
     "capabilities": [
       "configurable",
       "health",
@@ -60,21 +65,27 @@
           "file": "fonts/DS-Digital-Bold.ttf",
           "name": "FONT_DIGITALE_99",
           "type": "font",
-          "targetPlatforms": ["emery"]
+          "targetPlatforms": [
+            "emery"
+          ]
         },
         {
           "characterRegex": "[:0-9]",
           "file": "fonts/DS-Digital-Bold.ttf",
           "name": "FONT_DIGITALE_26",
           "type": "font",
-          "targetPlatforms": ["emery"]
+          "targetPlatforms": [
+            "emery"
+          ]
         },
         {
-          "characterRegex": "[0-9 A-Za-z°%.:, --/' ~]",
+          "characterRegex": "[0-9 A-Za-z\u00b0%.:, --/' ~]",
           "file": "fonts/lucon.ttf",
           "name": "FONT_LUCIDIA_14",
           "type": "font",
-          "targetPlatforms": ["emery"]
+          "targetPlatforms": [
+            "emery"
+          ]
         },
         {
           "file": "images/logo_pebble.png",
