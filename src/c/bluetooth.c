@@ -20,8 +20,9 @@ static void bluetooth_badge_sync(void);
 /*
 bl1 Bluetooth Circle Connected
 bl2 Bluetooth Icon Connected
-bl3 Bluetooth Circle Disconnected
-bl4 Bluetooth Icon Disconnected
+bl3/bl4 Disconnected circle/icon: still part of the palette wire contract
+        (themes and the settings page carry all 25 slots), but the badge is
+        hidden while disconnected, so nothing draws them.
 */
 void bluetooth_settings_callback() {
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "bluetooth_settings_callback()");
@@ -30,20 +31,14 @@ void bluetooth_settings_callback() {
 }
 
 void bluetooth_circle_layer_update_callback(Layer *my_layer, GContext* ctx) {
-  GColor color = color_helper(colors[c_bl1], global_settings.Invert);
-  if(!IsBluetoothConnected) {
-    color = color_helper(colors[c_bl3], global_settings.Invert);
-  }
-  graphics_context_set_fill_color(ctx, color);
+  // The badge only ever draws while connected (see bluetooth_badge_sync), so
+  // the connected slot is the only one that can be on screen.
+  graphics_context_set_fill_color(ctx, color_helper(colors[c_bl1], global_settings.Invert));
   graphics_fill_circle(ctx, GPoint(7, 7), 7);
 }
 
 void bluetooth_layer_update_callback(Layer *my_layer, GContext* ctx) {
-  GColor color = color_helper(colors[c_bl2], global_settings.Invert);
-  if(!IsBluetoothConnected) {
-    color = color_helper(colors[c_bl4], global_settings.Invert);
-  }
-  graphics_context_set_stroke_color(ctx, color);
+  graphics_context_set_stroke_color(ctx, color_helper(colors[c_bl2], global_settings.Invert));
   gpath_draw_outline(ctx, bt_path_ptr);
 }
 
