@@ -9,7 +9,10 @@ var mConfigURL = "https://cmalec.github.io/segment-watchface/server/index.15.htm
 var WEATHER_REFRESH_MS = 60 * 60 * 1000;
 var STALE_MS = 3 * 60 * 60 * 1000;
 var FETCH_RETRY_MIN_MS = 5 * 60 * 1000; // don't hammer geolocation/API on watch re-requests
+var FETCH_RETRY_AFTER_MS = 60 * 1000;   // one quick retry after a failed fetch
 var weatherTimer = null;
+var fetchRetryTimer = null;
+var fetchRetryUsed = false;             // one automatic retry per fetch episode
 var lastWeather = null;
 var lastSentHi = null;
 var lastSentLo = null;
@@ -175,8 +178,8 @@ function fetchWeather() {
       if (err.code === err.PERMISSION_DENIED) {
         // Stop hammering a denied permission: switch the hourly timer over
         // to the IP fallback (coarse but works without any permission).
-        if (weatherTimer) { clearInterval(weatherTimer); }
-        weatherTimer = setInterval(fetchWeatherIp, WEATHER_REFRESH_MS);
+        clearInterval(weatherTimer);
+        weatherTimer = setInterval(refreshWeatherIp, WEATHER_REFRESH_MS);
         // One immediate IP-based attempt now.
         fetchWeatherIp();
       }
@@ -200,21 +203,24 @@ function fetchWeatherIp() {
     fetchInFlight = false;
     if (req.status !== 200) {
       console.log('weather: IP lookup HTTP ' + req.status);
+      scheduleFetchRetry();
       return;
     }
     try {
       var loc = JSON.parse(req.responseText);
       if (typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') {
         console.log('weather: IP lookup returned no coordinates');
+        scheduleFetchRetry();
         return;
       }
       fetchWeatherFor(loc.latitude.toFixed(4), loc.longitude.toFixed(4));
     } catch (err) {
       console.log('weather: IP lookup parse error ' + err);
+      scheduleFetchRetry();
     }
   };
-  req.ontimeout = function() { fetchInFlight = false; console.log('weather: IP lookup timeout'); };
-  req.onerror = function() { fetchInFlight = false; console.log('weather: IP lookup error'); };
+  req.ontimeout = function() { fetchInFlight = false; console.log('weather: IP lookup timeout'); scheduleFetchRetry(); };
+  req.onerror = function() { fetchInFlight = false; console.log('weather: IP lookup error'); scheduleFetchRetry(); };
   req.open('GET', 'https://ipapi.co/json/', true);
   req.send();
 }
@@ -237,6 +243,7 @@ function fetchWeatherFor(lat, lon) {
     fetchInFlight = false;
     if (req.status !== 200) {
       console.log('weather: HTTP ' + req.status);
+      scheduleFetchRetry();
       return;
     }
     try {
@@ -247,6 +254,7 @@ function fetchWeatherFor(lat, lon) {
       if (typeof hiRaw !== 'number' || !isFinite(hiRaw) ||
           typeof loRaw !== 'number' || !isFinite(loRaw)) {
         console.log('weather: unexpected response shape');
+        scheduleFetchRetry();
         return;
       }
       // Current temperature and WMO condition code drive the face's weather
@@ -262,13 +270,15 @@ function fetchWeatherFor(lat, lon) {
         fetchedAt: Date.now()
       };
       localStorage.setItem('weather', JSON.stringify(lastWeather));
+      fetchSucceeded();
       sendWeatherToWatch();
     } catch (err) {
       console.log('weather: parse error ' + err);
+      scheduleFetchRetry();
     }
   };
-  req.ontimeout = function() { fetchInFlight = false; console.log('weather: request timeout'); };
-  req.onerror = function() { fetchInFlight = false; console.log('weather: request error'); };
+  req.ontimeout = function() { fetchInFlight = false; console.log('weather: request timeout'); scheduleFetchRetry(); };
+  req.onerror = function() { fetchInFlight = false; console.log('weather: request error'); scheduleFetchRetry(); };
   req.open('GET', url, true);
   req.send();
 }
@@ -285,7 +295,7 @@ function handleWeatherRequest() {
   }
   else if (Date.now() - lastFetchAttemptAt > FETCH_RETRY_MIN_MS) {
     // Stale or no cache: trigger a fresh fetch instead of serving old data.
-    fetchWeather();
+    refreshWeather();
   }
 }
 
@@ -330,9 +340,45 @@ function sendWeatherToWatch(force) {
   );
 }
 
+/*
+ * A failed fetch used to wait for the next hourly timer, while the watch's own
+ * retry loop gives up after ~75s — a single network blip could leave the row
+ * empty for an hour. Retry once, a minute later, per fetch episode; the hourly
+ * timer and an explicit watch request each start a new episode.
+ */
+function scheduleFetchRetry() {
+  if (fetchRetryTimer || fetchRetryUsed) {
+    return;
+  }
+  fetchRetryUsed = true;
+  fetchRetryTimer = setTimeout(function () {
+    fetchRetryTimer = null;
+    fetchWeather();
+  }, FETCH_RETRY_AFTER_MS);
+}
+
+function fetchSucceeded() {
+  fetchRetryUsed = false;
+  if (fetchRetryTimer) {
+    clearTimeout(fetchRetryTimer);
+    fetchRetryTimer = null;
+  }
+}
+
+/* Episode starters: they clear the one-retry budget so a failure in this
+ * attempt may schedule its own quick retry. */
+function refreshWeather() {
+  fetchRetryUsed = false;
+  fetchWeather();
+}
+function refreshWeatherIp() {
+  fetchRetryUsed = false;
+  fetchWeatherIp();
+}
+
 function scheduleWeatherRefresh() {
-  if (weatherTimer) { clearInterval(weatherTimer); }
-  weatherTimer = setInterval(fetchWeather, WEATHER_REFRESH_MS);
+  clearInterval(weatherTimer);
+  weatherTimer = setInterval(refreshWeather, WEATHER_REFRESH_MS);
 }
 
 /*
