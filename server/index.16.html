@@ -211,7 +211,7 @@
 
   <section>
     <h2>Theme</h2>
-    <div class="row stacked"><div><div class="t">Preset</div><div class="d">Colour set from the 91 Dub themes. The preview and the watch use it directly; presets that hide a row (a few paint the health or date ink the same as the panel) show up that way in the preview.</div></div>
+    <div class="row stacked"><div><div class="t">Preset</div><div class="d">Colour set from the 200+ 91 Dub themes. The preview and the watch use it directly; presets that hide a row (a few paint the health or date ink the same as the panel) show up that way in the preview.</div></div>
       <div class="ctl"><select id="theme"></select></div>
     </div>
   </section>
@@ -340,7 +340,7 @@ var ORDER = ['bg1','bg2','bg3','bg4','bi1','bi2','bi3','bi4','bl1','bl2','bl3','
 // per slot, in ORDER above. (The previous string was two slots too long, which
 // shifted every slot past the bluetooth badge — the date, step count and heart
 // rate were painted white on a white panel, i.e. invisible.)
-var DEFAULT_COLORS = 'FFC0FFC0C0F4F0F0C2EAF0FFFFFFFFC0FFFFFFFFFFC0C0FFC0';
+var DEFAULT_COLORS = 'FFC0FFC0C0F8F0F0C2EAF0FFFFFFFFC0FFFFFFFFFFC0C0FFC0';
 var DEFAULTS = {
   health: 1, blink: 1, invert: 0,
   bluetoothvibe: 1, bluetoothshow: 0, hourlyvibe: 1,
@@ -348,9 +348,8 @@ var DEFAULTS = {
   date_format: 1,
   label_light: 'LIGHT', label_prev: 'PREV', label_next: 'NEXT', label_font: 0,
   powersave: 0, ps_start: 47, ps_end: 15,
-  switchset: 0, switch_start: 47, switch_end: 15,
   temp_unit: 0,
-  setcolors: DEFAULT_COLORS, set2colors: DEFAULT_COLORS
+  setcolors: DEFAULT_COLORS
 };
 
 /* GColor8 byte (2 hex chars) <-> css */
@@ -404,6 +403,9 @@ function load() {
   }
   if (!ok) settings = JSON.parse(JSON.stringify(DEFAULTS));
   Object.keys(DEFAULTS).forEach(function(k){ if (settings[k]===undefined) settings[k]=DEFAULTS[k]; });
+  // Drop keys the page (and the watch) no longer know: an old save or the
+  // watch's echoed blob can still carry the removed colour-set switch keys.
+  Object.keys(settings).forEach(function(k){ if (!(k in DEFAULTS)) delete settings[k]; });
   // Palette is fixed now (no editor): show what the watch is actually using.
   parseColors(settings.setcolors || DEFAULT_COLORS, palette);
 }
@@ -446,19 +448,24 @@ document.querySelectorAll('.seg').forEach(function (seg) {
 
 function show(sel, yes) { document.querySelector(sel).classList.toggle('hidden', !yes); }
 
-/* ---- time selects: value = half-hour index 0..47 (matches settings.c) ---- */
+/* ---- time selects: value = the watch's half-hour slot 1..48 (settings.c's
+   tested = h*2+1, +1 when m>=30), so slot v is the boundary at
+   floor((v-1)/2):((v-1)%2 ? 30 : 00). The window is [start, end). ---- */
 function fillTimes() {
   ['#ps_start','#ps_end'].forEach(function (id) {
     var sel = document.querySelector(id);
     if (!sel.options.length) {
-      for (var i = 0; i < 48; i++) {
-        var h = Math.floor(i/2), m = (i%2) ? '30' : '00';
-        sel.appendChild(new Option((h<10?'0':'')+h+':'+m, String(i)));
+      for (var v = 1; v <= 48; v++) {
+        var t = v - 1, h = Math.floor(t/2), m = (t%2) ? '30' : '00';
+        sel.appendChild(new Option((h<10?'0':'')+h+':'+m, String(v)));
       }
     }
     var key = id.slice(1);
+    // Saves written by the old page used 0-based labels; 0 meant 00:00, which
+    // is slot 1 on the watch's scale. Values 1..47 were already watch slots.
+    if (parseInt(settings[key], 10) === 0) { settings[key] = 1; }
     sel.value = String(settings[key]);
-    if (sel.value !== String(settings[key])) { sel.value = '0'; }
+    if (sel.value !== String(settings[key])) { sel.value = '1'; }
     sel.onchange = function () { settings[key] = parseInt(this.value, 10); };
   });
 }
@@ -514,7 +521,13 @@ function renderPreview() {
   setS('s-d3','borderColor',c.d3); setS('s-d3','background',c.d4);
   setS('s-d1','background',c.d1); setS('s-d1b','background',c.d2);
   setS('s-d9','color',c.d9);
-  ['s-d7','s-d7b','s-d7c','s-chrono','s-v1','s-graph'].forEach(function(id){ setS(id,'color',c.d7); });
+  ['s-d7','s-d7b','s-d7c','s-chrono','s-graph'].forEach(function(id){ setS(id,'color',c.d7); });
+  // The middle label sits on the WR box fill; mirror decorations.c's fallback
+  // so a theme that paints d7 the same as d4 shows its real result here.
+  var v1ink = c.d7;
+  if (v1ink === c.d4) { v1ink = c.d5; }
+  if (v1ink === c.d4) { v1ink = invertCss(c.d4); }
+  setS('s-v1','color',v1ink);
   // hide branding/battery/bluetooth when configured off
   document.getElementById('s-d9').style.display = settings.branding_mask ? 'none' : '';
   var battVisible = !settings.battery_hide && !settings.battery_icon_only;

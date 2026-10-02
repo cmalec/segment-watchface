@@ -82,6 +82,6 @@ Everything running is on the watch: no companion app. The watchface uses the hea
 - [x] Release version (1.0.0) — nothing published before it
 - [x] `audit_assets.py appstore --platforms emery` passes
 - [x] Screenshots reviewed by eye — right screen, nothing cropped (rectangular display, no round mask to clear), no blank title
-- [x] Settings page pushed and live at the URL the watch builds (`server/index.15.html` on GitHub Pages — the pkjs points at the same file)
+- [x] Settings page pushed and live at the URL the watch builds (`server/index.16.html` on GitHub Pages — the pkjs points at the same file)
 - [ ] Portal legal agreements read while logging in
 - [ ] Install from the appstore on a real watch once it is public, including the settings gear path (emulators cannot cover the phone-app side)
