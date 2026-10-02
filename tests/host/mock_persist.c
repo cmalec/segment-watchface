@@ -41,5 +41,45 @@ int heap_bytes_free(void) { return 64 * 1024; }
 void app_message_register_inbox_received(void *cb) { (void)cb; }
 void app_message_register_inbox_dropped(void *cb) { (void)cb; }
 int app_message_open(uint32_t inbound, uint32_t outbound) { (void)inbound; (void)outbound; return 0; }
-Tuple *dict_read_first(DictionaryIterator *iter) { (void)iter; return NULL; }
-Tuple *dict_read_next(DictionaryIterator *iter) { (void)iter; return NULL; }
+
+/* ---- AppMessage iterator mock: tests queue tuples and settings_inbox reads
+ * them back. Values are stored inline so the exported Tuple pointers stay
+ * valid while the queue is walked. ---- */
+#define MOCK_ITER_MAX 8
+static struct MockTuple {
+  uint32_t key;
+  union { uint8_t uint8; int8_t int8; uint16_t uint16; int32_t int32; const char *cstring; } value;
+} mock_tuples[MOCK_ITER_MAX];
+static Tuple mock_export[MOCK_ITER_MAX];
+static int mock_iter_len = 0;
+static int mock_iter_pos = 0;
+
+void mock_iter_reset(void) { mock_iter_len = 0; mock_iter_pos = 0; }
+
+static void mock_iter_push(uint32_t key) {
+  if (mock_iter_len >= MOCK_ITER_MAX) return;
+  mock_export[mock_iter_len].key = key;
+  mock_export[mock_iter_len].value = (void *)&mock_tuples[mock_iter_len].value;
+  mock_iter_len++;
+}
+
+void mock_iter_uint(uint32_t key, uint8_t value) {
+  mock_iter_push(key);
+  mock_tuples[mock_iter_len - 1].value.uint8 = value;
+}
+
+void mock_iter_cstring(uint32_t key, const char *value) {
+  mock_iter_push(key);
+  mock_tuples[mock_iter_len - 1].value.cstring = value;
+}
+
+Tuple *dict_read_first(DictionaryIterator *iter) {
+  (void)iter;
+  mock_iter_pos = 0;
+  return mock_iter_len > 0 ? &mock_export[0] : NULL;
+}
+Tuple *dict_read_next(DictionaryIterator *iter) {
+  (void)iter;
+  mock_iter_pos++;
+  return mock_iter_pos < mock_iter_len ? &mock_export[mock_iter_pos] : NULL;
+}

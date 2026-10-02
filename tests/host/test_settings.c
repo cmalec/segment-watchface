@@ -13,7 +13,12 @@ void decorations_set_weather(int8_t now, int8_t hi, int8_t lo, uint8_t cond) {
 void battery_set_phone_percent(uint8_t pct) { (void)pct; }
 void weather_request_cancel(void) {}
 void weather_share_unit(void) {}
-AppTimer *app_timer_register(uint32_t ms, AppTimerCallback cb, void *data) { (void)ms; (void)cb; (void)data; return NULL; }
+static int save_timer_registrations = 0;
+AppTimer *app_timer_register(uint32_t ms, AppTimerCallback cb, void *data) {
+  (void)ms; (void)cb; (void)data;
+  save_timer_registrations++;
+  return NULL;
+}
 bool app_timer_cancel(AppTimer *t) { (void)t; return true; }
 
 /* settings.c defines these; declare to inspect */
@@ -155,6 +160,9 @@ static void test_weather_wire_contract(void) {
   send_uint(MESSAGE_KEY_wtemp_hi, (uint8_t)28);
   ASSERT_EQ(seen_hi, 28, "high lands on the row");
   ASSERT_EQ(seen_lo, INT8_MIN, "low still unknown");
+  // No condition key has arrived: the sentinel must be a value that maps to
+  // WEATHER_COND_NONE (pinned in test_helpers), not 0, which is WMO "clear".
+  ASSERT_EQ(seen_cond, 0xFF, "no condition yet: sentinel, not a WMO code");
 
   send_uint(MESSAGE_KEY_wtemp_lo, (uint8_t)12);
   ASSERT_EQ(seen_lo, 12, "low lands on the row");
@@ -253,6 +261,39 @@ static void test_blob_migration_of_current_and_empty_blobs(void) {
   ASSERT_EQ(global_settings.Seconds, 0, "empty blob: defaults stand");
 }
 
+static int cascade_runs = 0;
+static void count_cascade(void) { cascade_runs++; }
+
+static void test_inbox_gates_the_settings_cascade(void) {
+  settings_default_values();
+  appStarted = true;
+  settings_register_callback(count_cascade, SETTINGS_CALLBACK_DECORATIONS);
+
+  // A weather-only push updates the row but must not re-run the settings
+  // cascade or schedule a flash write.
+  mock_iter_reset();
+  mock_iter_uint(MESSAGE_KEY_wtemp_hi, 28);
+  mock_iter_uint(MESSAGE_KEY_wcond, 61);
+  cascade_runs = 0;
+  save_timer_registrations = 0;
+  settings_inbox(NULL, NULL);
+  ASSERT_EQ(cascade_runs, 0, "weather-only message: no settings cascade");
+  ASSERT_EQ(save_timer_registrations, 0, "weather-only message: no save scheduled");
+  ASSERT_EQ(seen_cond, 61, "weather-only message: the row still updates");
+
+  // A settings key in the same inbox path runs the cascade and schedules the
+  // delayed save.
+  mock_iter_reset();
+  mock_iter_uint(MESSAGE_KEY_seconds, 1);
+  settings_inbox(NULL, NULL);
+  ASSERT_EQ(cascade_runs, 1, "settings message: cascade runs");
+  ASSERT_EQ(save_timer_registrations, 1, "settings message: save scheduled");
+  ASSERT_EQ(global_settings.Seconds, 1, "settings message: value applied");
+
+  settings_unregister_callback(SETTINGS_CALLBACK_DECORATIONS);
+  appStarted = false;
+}
+
 int main(void) {
   settings_default_values();  // establish a known baseline
   RUN(test_powersave_nonwrapping);
@@ -267,5 +308,6 @@ int main(void) {
   RUN(test_blob_migration_skips_the_removed_switch_bytes);
   RUN(test_blob_migration_ignores_newer_layout);
   RUN(test_blob_migration_of_current_and_empty_blobs);
+  RUN(test_inbox_gates_the_settings_cascade);
   TEST_SUMMARY();
 }

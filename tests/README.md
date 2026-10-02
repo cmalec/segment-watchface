@@ -16,7 +16,7 @@ node tests/test_pkjs.js   # phone-side pkjs logic (temp conversion, staleness, c
 | Suite | Platform(s) | What it guards |
 |-------|-------------|----------------|
 | `test_helpers_emery` | emery | `duration_to_time`, `format_commas` (steps grouping), `hex_to_num` |
-| `test_settings_emery` | emery | `setting_is_power_save` half-hour window math (overnight wrap, end-exclusive boundary), the label/weather/sleep-readout wire contract, and blob migration (appended fields and the v5 removal) |
+| `test_settings_emery` | emery | `setting_is_power_save` half-hour window math (overnight wrap, end-exclusive boundary), the label/weather/sleep-readout wire contract, the weather-only inbox gate, and blob migration (appended fields and the v5 removal) |
 | `test_colors_emery` | emery | settings-page GColor8 hex ⇄ watch `hex_to_num` unpack round-trip (the B1 wire contract) |
 | `test_layout_emery` | emery | native 200×228 bounds and seconds-mode frame geometry — full font line boxes, on-screen digits, separator ordering, and non-overlapping seconds |
 | `test_pkjs.js` | node | `isStale` weather cache, `Math.round(c*9/5+32)` °F conversion, cssToByte/hex color round-trip |

@@ -28,3 +28,9 @@ static const char *g_current = "";
   printf("\n%d passed, %d failed\n", g_pass, g_fail); \
   return g_fail ? 1 : 0; \
 } while (0)
+
+/* AppMessage iterator mock (tests/host/mock_persist.c): queue tuples, then
+ * call settings_inbox() to consume them as the app message loop would. */
+void mock_iter_reset(void);
+void mock_iter_uint(uint32_t key, uint8_t value);
+void mock_iter_cstring(uint32_t key, const char *value);
