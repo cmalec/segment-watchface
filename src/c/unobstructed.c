@@ -8,11 +8,6 @@
 
 static bool s_screen_is_obstructed;
 
-// Event fires once, before the obstruction appears or disappears
-static void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, void *context) {
-  // only need the did_change side; appearance itself is handled there
-}
-
 // Event fires once, after obstruction appears or disappears
 static void prv_unobstructed_did_change(void *context) {
   // Keep track if the screen is obstructed or not
@@ -47,9 +42,9 @@ void unobstructed_init() {
   decorations_toggle(s_screen_is_obstructed);
   prv_unobstructed_change(100, NULL);
 
-  // Subscribe to the unobstructed area events
+  // Subscribe to the unobstructed area events. will_change stays NULL: the
+  // appearance itself is handled in did_change.
   UnobstructedAreaHandlers handlers = {
-    .will_change = prv_unobstructed_will_change,
     .change = prv_unobstructed_change,
     .did_change = prv_unobstructed_did_change
   };

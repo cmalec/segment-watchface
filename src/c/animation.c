@@ -15,7 +15,7 @@ void animation_slide_in(Layer *layer, int delay, direction_t direction) {
   // Revived launch cascade: slides a layer in from off-screen. Each module
   // calls this at the end of its init with a staggered delay, so the face
   // assembles piece by piece when the watchface launches.
-  static PropertyAnimation *s_property_animation;
+  PropertyAnimation *property_animation;
   int startX = 0, startY = 0;
 
   GRect from_frame = layer_get_frame(layer);
@@ -33,16 +33,16 @@ void animation_slide_in(Layer *layer, int delay, direction_t direction) {
   layer_set_frame(layer, from_frame);
   layer_set_hidden(layer, false);
 
-  s_property_animation = property_animation_create_layer_frame(layer, &from_frame, &to_frame);
-  animation_set_duration((Animation *) s_property_animation, ANIM_DURATION);
-  animation_set_delay((Animation *) s_property_animation, delay);
-  animation_set_curve((Animation *) s_property_animation, AnimationCurveEaseInOut);
+  property_animation = property_animation_create_layer_frame(layer, &from_frame, &to_frame);
+  animation_set_duration((Animation *) property_animation, ANIM_DURATION);
+  animation_set_delay((Animation *) property_animation, delay);
+  animation_set_curve((Animation *) property_animation, AnimationCurveEaseInOut);
   // Auto-destroy when done: these are fire-and-forget launch animations.
-  animation_set_handlers((Animation *) s_property_animation, (AnimationHandlers) {
+  animation_set_handlers((Animation *) property_animation, (AnimationHandlers) {
     .stopped = animation_slide_in_stopped,
   }, NULL);
 
-  animation_schedule((Animation *) s_property_animation);
+  animation_schedule((Animation *) property_animation);
 }
 
 static void animation_slide_in_stopped(Animation *animation, bool finished, void *context) {

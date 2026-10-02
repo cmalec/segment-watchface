@@ -248,9 +248,6 @@ void battery_init() {
     animation_slide_in(battery_layer, 550, DOWN);
     animation_slide_in(text_layer_get_layer(battery_percent_layer), 600, DOWN);
   }
-
-  //animation_slide_in(battery_layer, 1000, DOWN);
-  //animation_slide_in(text_layer_get_layer(battery_percent_layer), 1100, DOWN);
 }
 
 void battery_deinit() {

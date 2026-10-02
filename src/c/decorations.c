@@ -295,9 +295,6 @@ void decorations_init() {
   }
 
   // Emery is rectangular, so all decoration layers remain visible.
-
-  //animation_slide_in(decorations_layer, 700, RIGHT);
-  //animation_slide_in(wr_outer_layer, 700, UP);
 }
 
 void decorations_deinit() {
