@@ -13,5 +13,8 @@ tests/host/build/
 # emulator capture scratch (pebble-appstore skill)
 shots/
 
+# downloaded font archives, kept locally for later
+font-zips/
+
 # release builds are kept (the portal reads them straight from the repo)
 !releases/*.pbw
